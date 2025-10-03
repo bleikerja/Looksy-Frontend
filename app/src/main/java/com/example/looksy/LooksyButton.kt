@@ -1,7 +1,8 @@
 package com.example.looksy
 
-import androidx.compose.material3.Button
-import androidx.compose.material3.FilledIconButton
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -13,17 +14,22 @@ fun LooksyButton(
     modifier: Modifier = Modifier,
     picture: @Composable () ->Unit,
 ) {
-    FilledIconButton(
+    IconButton(
         onClick = onClick,
         modifier = modifier,
-        enabled = TODO(),
-        colors = TODO(),
-        interactionSource = TODO()
-    ) { picture }
+    ) {
+        picture()
+    }
 }
 
 @Preview
 @Composable
 fun PreviewLooksyButton() {
-    LooksyButton()
+        LooksyButton(
+            onClick = { },
+            modifier = Modifier,
+            {
+                Icon(Icons.Default.Add, contentDescription = "")
+            }
+        )
 }
