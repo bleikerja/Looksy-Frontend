@@ -15,7 +15,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import org.koin.java.KoinJavaComponent.inject
 
 data class BottomNavigationItem(
     val titleId: Int,
@@ -26,10 +25,10 @@ data class BottomNavigationItem(
 
 @Composable
 fun NavBar(
-    items: List<BottomNavigationItem>
+    items: List<BottomNavigationItem>,
+    navFlow: NavigationFlow
 ) {
     var selectedItem by remember { mutableIntStateOf(0) }
-    val navFlow : NavigationFlow by inject(NavigationFlow::class.java)
     NavigationBar(containerColor = Color.Magenta) {
         items.forEachIndexed { index, item ->
             NavigationBarItem(
@@ -50,9 +49,10 @@ fun NavBar(
                 selected = selectedItem == index,
                 onClick = {
                     selectedItem = index
-                    navFlow
+                    navFlow.navigate(item.destination)
                 }
             )
+
         }
     }
 }

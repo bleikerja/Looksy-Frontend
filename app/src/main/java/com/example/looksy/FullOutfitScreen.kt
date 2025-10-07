@@ -1,6 +1,7 @@
 package com.example.looksy
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
@@ -18,8 +19,8 @@ import androidx.compose.ui.unit.dp
 import com.example.looksy.ui.theme.LooksyTheme
 
 @Composable
-fun FullOutfitScreen(){
-    Column {
+fun FullOutfitScreen(modifier: Modifier = Modifier){
+    Column(modifier = modifier, verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
         Text("Add Outfit", modifier = Modifier.align(Alignment.CenterHorizontally))
         OutfitPart(painterResource(id = R.drawable.shirt))
         OutfitPart(painterResource(id = R.drawable.jeans))
