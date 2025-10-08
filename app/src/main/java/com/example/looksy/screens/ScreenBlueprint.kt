@@ -40,12 +40,9 @@ fun ScreenBlueprint(navFlow: NavigationFlow) {
         NavItem("Scan", Routes.Scan, R.drawable.cameraicon)
     )
 
-    // Den aktuellen Navigationspfad aus dem Flow beobachten.
     val currentDestination by navFlow.destination.collectAsState()
 
-    // Das Scaffold ist ein Grundgerüst für Bildschirme mit App-Bars, Navigation etc.
     Scaffold(
-        // Hier wird die untere Navigationsleiste platziert.
         bottomBar = {
             NavigationBar {
                 navItems.forEach { navItem ->
