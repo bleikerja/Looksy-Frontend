@@ -24,7 +24,15 @@ import com.example.looksy.ui.theme.LooksyTheme
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun ClothInformationScreen(image: Painter, color: String, type: String, material: String, size: String, season: String, status: String){
+fun ClothInformationScreen(
+    image: Painter,
+    color: String,
+    type: String,
+    material: String,
+    size: String,
+    season: String,
+    status: String
+) {
     Column {
         Image(
             modifier = Modifier
@@ -35,9 +43,11 @@ fun ClothInformationScreen(image: Painter, color: String, type: String, material
         )
 
         Text("Information", fontSize = 30.sp)
-        FlowRow(modifier = Modifier.padding(8.dp),
+        FlowRow(
+            modifier = Modifier.padding(8.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),) {
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
             Information("Color", color)
             Information("Type", type)
             Information("Material", material)
@@ -49,13 +59,15 @@ fun ClothInformationScreen(image: Painter, color: String, type: String, material
 }
 
 @Composable
-fun Information(name: String, value: String){
-    Column(modifier = Modifier.border(2.dp, Color.Black, shape = RoundedCornerShape(20))
-        .fillMaxWidth(0.45f)
-        .background(Color(240, 220, 189), shape = RoundedCornerShape(20))
-        .padding(5.dp)
+fun Information(name: String, value: String) {
+    Column(
+        modifier = Modifier
+            .border(2.dp, Color.Black, shape = RoundedCornerShape(20))
+            .fillMaxWidth(0.45f)
+            .background(Color(240, 220, 189), shape = RoundedCornerShape(20))
+            .padding(5.dp)
     )
-        {
+    {
         Text(name, fontSize = 10.sp, color = Color.DarkGray)
         Text(value, fontSize = 25.sp)
     }
@@ -65,7 +77,15 @@ fun Information(name: String, value: String){
 @Composable
 fun ClothInformationPreview() {
     LooksyTheme {
-        ClothInformationScreen(painterResource(id = R.drawable.shirt), "Red", "shirt", "wool", "M", "Summer", "clean")
+        ClothInformationScreen(
+            painterResource(id = R.drawable.shirt),
+            "Red",
+            "shirt",
+            "wool",
+            "M",
+            "Summer",
+            "clean"
+        )
         //ToDo: Get informaton in fun ClothInformationScreen from Backend
     }
 }
