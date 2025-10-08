@@ -66,5 +66,6 @@ fun Information(name: String, value: String){
 fun ClothInformationPreview() {
     LooksyTheme {
         ClothInformationScreen(painterResource(id = R.drawable.shirt), "Red", "shirt", "wool", "M", "Summer", "clean")
+        //ToDo: Get informaton in fun ClothInformationScreen from Backend
     }
 }

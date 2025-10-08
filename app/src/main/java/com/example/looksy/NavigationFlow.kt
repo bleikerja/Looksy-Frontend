@@ -2,7 +2,7 @@ package com.example.looksy
 
 import kotlinx.coroutines.flow.MutableStateFlow
 
-class NavigationFlow {
+open class NavigationFlow {
     val destination: MutableStateFlow<NavigationDestination> = MutableStateFlow(Routes.Home)
     val lastDestination: MutableStateFlow<NavigationDestination> = MutableStateFlow(Routes.Home)
 

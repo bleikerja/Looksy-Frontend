@@ -5,7 +5,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.looksy.ClothInformationScreen
 import com.example.looksy.ui.theme.LooksyTheme
 
 class MainActivity : ComponentActivity() {
@@ -24,6 +26,14 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainPreview() {
     LooksyTheme {
-        FullOutfitScreen()
+        ClothInformationScreen(
+            painterResource(id = R.drawable.shirt),
+            "Red",
+            "shirt",
+            "wool",
+            "M",
+            "Summer",
+            "clean"
+        )
     }
 }
