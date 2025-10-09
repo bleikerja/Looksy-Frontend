@@ -12,16 +12,24 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,26 +57,35 @@ fun CategoriesScreen(
     Scaffold(
         bottomBar = { navBar() }
     ) { padding ->
-        Column(modifier = Modifier.padding(padding)) {
+        Column(modifier = Modifier
+            .padding(padding)
+            .padding(horizontal = 20.dp)
+            .fillMaxSize()
+        ) {
             Header()
             CategoriesBlock(categories = categories)
-            ItemsContainer(categoryItems = categoryItems)
+            Spacer(modifier = Modifier.height(34.dp))
+            ItemsContainer(
+                categoryItems = categoryItems,
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Header() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
+            .padding(13.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        TextField(value = "", onValueChange = {}, placeholder = { Text("Search") })
+        SearchPanel(modifier = Modifier.weight(1f))
         Image(
-            painter = painterResource(id = R.drawable.avatar), // Replace with your avatar
+            painter = painterResource(id = R.drawable.avatar),
             contentDescription = "Avatar",
             modifier = Modifier
                 .size(40.dp)
@@ -78,12 +95,39 @@ fun Header() {
 }
 
 @Composable
+fun SearchPanel(modifier: Modifier = Modifier){
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = Icons.Default.Search,
+            contentDescription = "Search"
+        )
+        TextField(
+            value = "",
+            onValueChange = {},
+            placeholder = { Text("Search for today") },
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent,
+                disabledContainerColor = Color.Transparent,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                disabledIndicatorColor = Color.Transparent,
+            ),
+        )
+    }
+}
+
+@Composable
 fun CategoriesBlock(categories: List<Category>) {
-    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+    Column(modifier = Modifier.fillMaxWidth()) {
         Text(text = "Categories", fontSize = 20.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
         LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth()
         ) {
             items(categories) { category ->
                 CategoryIcon(category = category)
@@ -100,7 +144,7 @@ fun CategoryIcon(category: Category) {
             modifier = Modifier
                 .size(50.dp) // 1. Total size of the container is 25dp
                 .clip(CircleShape) // 2. Make the container a circle
-                .background(Color.LightGray) // 3. Set the background color
+                .background(Color(219, 48, 34, 64)) // 3. Set the background color
                 .padding(12.dp) // 4. Apply internal padding. The inner space is now 25 - 4 - 4 = 17dp
         ) {
             Image(
@@ -115,11 +159,17 @@ fun CategoryIcon(category: Category) {
 }
 
 @Composable
-fun ItemsContainer(categoryItems: List<CategoryItems>) {
-    Column(modifier = Modifier.padding(16.dp)) {
+fun ItemsContainer(categoryItems: List<CategoryItems>, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(Color(249, 246, 242), shape = RoundedCornerShape(20.dp))
+            .padding(start = 20.dp, top = 20.dp, end = 20.dp, bottom = 0.dp)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
         categoryItems.forEach { categoryItem ->
             ItemsBlock(categoryItem = categoryItem)
-            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
@@ -127,33 +177,61 @@ fun ItemsContainer(categoryItems: List<CategoryItems>) {
 @Composable
 fun ItemsBlock(categoryItem: CategoryItems) {
     Column {
+        ItemsTitle(categoryItem = categoryItem)
+        Spacer(modifier = Modifier.height(8.dp))
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            horizontalArrangement = Arrangement.spacedBy(5.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.height(170.dp) // Adjust height as needed
+        ) {
+            items(categoryItem.items) { item ->
+                ItemContainer(item = item,
+                    modifier = Modifier
+                        .size(165.dp)
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(Color(255, 255, 255))
+                        .padding(16.dp)
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+    }
+}
+
+@Composable
+fun ItemsTitle(categoryItem: CategoryItems){
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         Text(
             text = "${categoryItem.categoryName} (${categoryItem.items.size})",
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold
         )
-        Spacer(modifier = Modifier.height(8.dp))
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.height(250.dp) // Adjust height as needed
-        ) {
-            items(categoryItem.items) { item ->
-                ItemContainer(item = item)
-            }
-        }
+        Image(
+            painter = painterResource(id = R.drawable.arrow),
+            contentDescription = "See more",
+            modifier = Modifier.size(26.dp)
+        )
+
     }
 }
 
 @Composable
-fun ItemContainer(item: Item) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+fun ItemContainer(item: Item, modifier: Modifier) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+        ) {
         Image(
             painter = painterResource(id = item.imageRes),
             contentDescription = item.name,
-            modifier = Modifier.size(120.dp)
+
         )
+        Spacer(modifier = Modifier.height(8.dp))
         Text(text = item.name)
     }
 }
@@ -166,18 +244,17 @@ fun CategoriesScreenPreview() {
         Category("Pants", R.drawable.pants_category),
         Category("Glasses", R.drawable.glasses_category),
         Category("Shoes", R.drawable.shoes_category),
-        Category("Watch", R.drawable.watch_category),
         Category("Watch", R.drawable.watch_category)
     )
 
     val sampleItems1 = listOf(
-        Item("Black T-shirt", android.R.drawable.ic_menu_report_image),
-        Item("Grey T-shirt", android.R.drawable.ic_menu_report_image)
+        Item("Black T-shirt", R.drawable.black_t_shirt),
+        Item("Grey T-shirt", R.drawable.white_t_shirt)
     )
 
     val sampleItems2 = listOf(
-        Item("Orange Cardigan", android.R.drawable.ic_menu_report_image),
-        Item("Colorful Sweater", android.R.drawable.ic_menu_report_image)
+        Item("Orange Cardigan", R.drawable.orange_cardigan),
+        Item("Colorful Sweater", R.drawable.colorful_sweater)
     )
 
 

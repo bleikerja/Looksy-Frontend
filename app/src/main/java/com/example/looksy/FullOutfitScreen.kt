@@ -26,7 +26,6 @@ fun FullOutfitScreen(modifier: Modifier = Modifier){
         OutfitPart(painterResource(id = R.drawable.jeans))
     }
 }
-
 @Composable
 fun OutfitPart(image: Painter){
     Row {
