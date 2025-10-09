@@ -20,12 +20,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.looksy.ui.theme.LooksyTheme
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ClothInformationScreen(
-    image: Painter,
+    imagePath: Any?,
     color: String,
     type: String,
     material: String,
@@ -34,12 +35,13 @@ fun ClothInformationScreen(
     status: String
 ) {
     Column {
-        Image(
+        AsyncImage(
+            model = imagePath,
+            contentDescription = "Detailansicht des Kleidungsstücks",
             modifier = Modifier
                 .height(300.dp)
                 .fillMaxWidth(),
-            painter = image,
-            contentDescription = ""
+            error = painterResource(id = R.drawable.clothicon)
         )
 
         Text("Information", fontSize = 30.sp)
@@ -78,7 +80,7 @@ fun Information(name: String, value: String) {
 fun ClothInformationPreview() {
     LooksyTheme {
         ClothInformationScreen(
-            painterResource(id = R.drawable.shirt),
+            painterResource(id = R.drawable.shirt_small),
             "Red",
             "shirt",
             "wool",

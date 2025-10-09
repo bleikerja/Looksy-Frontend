@@ -2,9 +2,12 @@ package com.example.looksy.screens
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
+import androidx.activity.result.launch
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.takePicture
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.border
@@ -27,17 +30,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import java.util.Locale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.common.util.concurrent.ListenableFuture
+import kotlinx.coroutines.launch
 import java.io.File
+import java.io.FileOutputStream
+import java.text.SimpleDateFormat
+import java.util.Date
 import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
+import kotlin.text.format
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -70,7 +81,6 @@ fun CameraScreen(
     if (cameraPermissionState.status.isGranted) {
         // Wenn die Berechtigung erteilt ist, zeige die Kamera-Vorschau
         CameraView(
-            context = context,
             onImageCaptured = onImageCaptured
         )
     } else {
@@ -85,7 +95,6 @@ fun CameraScreen(
 
 @Composable
 private fun CameraView(
-    context: Context,
     onImageCaptured: (Uri) -> Unit
 ) {
     val context = LocalContext.current
@@ -98,7 +107,7 @@ private fun CameraView(
 
     // Kamera binden, wenn die Composable gestartet wird
     LaunchedEffect(cameraProviderFuture) {
-        val cameraProvider = cameraProviderFuture.await(context)
+        val cameraProvider = cameraProviderFuture.await()
         val preview = androidx.camera.core.Preview.Builder().build().also {
             it.setSurfaceProvider(previewView.surfaceProvider)
         }
@@ -132,7 +141,9 @@ private fun CameraView(
                 .border(2.dp, Color.White, CircleShape),
             onClick = {
                 // Foto aufnehmen
-                takePhoto(context, imageCapture, onImageCaptured)
+                lifecycleOwner.lifecycleScope.launch {
+                    takePhoto(context, imageCapture, onImageCaptured)
+                }
             }
         ) {
             Icon(
@@ -145,48 +156,83 @@ private fun CameraView(
     }
 }
 
-private fun takePhoto(
+private suspend fun takePhoto(
     context: Context,
     imageCapture: ImageCapture,
     onImageCaptured: (Uri) -> Unit
 ) {
-    val file = File(context.externalMediaDirs.firstOrNull(), "${System.currentTimeMillis()}.jpg")
-    val outputOptions = ImageCapture.OutputFileOptions.Builder(file).build()
-
-    imageCapture.takePicture(
-        outputOptions,
-        ContextCompat.getMainExecutor(context),
-        object : ImageCapture.OnImageSavedCallback {
-            override fun onError(exc: ImageCaptureException) {
-                // Fehler behandeln
-            }
-
-            override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                val savedUri = output.savedUri ?: Uri.fromFile(file)
-                // URI zurückgeben, um zum nächsten Screen zu navigieren
-                onImageCaptured(savedUri)
-            }
-        }
+    // ✅ ÄNDERUNG: Speichere im Cache-Verzeichnis statt im externen Medienverzeichnis.
+    // Das ist sicherer und erfordert keine speziellen Berechtigungen.
+    val photoFile = File(
+        context.cacheDir,
+        "temp_${System.currentTimeMillis()}.jpg"
     )
+
+    try {
+        // Nutze die eingebaute suspend-Funktion von CameraX
+        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
+        imageCapture.takePicture(outputOptions) // Diese Funktion wartet, bis das Bild gespeichert ist
+
+        // Wenn die obige Zeile ohne Fehler durchläuft, ist das Bild gespeichert.
+        val savedUri = Uri.fromFile(photoFile)
+        onImageCaptured(savedUri)
+
+    } catch (exc: ImageCaptureException) {
+        Log.e("Camera", "Fotoaufnahme fehlgeschlagen: ${exc.message}", exc)
+        // Hier könntest du dem Nutzer eine Fehlermeldung anzeigen.
+        // Wichtig: Führe UI-Änderungen im Main-Thread aus
+        // withContext(Dispatchers.Main) {
+        //     Toast.makeText(context, "Fehler: ${exc.message}", Toast.LENGTH_SHORT).show()
+        // }
+    }
 }
 
-private suspend fun <T> ListenableFuture<T>.await(context: Context): T =
-    suspendCoroutine { continuation ->
-        // 'this' now correctly refers to the ListenableFuture instance
-        addListener(
-            {
-                try {
-                    // .get() is called on the future ('this')
-                    continuation.resume(get())
-                } catch (e: Exception) {
-                    continuation.resumeWith(Result.failure(e))
-                }
-            },
-            // The executor is now retrieved correctly
-            ContextCompat.getMainExecutor(context)
+private suspend fun <T> ListenableFuture<T>.await(): T = suspendCoroutine { continuation ->
+    addListener(
+        {
+            try {
+                continuation.resume(get())
+            } catch (e: Exception) {
+                // Bei Fehlern die Coroutine mit einer Exception fortsetzen
+                continuation.resumeWithException(e.cause ?: e)
+            }
+        },
+        java.util.concurrent.Executors.newSingleThreadExecutor()
         )
+}
+
+fun saveImagePermanently(context: Context, imageUri: Uri): String? {
+    // Die Zeile "val imageUri = Uri.parse(tempUri)" ist jetzt überflüssig.
+
+    val currentDate = Date()
+    val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(currentDate)
+    val fileName = "IMG_$timeStamp.jpg"
+
+    val storageDir = File(context.filesDir, "images")
+
+    if (!storageDir.exists()) {
+        storageDir.mkdirs()
     }
 
+    val permanentFile = File(storageDir, fileName)
+
+    try {
+        // Öffne einen Input-Stream direkt von der übergebenen URI
+        val inputStream = context.contentResolver.openInputStream(imageUri)
+        val outputStream = FileOutputStream(permanentFile)
+
+        inputStream?.use { input ->
+            outputStream.use { output ->
+                input.copyTo(output)
+            }
+        }
+        return permanentFile.absolutePath
+
+    } catch (e: Exception) {
+        e.printStackTrace()
+        return null
+    }
+}
 
 @Preview
 @Composable

@@ -28,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.net.toUri
 import coil.compose.AsyncImage
@@ -67,7 +68,18 @@ fun AddNewClothesScreen(
                         clean = true,
                         washingNotes = washingNotes!!
                     )
-                    onSave(newItem, imageUriString.toUri())
+                    val imageUri = try {
+                        imageUriString.toUri()
+                    } catch (e: IllegalArgumentException) {
+                        // Gib eine leere/ungültige URI zurück, falls der String leer ist.
+                        // Das sollte in der echten App nie passieren, sichert aber die Preview ab.
+                        Uri.EMPTY
+                    }
+
+                    // Rufe onSave nur auf, wenn die URI gültig ist.
+                    if (imageUri != Uri.EMPTY) {
+                        onSave(newItem, imageUri)
+                    }
                 },
                 enabled = isFormValid // Der Button ist nur klickbar, wenn alle Felder ausgefüllt sind
             ) {
@@ -118,19 +130,16 @@ private fun AddNewClothesForm(
         // --- BILD-VORSCHAU ---
         item {
             AsyncImage(
-                model = coil.request.ImageRequest.Builder(LocalContext.current)
-                    .data(imageUriString.ifEmpty { R.drawable.clothicon })
-                    .crossfade(true)
-                    .build(),
-                // Du musst ein Platzhalter-Bild in deinem `drawable`-Ordner haben, z.B. ic_placeholder
-                // placeholder = painterResource(R.drawable.ic_placeholder),
-                // error = painterResource(R.drawable.ic_placeholder),
+                model = if (imageUriString.isNotEmpty()) imageUriString else R.drawable.clothicon,
                 contentDescription = "Neues Kleidungsstück",
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(300.dp)
                     .clip(RoundedCornerShape(12.dp)),
-                contentScale = ContentScale.Crop
+                contentScale = ContentScale.Crop,
+                // Diese beiden sind sehr nützlich, um Lade-Zustände anzuzeigen
+                placeholder = painterResource(id = R.drawable.clothicon), // Bild während des Ladens
+                error = painterResource(id = R.drawable.wardrobe2icon),
             )
         }
 
