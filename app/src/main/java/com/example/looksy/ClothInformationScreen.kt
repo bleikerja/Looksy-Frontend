@@ -3,59 +3,133 @@ package com.example.looksy
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.looksy.dataClassClones.Clothes
+import com.example.looksy.dataClassClones.Material
+import com.example.looksy.dataClassClones.Season
+import com.example.looksy.dataClassClones.Size
+import com.example.looksy.dataClassClones.Type
+import com.example.looksy.dataClassClones.WashingNotes
 import coil.compose.AsyncImage
 import com.example.looksy.ui.theme.LooksyTheme
 
+//ToDo: Get informaton in fun ClothInformationScreen from Backend
+//just from same type
+var allClothes = listOf(
+    Clothes(
+        Size._46,
+        Season.Winter,
+        Type.Pants,
+        Material.Wool,
+        true,
+        WashingNotes.Temperature30,
+        imagePath = Any?
+),
+Clothes(Size._46, Season.Summer, Type.Pants, Material.jeans, true, WashingNotes.Temperature30, imagePath = Any?),
+Clothes(Size._M, Season.inBetween, Type.Tops, Material.Wool, true, WashingNotes.Temperature30, imagePath = Any?)
+)
+
+//TODO: add image to Cloth class
+var allClothImages = listOf(
+    R.drawable.jeans,
+    R.drawable.jeans,
+    R.drawable.shirt,
+    R.drawable.jeans,
+    R.drawable.shirt,
+    R.drawable.jeans
+)
+
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun ClothInformationScreen(
-    imagePath: Any?,
-    color: String,
-    type: String,
-    material: String,
-    size: String,
-    season: String,
-    status: String
-) {
-    Column {
-        AsyncImage(
-            model = imagePath,
-            contentDescription = "Detailansicht des Kleidungsstücks",
-            modifier = Modifier
+fun ClothInformationScreen(selectedClothIndex: Int) {
+    var currentClothIndex by remember { mutableIntStateOf(selectedClothIndex) }
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(249, 246, 242))
+            .padding(30.dp)
+    ) {
+        //ToDo: painterResource auf die Aktuellen Begebenheiten anpassen
+        ClothImage(
+            painterResource(allClothImages[currentClothIndex]), modifier = Modifier
                 .height(300.dp)
-                .fillMaxWidth(),
-            error = painterResource(id = R.drawable.clothicon)
+                .fillMaxWidth()
+                .padding(bottom = 20.dp)
         )
 
-        Text("Information", fontSize = 30.sp)
+        Text("Information", fontSize = 30.sp, modifier = Modifier.align(Alignment.Start))
         FlowRow(
-            modifier = Modifier.padding(8.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.padding(bottom = 20.dp)
         ) {
-            Information("Color", color)
-            Information("Type", type)
-            Information("Material", material)
-            Information("Size", size)
-            Information("Season", season)
-            Information("Status", status)
+            //TODO: add Color to Cloth class
+            Information("Color", "-")
+            Information("Type", allClothes[currentClothIndex].type.toString())
+            Information("Material", allClothes[currentClothIndex].material.toString())
+            Information("Size", allClothes[currentClothIndex].size.toString())
+            Information("Season", allClothes[currentClothIndex].seasonUsage.toString())
+            Information("Status", if (allClothes[currentClothIndex].clean) "clean" else "dirty")
+        }
+
+        Text(
+            "other ${allClothes[currentClothIndex].type}",
+            fontSize = 30.sp,
+            modifier = Modifier.align(Alignment.Start)
+        )
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier
+                .horizontalScroll(rememberScrollState())
+                .height(200.dp)
+        ) {
+            for (i in allClothes.indices) {
+                LooksyButton(
+                    onClick = { currentClothIndex = i },
+                    picture = {
+                        Image(
+                            painter = painterResource(id = allClothImages[i]),
+                            contentDescription = ""
+                        )
+                    },
+                    modifier = Modifier
+                        .width(200.dp)
+                        .height(200.dp)
+                        .shadow(10.dp, RoundedCornerShape(10))
+                        .background(Color.White, RoundedCornerShape(10))
+                )
+            }
         }
     }
 }
@@ -64,9 +138,9 @@ fun ClothInformationScreen(
 fun Information(name: String, value: String) {
     Column(
         modifier = Modifier
-            .border(2.dp, Color.Black, shape = RoundedCornerShape(20))
+            .shadow(10.dp, RoundedCornerShape(20))
             .fillMaxWidth(0.45f)
-            .background(Color(240, 220, 189), shape = RoundedCornerShape(20))
+            .background(Color.White, shape = RoundedCornerShape(20))
             .padding(5.dp)
     )
     {
@@ -75,19 +149,23 @@ fun Information(name: String, value: String) {
     }
 }
 
+@Composable
+fun ClothImage(image: Any?, modifier: Modifier) {
+    AsyncImage(
+        modifier = modifier
+            .shadow(10.dp, RoundedCornerShape(10))
+            .background(Color.White, RoundedCornerShape(10)),
+        model = image,
+        contentDescription = "Detailansicht des Kleidungsstücks",
+        error = painterResource(id = R.drawable.clothicon)
+    )
+}
+
 @Preview(showBackground = true)
 @Composable
 fun ClothInformationPreview() {
     LooksyTheme {
-        ClothInformationScreen(
-            painterResource(id = R.drawable.shirt_small),
-            "Red",
-            "shirt",
-            "wool",
-            "M",
-            "Summer",
-            "clean"
-        )
+        ClothInformationScreen(1)
         //ToDo: Get informaton in fun ClothInformationScreen from Backend
     }
 }

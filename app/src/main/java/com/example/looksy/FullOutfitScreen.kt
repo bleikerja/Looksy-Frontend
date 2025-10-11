@@ -41,7 +41,6 @@ fun FullOutfitScreen(modifier: Modifier = Modifier) {
     }
 
 }
-
 @Composable
 fun OutfitPart(imageResId: Int) {
     Row {

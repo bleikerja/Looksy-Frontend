@@ -60,7 +60,7 @@ fun NavHostContainer(
     ) {
         // Entspricht: Routes.Home
         composable(Routes.Home.route) {
-            FullOutfitScreen()
+            FullOutfitScreen(modifier=modifier)
         }
 
         // Entspricht: Routes.ChoseClothes
@@ -84,16 +84,7 @@ fun NavHostContainer(
 
             // Wenn wir die Daten haben, rufen wir den Screen auf
             if (imagePath != null /* && clothesData != null */) {
-                ClothInformationScreen(
-                    imagePath = imagePath, // <<< HIER IST DEIN KAMERABILD-PFAD!
-                    color = "Rot", // clothesData.color
-                    type = "Shirt", // clothesData.type
-                    material = "Wolle", // clothesData.material
-                    // ... etc.
-                    size = "M",
-                    season = "Sommer",
-                    status = "sauber"
-                )
+                ClothInformationScreen(0)
             }
         }
 
