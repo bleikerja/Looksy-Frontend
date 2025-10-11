@@ -26,14 +26,6 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainPreview() {
     LooksyTheme {
-        ClothInformationScreen(
-            painterResource(id = R.drawable.shirt),
-            "Red",
-            "shirt",
-            "wool",
-            "M",
-            "Summer",
-            "clean"
-        )
+        ClothInformationScreen(0)
     }
 }

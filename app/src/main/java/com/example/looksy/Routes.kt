@@ -25,6 +25,6 @@ fun NavHostContainer(
     val currentDestination by navFlow.destination.collectAsState()
     when (currentDestination) {
         Routes.Home -> FullOutfitScreen(modifier = modifier)
-        Routes.Details -> ClothInformationScreen(painterResource(id = R.drawable.shirt), "Red", "shirt", "wool", "M", "Summer", "clean")
+        Routes.Details -> ClothInformationScreen(0)
     }
 }
