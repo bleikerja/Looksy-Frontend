@@ -134,7 +134,8 @@ fun NavHostContainer(
                             // Navigiere zurück zum Home-Screen
                             navController.navigate(Routes.Home.route)
                         }
-                    }
+                    },
+                    onRetakePhoto = { navController.navigate(Routes.Scan.route) }
                 )
             } else {
                 // Sicherheits-Fallback: Wenn die Uri fehlt, gehe einfach zurück.
