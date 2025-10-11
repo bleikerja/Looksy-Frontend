@@ -7,7 +7,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.looksy.ClothInformationScreen
+import androidx.navigation.compose.rememberNavController
+import com.example.looksy.screens.ScreenBlueprint
 import com.example.looksy.ui.theme.LooksyTheme
 
 class MainActivity : ComponentActivity() {
@@ -16,7 +17,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             LooksyTheme {
-                FullOutfitScreen()
+                val navController = rememberNavController()
+                ScreenBlueprint(navController = navController)
             }
         }
     }
@@ -27,5 +29,6 @@ class MainActivity : ComponentActivity() {
 fun MainPreview() {
     LooksyTheme {
         ClothInformationScreen(0)
+        //ImagePath:painterResource(id = R.drawable.shirt_small)
     }
 }
