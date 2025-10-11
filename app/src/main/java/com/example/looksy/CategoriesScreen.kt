@@ -60,9 +60,9 @@ fun CategoriesScreen(
         Column(modifier = Modifier
             .padding(padding)
             .padding(horizontal = 20.dp)
+            .padding(top = 10.dp)
             .fillMaxSize()
         ) {
-            Header()
             CategoriesBlock(categories = categories)
             Spacer(modifier = Modifier.height(34.dp))
             ItemsContainer(
@@ -73,26 +73,6 @@ fun CategoriesScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun Header() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(13.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        SearchPanel(modifier = Modifier.weight(1f))
-        Image(
-            painter = painterResource(id = R.drawable.avatar),
-            contentDescription = "Avatar",
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-        )
-    }
-}
 
 @Composable
 fun SearchPanel(modifier: Modifier = Modifier){
