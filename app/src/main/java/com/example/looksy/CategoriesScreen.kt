@@ -62,7 +62,7 @@ fun CategoriesScreen(
             .fillMaxSize()
         ) {
             CategoriesBlock(categories = categories)
-            Spacer(modifier = Modifier.height(34.dp))
+            Spacer(modifier = Modifier.height(25.dp))
             ItemsContainer(
                 categoryItems = categoryItems,
                 modifier = Modifier.weight(1f)
@@ -173,7 +173,6 @@ fun ItemsBlock(categoryItem: CategoryItems) {
                 )
             }
         }
-        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
@@ -239,24 +238,27 @@ fun CategoriesScreenPreview() {
     )
 
     val pants = listOf(
-        Item("Blue Jeans",),
-        Item("Cargo Pants",)
+        Item("Blue Jeans", android.R.drawable.ic_menu_gallery),
+        Item("Cargo Pants", android.R.drawable.ic_menu_gallery)
     )
 
     val dresses = listOf(
-        Item("Blue Dress", ),
-        Item("Yellow Dress", )
+        Item("Blue Dress", android.R.drawable.ic_menu_gallery),
+        Item("Yellow Dress", android.R.drawable.ic_menu_gallery)
     )
 
     val shorts = listOf(
-        Item("blue chino shorts",),
-        Item("grey sport shorts", )
+        Item("blue chino shorts", android.R.drawable.ic_menu_gallery),
+        Item("grey sport shorts", android.R.drawable.ic_menu_gallery)
     )
 
 
     val sampleCategoryItems = listOf(
-        CategoryItems("T-shirts", shirts),
-        CategoryItems("Sweaters", sweaters)
+        CategoryItems("Shirts", shirts),
+        CategoryItems("Sweaters", sweaters),
+        CategoryItems("Pants", pants),
+        CategoryItems("Dresses", dresses),
+        CategoryItems("Shorts", shorts)
     )
 
     LooksyTheme {
