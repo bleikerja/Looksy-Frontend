@@ -1,8 +1,6 @@
 package com.example.looksy
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -25,7 +23,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -43,26 +40,32 @@ import com.example.looksy.ui.theme.LooksyTheme
 //just from same type
 var allClothes = listOf(
     Clothes(
-        Size._46,
-        Season.Winter,
-        Type.Pants,
-        Material.Wool,
-        true,
-        WashingNotes.Temperature30,
-        imagePath = Any?
-),
-Clothes(Size._46, Season.Summer, Type.Pants, Material.jeans, true, WashingNotes.Temperature30, imagePath = Any?),
-Clothes(Size._M, Season.inBetween, Type.Tops, Material.Wool, true, WashingNotes.Temperature30, imagePath = Any?)
-)
-
-//TODO: add image to Cloth class
-var allClothImages = listOf(
-    R.drawable.jeans,
-    R.drawable.jeans,
-    R.drawable.shirt,
-    R.drawable.jeans,
-    R.drawable.shirt,
-    R.drawable.jeans
+        size = Size._46,
+        seasonUsage = Season.Winter,
+        type = Type.Pants,
+        material = Material.Wool,
+        clean = true,
+        washingNotes = WashingNotes.Temperature30,
+        imagePath = "android.resource://com.example.looksy/${R.drawable.jeans}"
+    ),
+    Clothes(
+        size = Size._46,
+        seasonUsage = Season.Summer,
+        type = Type.Pants,
+        material = Material.jeans,
+        clean = true,
+        washingNotes = WashingNotes.Temperature30,
+        imagePath = "android.resource://com.example.looksy/${R.drawable.jeans}"
+    ),
+    Clothes(
+        size = Size._M,
+        seasonUsage = Season.inBetween,
+        type = Type.Tops,
+        material = Material.Wool,
+        clean = true,
+        washingNotes = WashingNotes.Temperature30,
+        imagePath = "android.resource://com.example.looksy/${R.drawable.colorful_sweater}"
+    )
 )
 
 
@@ -81,7 +84,7 @@ fun ClothInformationScreen(selectedClothIndex: Int) {
     ) {
         //ToDo: painterResource auf die Aktuellen Begebenheiten anpassen
         ClothImage(
-            painterResource(allClothImages[currentClothIndex]), modifier = Modifier
+            allClothes[currentClothIndex].imagePath, modifier = Modifier
                 .height(300.dp)
                 .fillMaxWidth()
                 .padding(bottom = 20.dp)
@@ -118,9 +121,10 @@ fun ClothInformationScreen(selectedClothIndex: Int) {
                 LooksyButton(
                     onClick = { currentClothIndex = i },
                     picture = {
-                        Image(
-                            painter = painterResource(id = allClothImages[i]),
-                            contentDescription = ""
+                        AsyncImage(
+                            model = allClothes[i].imagePath,
+                            contentDescription = "Detailansicht des Kleidungsstücks",
+                            error = painterResource(id = R.drawable.clothicon)
                         )
                     },
                     modifier = Modifier

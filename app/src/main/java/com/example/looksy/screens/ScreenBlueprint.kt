@@ -3,9 +3,7 @@ package com.example.looksy.screens
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.res.painterResource
-import com.example.looksy.NavigationFlow
 import com.example.looksy.R
 import com.example.looksy.Routes
 
@@ -13,24 +11,13 @@ import com.example.looksy.Routes
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.looksy.NavHostContainer
-
-
-// Datenklasse, um die Informationen für jedes Navigationselement zu bündeln.
-data class NavItem(
-    val label: String,
-    val route: Routes,
-    val iconResId: Int // Resource-ID für das Icon
-)
 
 @Composable
 fun ScreenBlueprint(navController: NavHostController) {
@@ -53,17 +40,10 @@ fun ScreenBlueprint(navController: NavHostController) {
                         onClick = {
                             // Navigation zum neuen Ziel auslösen.
                             navController.navigate(route){
-                                // Pop up to the start destination of the graph to
-                                // avoid building up a large stack of destinations
-                                // on the back stack as users select items
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                // Avoid multiple copies of the same destination when
-                                // reselecting the same item
-                                launchSingleTop = true
-                                // Restore state when reselecting a previously selected item
-                                restoreState = true
+                                    popUpTo(navController.graph.startDestinationId) {
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
                             }
                         },
                         label = null,
@@ -93,7 +73,5 @@ fun ScreenBlueprint(navController: NavHostController) {
 @Preview(showBackground = true)
 @Composable
 fun NavBarOptikPreview() {
-    // Eine Fake-Instanz für die Vorschau.
-    val fakeNavFlow = remember { NavigationFlow() }
-    //ScreenBlueprint(navFlow = fakeNavFlow)
+
 }
