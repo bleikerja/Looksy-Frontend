@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -41,7 +40,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.looksy.ui.theme.LooksyTheme
-import com.example.looksy.R
 
 data class Category(val name: String, val iconRes: Int)
 data class Item(val name: String, val imageRes: Int)
@@ -103,7 +101,7 @@ fun SearchPanel(modifier: Modifier = Modifier){
 @Composable
 fun CategoriesBlock(categories: List<Category>) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text(text = "Categories", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Text(text = "Categories", fontSize = 28.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
         LazyRow(
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -220,27 +218,45 @@ fun ItemContainer(item: Item, modifier: Modifier) {
 @Composable
 fun CategoriesScreenPreview() {
     val sampleCategories = listOf(
-        Category("Shirt", R.drawable.shirt_category),
+        Category("Shirts", R.drawable.shirt_category),
         Category("Pants", R.drawable.pants_category),
-        Category("Glasses", R.drawable.glasses_category),
-        Category("Shoes", R.drawable.shoes_category),
-        Category("Watch", R.drawable.watch_category)
+        Category("Dresses", android.R.drawable.ic_search_category_default),
+        Category("Shorts", android.R.drawable.ic_search_category_default),
+        Category("Sweaters`", android.R.drawable.ic_search_category_default),
+//        Category("Glasses", R.drawable.glasses_category),
+//        Category("Shoes", R.drawable.shoes_category),
+//        Category("Watch", R.drawable.watch_category)
     )
 
-    val sampleItems1 = listOf(
+    val shirts = listOf(
         Item("Black T-shirt", R.drawable.black_t_shirt),
         Item("Grey T-shirt", R.drawable.white_t_shirt)
     )
 
-    val sampleItems2 = listOf(
+    val sweaters = listOf(
         Item("Orange Cardigan", R.drawable.orange_cardigan),
         Item("Colorful Sweater", R.drawable.colorful_sweater)
     )
 
+    val pants = listOf(
+        Item("Blue Jeans",),
+        Item("Cargo Pants",)
+    )
+
+    val dresses = listOf(
+        Item("Blue Dress", ),
+        Item("Yellow Dress", )
+    )
+
+    val shorts = listOf(
+        Item("blue chino shorts",),
+        Item("grey sport shorts", )
+    )
+
 
     val sampleCategoryItems = listOf(
-        CategoryItems("T-shirts", sampleItems1),
-        CategoryItems("Sweaters", sampleItems2)
+        CategoryItems("T-shirts", shirts),
+        CategoryItems("Sweaters", sweaters)
     )
 
     LooksyTheme {
