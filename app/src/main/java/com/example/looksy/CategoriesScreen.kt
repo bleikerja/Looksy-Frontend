@@ -40,20 +40,24 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.looksy.dataClassClones.Type
 import com.example.looksy.ui.theme.LooksyTheme
-import com.example.looksy.R
 
 data class Category(val name: String, val iconRes: Int)
 data class Item(val name: String, val imageRes: Int)
 data class CategoryItems(val categoryName: String, val items: List<Item>)
+
+var NavFunction: (String) -> Unit = {}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoriesScreen(
     categories: List<Category>,
     categoryItems: List<CategoryItems>,
-    navBar: @Composable () -> Unit
+    navBar: @Composable () -> Unit,
+    onClick: (String) -> Unit = {}
 ) {
+    NavFunction = onClick
     Scaffold(
         bottomBar = { navBar() }
     ) { padding ->
@@ -211,12 +215,17 @@ fun ItemsTitle(categoryItem: CategoryItems){
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold
         )
-        Image(
-            painter = painterResource(id = R.drawable.arrow),
-            contentDescription = "See more",
-            modifier = Modifier.size(26.dp)
+        LooksyButton(
+            //TODO: change to type of category
+            onClick = { NavFunction(Type.Tops.toString()) },
+            picture = {
+                Image(
+                    painter = painterResource(id = R.drawable.arrow),
+                    contentDescription = "See more",
+                    modifier = Modifier.size(26.dp)
+                )
+            }
         )
-
     }
 }
 

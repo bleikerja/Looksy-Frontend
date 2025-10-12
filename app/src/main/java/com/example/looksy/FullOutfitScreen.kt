@@ -23,7 +23,7 @@ import com.example.looksy.ui.theme.LooksyTheme
 fun FullOutfitScreen(modifier: Modifier = Modifier,
                      top: Clothes,
                      pants:Clothes,
-                     onClick: (String) ->Unit = {}) {
+                     onClick: (Int) ->Unit = {}) {
 
     Column(
         modifier = modifier
@@ -33,8 +33,8 @@ fun FullOutfitScreen(modifier: Modifier = Modifier,
     ) {
         Text("Dein heutiges Outfit", modifier = Modifier.align(Alignment.CenterHorizontally))
         Spacer(modifier = Modifier.height(32.dp))
-        OutfitPart(imageResId = top.imagePath, { onClick(top.imagePath) })
-        OutfitPart(imageResId = pants.imagePath, { onClick(pants.imagePath) })
+        OutfitPart(imageResId = top.imagePath, { onClick(allClothes.indexOf(top)) })
+        OutfitPart(imageResId = pants.imagePath, { onClick(allClothes.indexOf(pants)) })
     }
 
 }

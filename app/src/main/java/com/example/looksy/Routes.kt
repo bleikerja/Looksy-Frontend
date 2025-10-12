@@ -14,15 +14,18 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.example.looksy.dataClassClones.Type
 import com.example.looksy.screens.AddNewClothesScreen
 import com.example.looksy.screens.CameraScreenPermission
+import com.example.looksy.screens.SpecificCategoryScreen
 import com.example.looksy.screens.saveImagePermanently
 
 interface NavigationDestination{
     val route:String
 }
 object RouteArgs {
-    var INDEX = 0
+    var INDEX = "ClothIndex"
+    var TYPE = "imageType"
     const val IMAGE_URI = "imageUri"
     const val IMAGE_PATH = "imagePath"
 }
@@ -31,11 +34,17 @@ sealed class Routes(override val route: String): NavigationDestination{
     data object Home : Routes("home")
     data object Scan : Routes("scan")
     data object ChoseClothes : Routes("chose clothes")
-    data object Details : Routes("details/{${RouteArgs.IMAGE_PATH}}") {
-        fun createRoute(imagePath: String): String {
+    data object SpecificCategory : Routes("specific_category/{${RouteArgs.TYPE}}"){
+        fun createRoute(type: String): String {
             // Wichtig: Pfade enthalten oft Slashes '/', die in URLs Probleme machen.
             // Wir müssen den Pfad kodieren, bevor wir ihn übergeben.
-            val encodedPath = Uri.encode(imagePath)
+            val encodedPath = Uri.encode(type)
+            return "specific_category/$encodedPath"
+        }
+    }
+    data object Details : Routes("details/{${RouteArgs.INDEX}}") {
+        fun createRoute(index: Int): String {
+            val encodedPath = Uri.encode(index.toString())
             return "details/$encodedPath"
         }
     }
@@ -86,8 +95,8 @@ fun NavHostContainer(
             FullOutfitScreen(modifier=modifier,
                 top =top,
                 pants = pants,
-                onClick = { imagePath->
-                val finalRoute=Routes.Details.createRoute(imagePath)
+                onClick = { index ->
+                val finalRoute=Routes.Details.createRoute(index)
                 navController.navigate(finalRoute)
             })
         }
@@ -97,25 +106,51 @@ fun NavHostContainer(
             CategoriesScreen(
                 categories = sampleCategories,
                 categoryItems = sampleCategoryItems,
-                navBar = { }
+                navBar = { },
+                onClick = { type->
+                    val finalRoute=Routes.SpecificCategory.createRoute(type)
+                    navController.navigate(finalRoute)
+                }
             )
+        }
+
+        // Entspricht: Routes.SpecificCategory
+        composable(
+            route = Routes.SpecificCategory.route,
+            arguments = listOf(navArgument(RouteArgs.TYPE) { type = NavType.StringType })
+        ) { backStackEntry ->
+            val encodedPath = backStackEntry.arguments?.getString(RouteArgs.TYPE)
+            val type = encodedPath?.let { Uri.decode(it) }
+
+            if (type != null /* && clothesData != null */) {
+                SpecificCategoryScreen(
+                    type = Type.valueOf(type),
+                    onOpenDetails = { index ->
+                        val finalRoute=Routes.Details.createRoute(index)
+                        navController.navigate(finalRoute)
+                    },
+                    onGoBack = {
+                        navController.navigate(Routes.ChoseClothes.route)
+                    }
+                )
+            }
         }
 
         // Entspricht: Routes.Details
         composable(
             route = Routes.Details.route,
-            arguments = listOf(navArgument(RouteArgs.IMAGE_PATH) { type = NavType.StringType })
+            arguments = listOf(navArgument(RouteArgs.INDEX) { type = NavType.StringType })
         ) { backStackEntry ->
             // 1. Argument auslesen und dekodieren
-            val encodedPath = backStackEntry.arguments?.getString(RouteArgs.IMAGE_PATH)
-            val imagePath = encodedPath?.let { Uri.decode(it) }
+            val encodedPath = backStackEntry.arguments?.getString(RouteArgs.INDEX)
+            val clothIndex = encodedPath?.let { Uri.decode(it) }
 
             // 2. Daten für diesen Pfad laden (aus einer Datenbank oder ViewModel)
             // val clothesData = viewModel.getClothesByPath(imagePath)
 
             // Wenn wir die Daten haben, rufen wir den Screen auf
-            if (imagePath != null /* && clothesData != null */) {
-                ClothInformationScreen(RouteArgs.INDEX)
+            if (clothIndex != null /* && clothesData != null */) {
+                ClothInformationScreen(clothIndex.toInt())
             }
         }
 
