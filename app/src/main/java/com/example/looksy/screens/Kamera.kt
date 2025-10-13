@@ -3,7 +3,6 @@ package com.example.looksy.screens
 import android.content.Context
 import android.net.Uri
 import android.util.Log
-import androidx.activity.result.launch
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
@@ -30,11 +29,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
-import java.util.Locale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
@@ -42,13 +39,9 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.google.common.util.concurrent.ListenableFuture
 import kotlinx.coroutines.launch
 import java.io.File
-import java.io.FileOutputStream
-import java.text.SimpleDateFormat
-import java.util.Date
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
-import kotlin.text.format
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -71,7 +64,6 @@ fun CameraScreenPermission(onImageCaptured: (Uri) -> Unit) {
 fun CameraScreen(
     onImageCaptured: (Uri) -> Unit // Callback, um die URI des Bildes zurückzugeben
 ) {
-    val context = LocalContext.current
     // Berechtigungen prüfen
     val cameraPermissionState = rememberPermissionState(
         android.Manifest.permission.CAMERA
@@ -199,39 +191,6 @@ private suspend fun <T> ListenableFuture<T>.await(): T = suspendCoroutine { cont
         },
         java.util.concurrent.Executors.newSingleThreadExecutor()
         )
-}
-
-fun saveImagePermanently(context: Context, imageUri: Uri): String? {
-    // Die Zeile "val imageUri = Uri.parse(tempUri)" ist jetzt überflüssig.
-
-    val currentDate = Date()
-    val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(currentDate)
-    val fileName = "IMG_$timeStamp.jpg"
-
-    val storageDir = File(context.filesDir, "images")
-
-    if (!storageDir.exists()) {
-        storageDir.mkdirs()
-    }
-
-    val permanentFile = File(storageDir, fileName)
-
-    try {
-        // Öffne einen Input-Stream direkt von der übergebenen URI
-        val inputStream = context.contentResolver.openInputStream(imageUri)
-        val outputStream = FileOutputStream(permanentFile)
-
-        inputStream?.use { input ->
-            outputStream.use { output ->
-                input.copyTo(output)
-            }
-        }
-        return permanentFile.absolutePath
-
-    } catch (e: Exception) {
-        e.printStackTrace()
-        return null
-    }
 }
 
 @Preview

@@ -1,5 +1,6 @@
 package com.example.looksy
 
+import android.content.Context
 import android.net.Uri
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,7 +19,11 @@ import com.example.looksy.ViewModels.ClothesViewModel
 import com.example.looksy.dataClassClones.Type
 import com.example.looksy.screens.AddNewClothesScreen
 import com.example.looksy.screens.CameraScreenPermission
-import com.example.looksy.screens.saveImagePermanently
+import java.io.File
+import java.io.FileOutputStream
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 interface NavigationDestination {
     val route: String
@@ -58,19 +63,6 @@ val sampleCategories = listOf(
     Category("Shoes", R.drawable.shoes_category),
     Category("Watch", R.drawable.watch_category)
 )
-val sampleItems1 = listOf(
-    Item("Black T-shirt", R.drawable.black_t_shirt),
-    Item("Grey T-shirt", R.drawable.white_t_shirt)
-)
-
-val sampleItems2 = listOf(
-    Item("Orange Cardigan", R.drawable.orange_cardigan),
-    Item("Colorful Sweater", R.drawable.colorful_sweater)
-)
-val sampleCategoryItems = listOf(
-    CategoryItems("T-shirts", sampleItems1),
-    CategoryItems("Sweaters", sampleItems2)
-)
 
 @Composable
 fun NavHostContainer(
@@ -79,6 +71,9 @@ fun NavHostContainer(
     viewModel: ClothesViewModel
 ) {
     val allClothesFromDb by viewModel.allClothes.collectAsState()
+    val categoryItems = allClothesFromDb.groupBy { it.type }.map { (type, items) ->
+        CategoryItems(categoryName = type.name, items = items)
+    }
     NavHost(
         navController = navController,
         startDestination = Routes.Home.route,
@@ -111,9 +106,9 @@ fun NavHostContainer(
         composable(Routes.ChoseClothes.route) {
             CategoriesScreen(
                 categories = sampleCategories,
-                categoryItems = sampleCategoryItems,
-                navBar = { }
+                categoryItems = categoryItems,
             )
+
         }
 
         // Entspricht: Routes.Details
@@ -124,7 +119,8 @@ fun NavHostContainer(
             // 1. Argument auslesen und dekodieren
             val clothesId = backStackEntry.arguments?.getInt("id")
             if (clothesId != null) {
-                val clothesData by viewModel.getClothesById(clothesId).collectAsState(initial = null)
+                val clothesData by viewModel.getClothesById(clothesId)
+                    .collectAsState(initial = null)
 
                 clothesData?.let {
                     ClothInformationScreen(
@@ -179,7 +175,6 @@ fun NavHostContainer(
 
             if (encodedUriString != null) {
                 val context = LocalContext.current
-                val viewModel: ClothesViewModel = viewModel
 
                 AddNewClothesScreen(
                     imageUriString = encodedUriString, // Die Uri wird direkt übergeben
@@ -229,5 +224,38 @@ fun NavHostContainer(
             )
         }
          */
+    }
+}
+
+private fun saveImagePermanently(context: Context, imageUri: Uri): String? {
+    // Die Zeile "val imageUri = Uri.parse(tempUri)" ist jetzt überflüssig.
+
+    val currentDate = Date()
+    val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(currentDate)
+    val fileName = "IMG_$timeStamp.jpg"
+
+    val storageDir = File(context.filesDir, "images")
+
+    if (!storageDir.exists()) {
+        storageDir.mkdirs()
+    }
+
+    val permanentFile = File(storageDir, fileName)
+
+    try {
+        // Öffne einen Input-Stream direkt von der übergebenen URI
+        val inputStream = context.contentResolver.openInputStream(imageUri)
+        val outputStream = FileOutputStream(permanentFile)
+
+        inputStream?.use { input ->
+            outputStream.use { output ->
+                input.copyTo(output)
+            }
+        }
+        return permanentFile.absolutePath
+
+    } catch (e: Exception) {
+        e.printStackTrace()
+        return null
     }
 }

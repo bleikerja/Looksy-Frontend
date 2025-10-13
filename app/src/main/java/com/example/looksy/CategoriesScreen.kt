@@ -7,12 +7,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -40,22 +40,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.looksy.ui.theme.LooksyTheme
-import com.example.looksy.R
+import com.example.looksy.dataClassClones.Clothes
 
 data class Category(val name: String, val iconRes: Int)
 data class Item(val name: String, val imageRes: Int)
-data class CategoryItems(val categoryName: String, val items: List<Item>)
+data class CategoryItems(val categoryName: String, val items: List<Clothes>)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoriesScreen(
     categories: List<Category>,
     categoryItems: List<CategoryItems>,
-    navBar: @Composable () -> Unit
 ) {
     Scaffold(
-        bottomBar = { navBar() }
+        bottomBar = { }
     ) { padding ->
         Column(modifier = Modifier
             .padding(padding)
@@ -186,7 +186,8 @@ fun ItemsBlock(categoryItem: CategoryItems) {
             modifier = Modifier.height(170.dp) // Adjust height as needed
         ) {
             items(categoryItem.items) { item ->
-                ItemContainer(item = item,
+                ItemContainer(
+                    item = item,
                     modifier = Modifier
                         .size(165.dp)
                         .clip(RoundedCornerShape(20.dp))
@@ -221,18 +222,21 @@ fun ItemsTitle(categoryItem: CategoryItems){
 }
 
 @Composable
-fun ItemContainer(item: Item, modifier: Modifier) {
+fun ItemContainer(item: Clothes, modifier: Modifier) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
         ) {
-        Image(
-            painter = painterResource(id = item.imageRes),
-            contentDescription = item.name,
-
+        AsyncImage(
+            model = item.imagePath,
+            contentDescription = "",
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(1f), // quadratisch
+            error = painterResource(id = R.drawable.clothicon) // Fallback-Bild
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Text(text = item.name)
+        //Text(text = item.)
     }
 }
 
@@ -258,17 +262,16 @@ fun CategoriesScreenPreview() {
     )
 
 
-    val sampleCategoryItems = listOf(
-        CategoryItems("T-shirts", sampleItems1),
-        CategoryItems("Sweaters", sampleItems2)
-    )
+//    val sampleCategoryItems = listOf(
+//        CategoryItems("T-shirts", sampleItems1),
+//        CategoryItems("Sweaters", sampleItems2)
+//    )
 
     LooksyTheme {
-        CategoriesScreen(
-            categories = sampleCategories,
-            categoryItems = sampleCategoryItems,
-            navBar = { }
-        )
+//        CategoriesScreen(
+//            categories = sampleCategories,
+//            categoryItems = sampleCategoryItems,
+//        )
     }
 
     //ToDo: Get informaton in fun CategoriesScreen from Backend
