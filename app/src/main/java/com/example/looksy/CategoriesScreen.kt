@@ -71,33 +71,6 @@ fun CategoriesScreen(
     }
 }
 
-
-@Composable
-fun SearchPanel(modifier: Modifier = Modifier){
-    Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = Icons.Default.Search,
-            contentDescription = "Search"
-        )
-        TextField(
-            value = "",
-            onValueChange = {},
-            placeholder = { Text("Search for today") },
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color.Transparent,
-                unfocusedContainerColor = Color.Transparent,
-                disabledContainerColor = Color.Transparent,
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                disabledIndicatorColor = Color.Transparent,
-            ),
-        )
-    }
-}
-
 @Composable
 fun CategoriesBlock(categories: List<Category>) {
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -238,8 +211,8 @@ fun CategoriesScreenPreview() {
     )
 
     val pants = listOf(
-        Item("Blue Jeans", android.R.drawable.ic_menu_gallery),
-        Item("Cargo Pants", android.R.drawable.ic_menu_gallery)
+        Item("Blue Jeans", R.drawable.orange_cardigan),
+        Item("Cargo Pants", R.drawable.colorful_sweater)
     )
 
     val dresses = listOf(
@@ -257,8 +230,8 @@ fun CategoriesScreenPreview() {
         CategoryItems("Shirts", shirts),
         CategoryItems("Sweaters", sweaters),
         CategoryItems("Pants", pants),
-        CategoryItems("Dresses", dresses),
-        CategoryItems("Shorts", shorts)
+//        CategoryItems("Dresses", dresses),
+//        CategoryItems("Shorts", shorts)
     )
 
     LooksyTheme {
