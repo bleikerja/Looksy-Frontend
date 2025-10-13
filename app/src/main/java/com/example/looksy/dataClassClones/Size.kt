@@ -1,26 +1,18 @@
 package com.example.looksy.dataClassClones
 
 enum class Size {  _34, _36, _38, _40, _42, _44, _46, _48, _50, _52, _54, _56, _58, _60, _XS, _S, _M, _L, _XL;
-    fun  onlyLetters (size:Size) : Size{
-        if (size == Size._34 || size == Size._36) {
-            return _XS;
+    val toLetterSize: Size
+        get() = when (this) { // `this` bezieht sich auf die Instanz, z.B. Size._34
+            _34, _36 -> _XS
+            _38 -> _S
+            _40 -> _M
+            _42 -> _L
+            _44 -> _XL
+            // Wenn es bereits eine Buchstaben-Größe ist, gib sie einfach zurück
+            _XS, _S, _M, _L, _XL -> this
+            // Für alle anderen numerischen Größen, die wir nicht kennen
+            else -> throw NoKnownSize("Keine Buchstabengröße für '${this.name}' bekannt.")
         }
-        else if (size == Size._38) {
-            return _S;
-        }
-        else if (size == Size._40) {
-            return _M;
-        }
-        else if (size == Size._42) {
-            return _L;
-        }
-        else if (size == Size._44) {
-            return _XL;
-        }
-        else{
-            throw NoKnownSize("I don't know which Size this is.")
-        }
-    }
 }
 
 class NoKnownSize(message: String?) : RuntimeException(message)
