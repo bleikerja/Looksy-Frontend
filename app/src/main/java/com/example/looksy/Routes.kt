@@ -70,19 +70,6 @@ val sampleCategories = listOf(
     Category("Shoes", R.drawable.shoes_category),
     Category("Watch", R.drawable.watch_category)
 )
-val sampleItems1 = listOf(
-    Item("Black T-shirt", R.drawable.black_t_shirt),
-    Item("Grey T-shirt", R.drawable.white_t_shirt)
-)
-
-val sampleItems2 = listOf(
-    Item("Orange Cardigan", R.drawable.orange_cardigan),
-    Item("Colorful Sweater", R.drawable.colorful_sweater)
-)
-val sampleCategoryItems = listOf(
-    CategoryItems("T-shirts", sampleItems1),
-    CategoryItems("Sweaters", sampleItems2)
-)
 
 @Composable
 fun NavHostContainer(
@@ -145,6 +132,7 @@ fun NavHostContainer(
             if (type != null /* && clothesData != null */) {
                 SpecificCategoryScreen(
                     type = Type.valueOf(type),
+                    viewModel = viewModel,
                     onOpenDetails = { index ->
                         val finalRoute=Routes.Details.createRoute(index)
                         navController.navigate(finalRoute)

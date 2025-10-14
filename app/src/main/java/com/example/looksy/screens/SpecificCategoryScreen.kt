@@ -5,12 +5,14 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -24,11 +26,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
@@ -38,21 +40,17 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.looksy.LooksyButton
 import com.example.looksy.R
-import com.example.looksy.allClothes
+import com.example.looksy.ViewModels.ClothesViewModel
 import com.example.looksy.dataClassClones.Clothes
-import com.example.looksy.dataClassClones.Filter
 import com.example.looksy.dataClassClones.Material
 import com.example.looksy.dataClassClones.Season
 import com.example.looksy.dataClassClones.Size
 import com.example.looksy.dataClassClones.Type
 
-var categoryClothes: List<Clothes> = emptyList()
-val filter = Filter()
-
 @Composable
 fun ClothImage(cloth: Clothes, onClick: (Int) -> Unit){
     LooksyButton(
-        onClick = { onClick(allClothes.indexOf(cloth)) },
+        onClick = { onClick(cloth.id) },
         picture = {
             AsyncImage(
                 model = cloth.imagePath,
@@ -70,15 +68,27 @@ fun ClothImage(cloth: Clothes, onClick: (Int) -> Unit){
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SpecificCategoryScreen(type: Type, onOpenDetails: (Int) -> Unit = {}, onGoBack: () -> Unit = {}){
-    categoryClothes = filter.byType(type, allClothes.toMutableList()) //TODO take from backend
-    val filteredClothes: MutableList<Clothes> = remember { categoryClothes.toMutableStateList() }
+fun SpecificCategoryScreen(
+    type: Type,
+    viewModel: ClothesViewModel,
+    onOpenDetails: (Int) -> Unit = {},
+    onGoBack: () -> Unit = {}
+){
+    val categoryClothes by viewModel.getClothesByType(type).collectAsState(initial = emptyList())
     var size by remember { mutableStateOf<Size?>(null) }
     var season by remember { mutableStateOf<Season?>(null) }
     var material by remember { mutableStateOf<Material?>(null) }
 
+    val filteredClothes = remember(categoryClothes, size, season, material) {
+        categoryClothes.filter { cloth ->
+            (size == null || cloth.size == size) &&
+            (season == null || cloth.seasonUsage == season) &&
+            (material == null || cloth.material == material)
+        }
+    }
+
     Column(
-        modifier = Modifier.padding(20.dp)
+        modifier = Modifier.fillMaxSize().padding(20.dp)
     ){
         TopAppBar(
             title = {
@@ -104,30 +114,21 @@ fun SpecificCategoryScreen(type: Type, onOpenDetails: (Int) -> Unit = {}, onGoBa
                 "Größe",
                 categoryClothes.map { it.size }.distinct().sortedBy { it.ordinal },
                 size,
-                {
-                    size = it
-                    filterCloth(filteredClothes, size, season, material)
-                },
+                { size = it },
                 Modifier.width(300.dp)
             )
             EnumDropdown(
                 "Saison",
                 categoryClothes.map { it.seasonUsage }.distinct().sortedBy { it.ordinal },
                 season,
-                {
-                    season = it
-                    filterCloth(filteredClothes, size, season, material)
-                },
+                { season = it },
                 Modifier.width(300.dp)
             )
             EnumDropdown(
                 "Material",
                 categoryClothes.map { it.material }.distinct().sortedBy { it.ordinal },
                 material,
-                {
-                    material = it
-                    filterCloth(filteredClothes, size, season, material)
-                },
+                { material = it },
                 Modifier.width(300.dp)
             )
         }
@@ -136,7 +137,6 @@ fun SpecificCategoryScreen(type: Type, onOpenDetails: (Int) -> Unit = {}, onGoBa
             size = null
             season = null
             material = null
-            filterCloth(filteredClothes, null, null, null)
         }) {
             Text("Zurücksetzen")
         }
@@ -145,26 +145,19 @@ fun SpecificCategoryScreen(type: Type, onOpenDetails: (Int) -> Unit = {}, onGoBa
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             columns = GridCells.Fixed(2),
-            modifier = Modifier.padding(bottom = 20.dp).fillMaxWidth()
+            modifier = Modifier
+                .padding(bottom = 20.dp)
+                .fillMaxWidth()
         ) {
-            items(filteredClothes.size ) { i ->
-                ClothImage(filteredClothes[i], onOpenDetails)
+            items(filteredClothes) { cloth ->
+                ClothImage(cloth, onOpenDetails)
             }
         }
     }
 }
 
-fun filterCloth(filteredClothes: MutableList<Clothes>, size: Size?, season: Season?, material: Material?) {
-    filteredClothes.clear()
-    var newFilteredClothes = categoryClothes.toMutableList()
-    if (size != null) newFilteredClothes = filter.bySize(size, newFilteredClothes)
-    if (season != null) newFilteredClothes = filter.bySeason(season, newFilteredClothes)
-    if (material != null) newFilteredClothes = filter.byMaterial(material, newFilteredClothes)
-    filteredClothes.addAll(newFilteredClothes)
-}
-
 @Preview
 @Composable
 fun ScreenPreview(){
-    SpecificCategoryScreen(Type.Pants)
+    //SpecificCategoryScreen(Type.Pants)
 }
