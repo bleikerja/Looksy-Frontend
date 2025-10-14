@@ -21,6 +21,11 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -43,7 +48,6 @@ import com.example.looksy.dataClassClones.Type
 import com.example.looksy.dataClassClones.WashingNotes
 import com.example.looksy.ui.theme.LooksyTheme
 
-//ToDo: Get informaton in fun ClothInformationScreen from Backend
 //just from same type
 
 var allClothes = listOf(

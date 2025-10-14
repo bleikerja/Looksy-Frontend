@@ -17,6 +17,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.looksy.dataClassClones.*
 import com.example.looksy.ViewModels.ClothesViewModel
+import com.example.looksy.dataClassClones.Clothes
+import com.example.looksy.dataClassClones.Type
 import com.example.looksy.screens.AddNewClothesScreen
 import com.example.looksy.screens.CameraScreenPermission
 import com.example.looksy.screens.SpecificCategoryScreen
