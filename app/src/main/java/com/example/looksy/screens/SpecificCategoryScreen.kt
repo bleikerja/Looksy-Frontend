@@ -144,6 +144,7 @@ fun SpecificCategoryScreen(
                 Modifier.width(300.dp)
             )
         }
+        Spacer(modifier = Modifier.height(10.dp))
 
         Button(onClick = {
             size = null
@@ -152,6 +153,7 @@ fun SpecificCategoryScreen(
         }) {
             Text("Zurücksetzen")
         }
+        Spacer(modifier = Modifier.height(10.dp))
 
         LazyVerticalGrid(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
