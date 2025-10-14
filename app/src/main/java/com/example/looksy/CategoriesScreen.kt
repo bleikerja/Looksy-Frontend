@@ -2,6 +2,7 @@ package com.example.looksy
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -45,14 +46,17 @@ data class CategoryItems(val categoryName: String, val items: List<Clothes>)
 
 var NavFunction: (String) -> Unit = {}
 
+var onButtonClickedLocal: (Int) -> Unit = {}
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoriesScreen(
     categories: List<Category>,
     categoryItems: List<CategoryItems>,
     //navBar: @Composable () -> Unit,
-    onClick: (String) -> Unit = {}
+    onClick: (String) -> Unit = {},
+    onButtonClicked: (Int) -> Unit = {},
 ) {
+    onButtonClickedLocal=onButtonClicked
     NavFunction = onClick
     Scaffold(
 
@@ -151,7 +155,8 @@ fun ItemsBlock(categoryItem: CategoryItems) {
                         .size(165.dp)
                         .clip(RoundedCornerShape(20.dp))
                         .background(Color(255, 255, 255))
-                        .padding(16.dp)
+                        .padding(16.dp),
+                    onClick = { onButtonClickedLocal(item.id) }
                 )
             }
         }
@@ -186,7 +191,7 @@ fun ItemsTitle(categoryItem: CategoryItems) {
 }
 
 @Composable
-fun ItemContainer(item: Clothes, modifier: Modifier) {
+fun ItemContainer(item: Clothes, modifier: Modifier, onClick: () -> Unit) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
@@ -196,6 +201,7 @@ fun ItemContainer(item: Clothes, modifier: Modifier) {
             contentDescription = "",
             modifier = Modifier
                 .fillMaxWidth()
+                .clickable(onClick = onClick)
                 .aspectRatio(1f), // quadratisch
             error = painterResource(id = R.drawable.clothicon) // Fallback-Bild
         )

@@ -5,6 +5,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -23,14 +24,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
@@ -48,7 +48,7 @@ import com.example.looksy.dataClassClones.Size
 import com.example.looksy.dataClassClones.Type
 
 @Composable
-fun ClothImage(cloth: Clothes, onClick: (Int) -> Unit){
+fun ClothImage(cloth: Clothes, onClick: (Int) -> Unit) {
     LooksyButton(
         onClick = { onClick(cloth.id) },
         picture = {
@@ -73,7 +73,7 @@ fun SpecificCategoryScreen(
     viewModel: ClothesViewModel,
     onOpenDetails: (Int) -> Unit = {},
     onGoBack: () -> Unit = {}
-){
+) {
     val categoryClothes by viewModel.getClothesByType(type).collectAsState(initial = emptyList())
     var size by remember { mutableStateOf<Size?>(null) }
     var season by remember { mutableStateOf<Season?>(null) }
@@ -82,34 +82,46 @@ fun SpecificCategoryScreen(
     val filteredClothes = remember(categoryClothes, size, season, material) {
         categoryClothes.filter { cloth ->
             (size == null || cloth.size == size) &&
-            (season == null || cloth.seasonUsage == season) &&
-            (material == null || cloth.material == material)
+                    (season == null || cloth.seasonUsage == season) &&
+                    (material == null || cloth.material == material)
         }
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(20.dp)
-    ){
-        TopAppBar(
-            title = {
-                Text(
-                    type.toString(),
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.primary
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(20.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onGoBack) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Zurück",
+                    modifier = Modifier.padding(end = 10.dp)
                 )
-            },
-            navigationIcon = {
-                IconButton(onClick = onGoBack) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Zurück"
-                    )
-                }
-            },
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-        )
+            }
+            Text(
+                type.toString(),
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.align(Alignment.CenterVertically)
+            )
+        }
+        Spacer(modifier = Modifier.height(20.dp))
+//        TopAppBar(
+//            title = {
+//
+//            },
+//            navigationIcon = {
+//
+//            },
+//            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+//        )
 
-        Row(modifier = Modifier.horizontalScroll(rememberScrollState())){
+        Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
             EnumDropdown(
                 "Größe",
                 categoryClothes.map { it.size }.distinct().sortedBy { it.ordinal },
@@ -141,7 +153,7 @@ fun SpecificCategoryScreen(
             Text("Zurücksetzen")
         }
 
-        LazyVerticalGrid (
+        LazyVerticalGrid(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             columns = GridCells.Fixed(2),
@@ -158,6 +170,6 @@ fun SpecificCategoryScreen(
 
 @Preview
 @Composable
-fun ScreenPreview(){
+fun ScreenPreview() {
     //SpecificCategoryScreen(Type.Pants)
 }

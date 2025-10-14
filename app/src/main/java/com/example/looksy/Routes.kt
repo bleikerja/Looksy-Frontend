@@ -45,7 +45,8 @@ sealed class Routes(override val route: String) : NavigationDestination {
             return "details/$id"
         }
     }
-    data object SpecificCategory : Routes("specific_category/{${RouteArgs.TYPE}}"){
+
+    data object SpecificCategory : Routes("specific_category/{${RouteArgs.TYPE}}") {
         fun createRoute(type: String): String {
             // Wichtig: Pfade enthalten oft Slashes '/', die in URLs Probleme machen.
             // Wir müssen den Pfad kodieren, bevor wir ihn übergeben.
@@ -113,9 +114,12 @@ fun NavHostContainer(
             CategoriesScreen(
                 categories = sampleCategories,
                 categoryItems = categoryItems,
-                onClick = { type->
-                    val finalRoute=Routes.SpecificCategory.createRoute(type)
+                onClick = { type ->
+                    val finalRoute = Routes.SpecificCategory.createRoute(type)
                     navController.navigate(finalRoute)
+                },
+                onButtonClicked = { itemId ->
+                    navController.navigate(Routes.Details.createRoute(itemId))
                 }
             )
 
@@ -134,7 +138,7 @@ fun NavHostContainer(
                     type = Type.valueOf(type),
                     viewModel = viewModel,
                     onOpenDetails = { index ->
-                        val finalRoute=Routes.Details.createRoute(index)
+                        val finalRoute = Routes.Details.createRoute(index)
                         navController.navigate(finalRoute)
                     },
                     onGoBack = {
