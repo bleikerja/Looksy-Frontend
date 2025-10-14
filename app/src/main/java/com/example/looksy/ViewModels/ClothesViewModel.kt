@@ -1,5 +1,16 @@
 package com.example.looksy.ViewModels
 
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.looksy.Repository.ClothesRepository
+import com.example.looksy.dataClassClones.Clothes
+import com.example.looksy.dataClassClones.Type
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+
 /*
 private fun saveImagePermanently(context: Context, tempUri: Uri): String {
     val inputStream = context.contentResolver.openInputStream(tempUri)
@@ -23,3 +34,30 @@ private fun saveImagePermanently(context: Context, tempUri: Uri): String {
     return persistentFile.absolutePath
 }
  */
+class ClothesViewModel(private val repository: ClothesRepository) : ViewModel() {
+
+    // DIESE ZEILE IST DIE BRÜCKE ZUM FRONTEND:
+    val allClothes: StateFlow<List<Clothes>> = repository.allClothes
+        .stateIn(
+            scope = viewModelScope, // Läuft so lange wie das ViewModel lebt
+            started = SharingStarted.WhileSubscribed(5000), // Startet, wenn die UI zuhört
+            initialValue = emptyList() // Wichtig: Eine leere Liste als Startwert
+        )
+
+    // Die `insert` Funktion, die vom Frontend aufgerufen wird
+    fun insert(clothes: Clothes) = viewModelScope.launch {
+        repository.insert(clothes)
+    }
+
+    // Die `getById` Funktion für den Detailbildschirm
+    fun getClothesById(id: Int): Flow<Clothes?> {
+        return repository.getClothesById(id)
+    }
+
+    fun getClothesByType(type: Type): Flow<List<Clothes>> {
+        return repository.getClothesByType(type)
+    }
+
+    companion object
+
+}

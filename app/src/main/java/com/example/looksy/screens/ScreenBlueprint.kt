@@ -12,12 +12,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.looksy.Application.ClothesApplication
+import com.example.looksy.Factory.ClothesViewModelFactory
 import com.example.looksy.NavHostContainer
+import com.example.looksy.ViewModels.ClothesViewModel
 
 @Composable
 fun ScreenBlueprint(navController: NavHostController) {
@@ -27,7 +32,10 @@ fun ScreenBlueprint(navController: NavHostController) {
         Triple(Routes.Home.route, "Home", R.drawable.clothicon),
         Triple(Routes.Scan.route, "Scan", R.drawable.cameraicon)
     )
-
+    val application = LocalContext.current.applicationContext as ClothesApplication
+    val viewModelClothes: ClothesViewModel = viewModel(
+        factory = ClothesViewModelFactory(application.repository)
+    )
     Scaffold(
         bottomBar = {
             NavigationBar {
@@ -66,7 +74,7 @@ fun ScreenBlueprint(navController: NavHostController) {
             }
         }
     ) { innerPadding ->
-       NavHostContainer(navController = navController, modifier = Modifier.padding(innerPadding))
+       NavHostContainer(navController = navController, modifier = Modifier.padding(innerPadding), viewModel=viewModelClothes)
     }
 }
 

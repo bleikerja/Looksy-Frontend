@@ -2,17 +2,18 @@ package com.example.looksy
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -22,14 +23,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,35 +37,44 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.looksy.dataClassClones.Type
-import com.example.looksy.ui.theme.LooksyTheme
+import coil.compose.AsyncImage
+import com.example.looksy.dataClassClones.Clothes
 
 data class Category(val name: String, val iconRes: Int)
 data class Item(val name: String, val imageRes: Int)
-data class CategoryItems(val categoryName: String, val items: List<Item>)
+data class CategoryItems(val categoryName: String, val items: List<Clothes>)
 
 var NavFunction: (String) -> Unit = {}
 
+var onButtonClickedLocal: (Int) -> Unit = {}
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoriesScreen(
     categories: List<Category>,
     categoryItems: List<CategoryItems>,
-    navBar: @Composable () -> Unit,
-    onClick: (String) -> Unit = {}
+    //navBar: @Composable () -> Unit,
+    onClick: (String) -> Unit = {},
+    onButtonClicked: (Int) -> Unit = {},
 ) {
+    onButtonClickedLocal=onButtonClicked
     NavFunction = onClick
     Scaffold(
-        bottomBar = { navBar() }
+
     ) { padding ->
         Column(modifier = Modifier
             .padding(padding)
             .padding(horizontal = 20.dp)
+            .padding(top = 10.dp)
             .fillMaxSize()
         ) {
-            Header()
-            CategoriesBlock(categories = categories)
-            Spacer(modifier = Modifier.height(34.dp))
+            //Header()
+            Text(
+                text = "Dein Kleiderschrank",
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+            //CategoriesBlock(categories = categories)
+            Spacer(modifier = Modifier.height(25.dp))
             ItemsContainer(
                 categoryItems = categoryItems,
                 modifier = Modifier.weight(1f)
@@ -77,57 +83,10 @@ fun CategoriesScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun Header() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(13.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        SearchPanel(modifier = Modifier.weight(1f))
-        Image(
-            painter = painterResource(id = R.drawable.avatar),
-            contentDescription = "Avatar",
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-        )
-    }
-}
-
-@Composable
-fun SearchPanel(modifier: Modifier = Modifier){
-    Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = Icons.Default.Search,
-            contentDescription = "Search"
-        )
-        TextField(
-            value = "",
-            onValueChange = {},
-            placeholder = { Text("Search for today") },
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color.Transparent,
-                unfocusedContainerColor = Color.Transparent,
-                disabledContainerColor = Color.Transparent,
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                disabledIndicatorColor = Color.Transparent,
-            ),
-        )
-    }
-}
-
 @Composable
 fun CategoriesBlock(categories: List<Category>) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text(text = "Categories", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Text(text = "Categories", fontSize = 28.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
         LazyRow(
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -190,21 +149,22 @@ fun ItemsBlock(categoryItem: CategoryItems) {
             modifier = Modifier.height(170.dp) // Adjust height as needed
         ) {
             items(categoryItem.items) { item ->
-                ItemContainer(item = item,
+                ItemContainer(
+                    item = item,
                     modifier = Modifier
                         .size(165.dp)
                         .clip(RoundedCornerShape(20.dp))
                         .background(Color(255, 255, 255))
-                        .padding(16.dp)
+                        .padding(16.dp),
+                    onClick = { onButtonClickedLocal(item.id) }
                 )
             }
         }
-        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
 @Composable
-fun ItemsTitle(categoryItem: CategoryItems){
+fun ItemsTitle(categoryItem: CategoryItems) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -215,9 +175,10 @@ fun ItemsTitle(categoryItem: CategoryItems){
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold
         )
+
         LooksyButton(
             //TODO: change to type of category
-            onClick = { NavFunction(Type.Tops.toString()) },
+            onClick = { NavFunction(categoryItem.categoryName) },
             picture = {
                 Image(
                     painter = painterResource(id = R.drawable.arrow),
@@ -230,18 +191,22 @@ fun ItemsTitle(categoryItem: CategoryItems){
 }
 
 @Composable
-fun ItemContainer(item: Item, modifier: Modifier) {
+fun ItemContainer(item: Clothes, modifier: Modifier, onClick: () -> Unit) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
-        ) {
-        Image(
-            painter = painterResource(id = item.imageRes),
-            contentDescription = item.name,
-
+    ) {
+        AsyncImage(
+            model = item.imagePath,
+            contentDescription = "",
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .aspectRatio(1f), // quadratisch
+            error = painterResource(id = R.drawable.clothicon) // Fallback-Bild
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Text(text = item.name)
+        //Text(text = item.)
     }
 }
 
@@ -249,29 +214,51 @@ fun ItemContainer(item: Item, modifier: Modifier) {
 @Composable
 fun CategoriesScreenPreview() {
     val sampleCategories = listOf(
-        Category("Shirt", R.drawable.shirt_category),
+        Category("Shirts", R.drawable.shirt_category),
         Category("Pants", R.drawable.pants_category),
-        Category("Glasses", R.drawable.glasses_category),
-        Category("Shoes", R.drawable.shoes_category),
-        Category("Watch", R.drawable.watch_category)
+        Category("Dresses", android.R.drawable.ic_search_category_default),
+        Category("Shorts", android.R.drawable.ic_search_category_default),
+        Category("Sweaters`", android.R.drawable.ic_search_category_default),
+//        Category("Glasses", R.drawable.glasses_category),
+//        Category("Shoes", R.drawable.shoes_category),
+//        Category("Watch", R.drawable.watch_category)
     )
 
-    val sampleItems1 = listOf(
+    val shirts = listOf(
         Item("Black T-shirt", R.drawable.black_t_shirt),
         Item("Grey T-shirt", R.drawable.white_t_shirt)
     )
 
-    val sampleItems2 = listOf(
+    val sweaters = listOf(
         Item("Orange Cardigan", R.drawable.orange_cardigan),
         Item("Colorful Sweater", R.drawable.colorful_sweater)
     )
 
-
-    val sampleCategoryItems = listOf(
-        CategoryItems("T-shirts", sampleItems1),
-        CategoryItems("Sweaters", sampleItems2)
+    val pants = listOf(
+        Item("Blue Jeans", R.drawable.orange_cardigan),
+        Item("Cargo Pants", R.drawable.colorful_sweater)
     )
 
+    val dresses = listOf(
+        Item("Blue Dress", android.R.drawable.ic_menu_gallery),
+        Item("Yellow Dress", android.R.drawable.ic_menu_gallery)
+    )
+
+    val shorts = listOf(
+        Item("blue chino shorts", android.R.drawable.ic_menu_gallery),
+        Item("grey sport shorts", android.R.drawable.ic_menu_gallery)
+    )
+
+/*
+    val sampleCategoryItems = listOf(
+        CategoryItems("Shirts", shirts),
+        CategoryItems("Sweaters", sweaters),
+        CategoryItems("Pants", pants),
+//        CategoryItems("Dresses", dresses),
+//        CategoryItems("Shorts", shorts)
+    )
+ */
+/*
     LooksyTheme {
         CategoriesScreen(
             categories = sampleCategories,
@@ -279,6 +266,6 @@ fun CategoriesScreenPreview() {
             navBar = { }
         )
     }
-
+*/
     //ToDo: Get informaton in fun CategoriesScreen from Backend
 }
