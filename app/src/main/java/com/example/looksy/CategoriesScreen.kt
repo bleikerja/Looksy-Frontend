@@ -58,11 +58,11 @@ fun CategoriesScreen(
     Scaffold(
 
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .padding(horizontal = 20.dp)
-                .fillMaxSize()
+        Column(modifier = Modifier
+            .padding(padding)
+            .padding(horizontal = 20.dp)
+            .padding(top = 10.dp)
+            .fillMaxSize()
         ) {
             //Header()
             Text(
@@ -71,7 +71,7 @@ fun CategoriesScreen(
                 color = MaterialTheme.colorScheme.primary
             )
             CategoriesBlock(categories = categories)
-            Spacer(modifier = Modifier.height(34.dp))
+            Spacer(modifier = Modifier.height(25.dp))
             ItemsContainer(
                 categoryItems = categoryItems,
                 modifier = Modifier.weight(1f)
@@ -80,58 +80,10 @@ fun CategoriesScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun Header() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(13.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        //SearchPanel(modifier = Modifier.weight(1f))
-        /*Image(
-            painter = painterResource(id = R.drawable.avatar),
-            contentDescription = "Avatar",
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-        )
-         */
-    }
-}
-
-@Composable
-fun SearchPanel(modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = Icons.Default.Search,
-            contentDescription = "Search"
-        )
-        TextField(
-            value = "",
-            onValueChange = {},
-            placeholder = { Text("Search for today") },
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color.Transparent,
-                unfocusedContainerColor = Color.Transparent,
-                disabledContainerColor = Color.Transparent,
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                disabledIndicatorColor = Color.Transparent,
-            ),
-        )
-    }
-}
-
 @Composable
 fun CategoriesBlock(categories: List<Category>) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text(text = "Categories", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Text(text = "Categories", fontSize = 28.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
         LazyRow(
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -204,7 +156,6 @@ fun ItemsBlock(categoryItem: CategoryItems) {
                 )
             }
         }
-        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
@@ -252,35 +203,57 @@ fun ItemContainer(item: Clothes, modifier: Modifier) {
 @Composable
 fun CategoriesScreenPreview() {
     val sampleCategories = listOf(
-        Category("Shirt", R.drawable.shirt_category),
+        Category("Shirts", R.drawable.shirt_category),
         Category("Pants", R.drawable.pants_category),
-        Category("Glasses", R.drawable.glasses_category),
-        Category("Shoes", R.drawable.shoes_category),
-        Category("Watch", R.drawable.watch_category)
+        Category("Dresses", android.R.drawable.ic_search_category_default),
+        Category("Shorts", android.R.drawable.ic_search_category_default),
+        Category("Sweaters`", android.R.drawable.ic_search_category_default),
+//        Category("Glasses", R.drawable.glasses_category),
+//        Category("Shoes", R.drawable.shoes_category),
+//        Category("Watch", R.drawable.watch_category)
     )
 
-    val sampleItems1 = listOf(
+    val shirts = listOf(
         Item("Black T-shirt", R.drawable.black_t_shirt),
         Item("Grey T-shirt", R.drawable.white_t_shirt)
     )
 
-    val sampleItems2 = listOf(
+    val sweaters = listOf(
         Item("Orange Cardigan", R.drawable.orange_cardigan),
         Item("Colorful Sweater", R.drawable.colorful_sweater)
     )
 
+    val pants = listOf(
+        Item("Blue Jeans", R.drawable.orange_cardigan),
+        Item("Cargo Pants", R.drawable.colorful_sweater)
+    )
 
-//    val sampleCategoryItems = listOf(
-//        CategoryItems("T-shirts", sampleItems1),
-//        CategoryItems("Sweaters", sampleItems2)
-//    )
+    val dresses = listOf(
+        Item("Blue Dress", android.R.drawable.ic_menu_gallery),
+        Item("Yellow Dress", android.R.drawable.ic_menu_gallery)
+    )
 
+    val shorts = listOf(
+        Item("blue chino shorts", android.R.drawable.ic_menu_gallery),
+        Item("grey sport shorts", android.R.drawable.ic_menu_gallery)
+    )
+
+
+    val sampleCategoryItems = listOf(
+        CategoryItems("Shirts", shirts),
+        CategoryItems("Sweaters", sweaters),
+        CategoryItems("Pants", pants),
+//        CategoryItems("Dresses", dresses),
+//        CategoryItems("Shorts", shorts)
+    )
+/*
     LooksyTheme {
-//        CategoriesScreen(
-//            categories = sampleCategories,
-//            categoryItems = sampleCategoryItems,
-//        )
+        CategoriesScreen(
+            categories = sampleCategories,
+            categoryItems = sampleCategoryItems,
+            navBar = { }
+        )
     }
-
+*/
     //ToDo: Get informaton in fun CategoriesScreen from Backend
 }
