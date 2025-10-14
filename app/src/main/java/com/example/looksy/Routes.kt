@@ -14,6 +14,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.example.looksy.dataClassClones.Clothes
 import com.example.looksy.dataClassClones.Type
 import com.example.looksy.screens.AddNewClothesScreen
 import com.example.looksy.screens.CameraScreenPermission
@@ -150,7 +151,7 @@ fun NavHostContainer(
 
             // Wenn wir die Daten haben, rufen wir den Screen auf
             if (clothIndex != null /* && clothesData != null */) {
-                ClothInformationScreen(clothIndex.toInt())
+                ClothInformationScreen(clothIndex.toInt(), onConfirm = TODO("And funktion here"))
             }
         }
 

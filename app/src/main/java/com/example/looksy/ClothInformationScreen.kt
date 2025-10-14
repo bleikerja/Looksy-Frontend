@@ -13,6 +13,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -71,7 +76,7 @@ var allClothes = listOf(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun ClothInformationScreen(selectedClothIndex: Int) {
+fun ClothInformationScreen(selectedClothIndex: Int, onConfirm: (String) -> Unit) {
     var currentClothIndex by remember { mutableIntStateOf(selectedClothIndex) }
 
     Column(
@@ -103,6 +108,10 @@ fun ClothInformationScreen(selectedClothIndex: Int) {
             Information("Size", allClothes[currentClothIndex].size.toString())
             Information("Season", allClothes[currentClothIndex].seasonUsage.toString())
             Information("Status", if (allClothes[currentClothIndex].clean) "clean" else "dirty")
+        }
+
+        Button(onClick = { onConfirm(allClothes[currentClothIndex].imagePath) }) {
+            Text("Auswahl bestätigen")
         }
 
         Text(
@@ -169,7 +178,7 @@ fun ClothImage(image: Any?, modifier: Modifier) {
 @Composable
 fun ClothInformationPreview() {
     LooksyTheme {
-        ClothInformationScreen(1)
+        ClothInformationScreen(1, {})
         //ToDo: Get informaton in fun ClothInformationScreen from Backend
     }
 }
