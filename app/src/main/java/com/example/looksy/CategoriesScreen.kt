@@ -238,7 +238,7 @@ fun CategoriesScreenPreview() {
         Item("grey sport shorts", android.R.drawable.ic_menu_gallery)
     )
 
-
+/*
     val sampleCategoryItems = listOf(
         CategoryItems("Shirts", shirts),
         CategoryItems("Sweaters", sweaters),
@@ -246,6 +246,7 @@ fun CategoriesScreenPreview() {
 //        CategoryItems("Dresses", dresses),
 //        CategoryItems("Shorts", shorts)
     )
+ */
 /*
     LooksyTheme {
         CategoriesScreen(
