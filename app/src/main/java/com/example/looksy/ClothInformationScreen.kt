@@ -6,14 +6,21 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -26,14 +33,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import com.example.looksy.ViewModels.ClothesViewModel
 import com.example.looksy.dataClassClones.Clothes
 import com.example.looksy.dataClassClones.Material
 import com.example.looksy.dataClassClones.Season
 import com.example.looksy.dataClassClones.Size
 import com.example.looksy.dataClassClones.Type
 import com.example.looksy.dataClassClones.WashingNotes
-import coil.compose.AsyncImage
-import com.example.looksy.ViewModels.ClothesViewModel
 import com.example.looksy.ui.theme.LooksyTheme
 
 //ToDo: Get informaton in fun ClothInformationScreen from Backend
@@ -70,25 +77,43 @@ var allClothes = listOf(
 )
 
 
-
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ClothInformationScreen(
     clothesData: Clothes,
     viewModel: ClothesViewModel,
-    onNavigateToDetails: (Int) -> Unit
+    onNavigateToDetails: (Int) -> Unit,
+    onNavigateBack: () -> Unit,
+    onConfirmOutfit: (Int) -> Unit
 ) {
-    //var currentClothIndex by remember { mutableIntStateOf(selectedClothIndex) }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(10.dp),
         modifier = Modifier
-            .fillMaxWidth()
+            .fillMaxSize()
             .background(Color(249, 246, 242))
-            .padding(30.dp)
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp)
     ) {
-        //ToDo: painterResource auf die Aktuellen Begebenheiten anpassen
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onNavigateBack) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Zurück zur Outfitansicht",
+                    modifier = Modifier.padding(end = 10.dp)
+                )
+            }
+            Text(
+                "Details",
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.align(Alignment.CenterVertically)
+            )
+        }
         ClothImage(
             clothesData.imagePath, modifier = Modifier
                 .height(300.dp)
@@ -102,13 +127,15 @@ fun ClothInformationScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.padding(bottom = 20.dp)
         ) {
-            //TODO: add Color to Cloth class
-            Information("Color", "-")
+            Information("Waschhinweise", clothesData.washingNotes.toString())
             Information("Type", clothesData.type.toString())
             Information("Material", clothesData.material.toString())
-            Information("Size", clothesData.size.toString())
+            Information("Größe", clothesData.size.toString())
             Information("Season", clothesData.seasonUsage.toString())
             Information("Status", if (clothesData.clean) "clean" else "dirty")
+        }
+        Button(onClick = { onConfirmOutfit(clothesData.id) }) {
+            Text("${clothesData.type} auswählen")
         }
 
         Text(
@@ -120,13 +147,13 @@ fun ClothInformationScreen(
             .getClothesByType(clothesData.type)
             .collectAsState(initial = emptyList())
 
-        LazyRow(
+        Row(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier
                 .horizontalScroll(rememberScrollState())
                 .height(200.dp)
         ) {
-            items(similarClothes.filter { it.id != clothesData.id }) { item ->
+            similarClothes.filter { it.id != clothesData.id }.forEach { item ->
                 SimilarClothCard(
                     clothes = item,
                     onClick = { onNavigateToDetails(item.id) }
@@ -135,6 +162,7 @@ fun ClothInformationScreen(
         }
     }
 }
+
 @Composable
 fun SimilarClothCard(
     clothes: Clothes,

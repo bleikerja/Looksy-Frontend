@@ -31,19 +31,16 @@ interface NavigationDestination {
 
 object RouteArgs {
     const val IMAGE_URI = "imageUri"
-    const val IMAGE_PATH = "imagePath"
+    const val ID = "id"
 }
 
 sealed class Routes(override val route: String) : NavigationDestination {
     data object Home : Routes("home")
     data object Scan : Routes("scan")
     data object ChoseClothes : Routes("chose clothes")
-    data object Details : Routes("details/{${RouteArgs.IMAGE_PATH}}") {
-        fun createRoute(imagePath: String): String {
-            // Wichtig: Pfade enthalten oft Slashes '/', die in URLs Probleme machen.
-            // Wir müssen den Pfad kodieren, bevor wir ihn übergeben.
-            val encodedPath = Uri.encode(imagePath)
-            return "details/$encodedPath"
+    data object Details : Routes("details/{${RouteArgs.ID}}") {
+        fun createRoute(id: Int): String {
+            return "details/$id"
         }
     }
 
@@ -70,10 +67,14 @@ fun NavHostContainer(
     modifier: Modifier = Modifier,
     viewModel: ClothesViewModel
 ) {
-    val allClothesFromDb by viewModel.allClothes.collectAsState()
+    val allClothesFromDb by viewModel.allClothes.collectAsState(initial = emptyList())
     val categoryItems = allClothesFromDb.groupBy { it.type }.map { (type, items) ->
         CategoryItems(categoryName = type.name, items = items)
     }
+
+    var top by remember(allClothesFromDb) { mutableStateOf(allClothesFromDb.firstOrNull { it.type == Type.Tops }) }
+    var pants by remember(allClothesFromDb) { mutableStateOf(allClothesFromDb.firstOrNull { it.type == Type.Pants }) }
+
     NavHost(
         navController = navController,
         startDestination = Routes.Home.route,
@@ -81,19 +82,14 @@ fun NavHostContainer(
     ) {
         // Entspricht: Routes.Home
         composable(Routes.Home.route) {
-            if (allClothesFromDb.count { it.type == Type.Tops } >= 1 &&
-                allClothesFromDb.count { it.type == Type.Pants } >= 1) {
-
-                var top by remember(allClothesFromDb) { mutableStateOf(allClothesFromDb.first { it.type == Type.Tops }) }
-                var pants by remember(allClothesFromDb) { mutableStateOf(allClothesFromDb.first { it.type == Type.Pants }) }
-
+            val currentTop = top
+            val currentPants = pants
+            if (currentTop != null && currentPants != null) {
                 FullOutfitScreen(
-                    modifier = modifier,
-                    top = top,
-                    pants = pants,
-                    onClick = { imagePath ->
-                        val finalRoute = Routes.Details.createRoute(imagePath)
-                        navController.navigate(finalRoute)
+                    top = currentTop,
+                    pants = currentPants,
+                    onClick = { clothesId ->
+                        navController.navigate(Routes.Details.createRoute(clothesId))
                     })
             } else {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -113,45 +109,42 @@ fun NavHostContainer(
 
         // Entspricht: Routes.Details
         composable(
-            route = "details/{id}",
-            arguments = listOf(navArgument("id") { type = NavType.IntType })
+            route = Routes.Details.route,
+            arguments = listOf(navArgument(RouteArgs.ID) { type = NavType.IntType })
         ) { backStackEntry ->
             // 1. Argument auslesen und dekodieren
-            val clothesId = backStackEntry.arguments?.getInt("id")
+            val clothesId = backStackEntry.arguments?.getInt(RouteArgs.ID)
             if (clothesId != null) {
                 val clothesData by viewModel.getClothesById(clothesId)
                     .collectAsState(initial = null)
 
-                clothesData?.let {
+                clothesData?.let { cloth ->
                     ClothInformationScreen(
-                        clothesData = it,
+                        clothesData = cloth,
                         viewModel = viewModel,
                         onNavigateToDetails = { newId ->
-                            navController.navigate("details/$newId") {
+                            navController.navigate(Routes.Details.createRoute(newId)) {
                                 launchSingleTop = true
+                            }
+                        },
+                        onNavigateBack = { navController.popBackStack() },
+                        onConfirmOutfit = { confirmedId ->
+                            val selectedCloth = allClothesFromDb.find { it.id == confirmedId }
+                            selectedCloth?.let {
+                                when (it.type) {
+                                    Type.Tops -> top = it
+                                    Type.Pants -> pants = it
+                                    else -> {}
+                                }
+                            }
+                            navController.navigate(Routes.Home.route) {
+                                popUpTo(Routes.Home.route) { inclusive = true }
                             }
                         }
                     )
                 }
             }
         }
-        /*
-        composable("details/{id}", ...) { backStackEntry ->
-            val clothesId = backStackEntry.arguments?.getInt("id")
-            if (clothesId != null) {
-                // Wir holen das EINE Kleidungsstück direkt vom ViewModel
-                val clothesData by viewModel.getClothesById(clothesId).collectAsState(initial = null)
-
-                // Zeige den Screen an, sobald das Item geladen ist.
-                clothesData?.let {
-                    ClothInformationScreen(
-                        clothesData = it,
-                        onNavigateBack = { navController.popBackStack() }
-                    )
-                }
-            }
-        }
-         */
 
         // Entspricht: Routes.Scan
         composable(Routes.Scan.route) {
@@ -202,28 +195,6 @@ fun NavHostContainer(
                 navController.popBackStack()
             }
         }
-        /*
-        composable(Routes.AddNewClothes.route, ...) {
-            // ...
-            AddNewClothesScreen(
-                // ...
-                onSave = { newClothesData, imageUriStr ->
-                    // ... (deine Logik zum Speichern des Bildes) ...
-                    if (permanentPath != null) {
-                        val finalClothes = newClothesData.copy(imagePath = permanentPath)
-
-                        // ===============================================
-                        // HIER PASSIERT DIE VERKNÜPFUNG BEIM SPEICHERN
-                        viewModel.insert(finalClothes) // Ruft die Methode im ViewModel auf
-                        // ===============================================
-
-                        // ... (deine Navigationslogik zurück zu Home) ...
-                    }
-                },
-                // ...
-            )
-        }
-         */
     }
 }
 

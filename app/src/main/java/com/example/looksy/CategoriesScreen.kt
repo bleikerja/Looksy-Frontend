@@ -26,6 +26,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -55,14 +56,20 @@ fun CategoriesScreen(
     categoryItems: List<CategoryItems>,
 ) {
     Scaffold(
-        bottomBar = { }
+
     ) { padding ->
-        Column(modifier = Modifier
-            .padding(padding)
-            .padding(horizontal = 20.dp)
-            .fillMaxSize()
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .padding(horizontal = 20.dp)
+                .fillMaxSize()
         ) {
-            Header()
+            //Header()
+            Text(
+                text = "Dein Kleiderschrank",
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
             CategoriesBlock(categories = categories)
             Spacer(modifier = Modifier.height(34.dp))
             ItemsContainer(
@@ -83,19 +90,20 @@ fun Header() {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        SearchPanel(modifier = Modifier.weight(1f))
-        Image(
+        //SearchPanel(modifier = Modifier.weight(1f))
+        /*Image(
             painter = painterResource(id = R.drawable.avatar),
             contentDescription = "Avatar",
             modifier = Modifier
                 .size(40.dp)
                 .clip(CircleShape)
         )
+         */
     }
 }
 
 @Composable
-fun SearchPanel(modifier: Modifier = Modifier){
+fun SearchPanel(modifier: Modifier = Modifier) {
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically
@@ -201,7 +209,7 @@ fun ItemsBlock(categoryItem: CategoryItems) {
 }
 
 @Composable
-fun ItemsTitle(categoryItem: CategoryItems){
+fun ItemsTitle(categoryItem: CategoryItems) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -226,7 +234,7 @@ fun ItemContainer(item: Clothes, modifier: Modifier) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
-        ) {
+    ) {
         AsyncImage(
             model = item.imagePath,
             contentDescription = "",
