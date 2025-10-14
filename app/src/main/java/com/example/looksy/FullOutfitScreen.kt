@@ -69,6 +69,7 @@ fun OutfitPart(imageResId: Any?, onClick: () -> Unit, modifier: Modifier = Modif
         )
         LooksyButton(
             onClick = onClick,
+            modifier = Modifier.align(Alignment.CenterVertically),
             picture = { Icon(Icons.Default.Create, contentDescription = "") })
     }
 }

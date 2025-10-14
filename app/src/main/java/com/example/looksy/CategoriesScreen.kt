@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -42,6 +43,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.example.looksy.dataClassClones.Type
 import com.example.looksy.ui.theme.LooksyTheme
 import com.example.looksy.dataClassClones.Clothes
 
@@ -49,12 +51,17 @@ data class Category(val name: String, val iconRes: Int)
 data class Item(val name: String, val imageRes: Int)
 data class CategoryItems(val categoryName: String, val items: List<Clothes>)
 
+var NavFunction: (String) -> Unit = {}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoriesScreen(
     categories: List<Category>,
     categoryItems: List<CategoryItems>,
+    //navBar: @Composable () -> Unit,
+    onClick: (String) -> Unit = {}
 ) {
+    NavFunction = onClick
     Scaffold(
 
     ) { padding ->
@@ -171,12 +178,17 @@ fun ItemsTitle(categoryItem: CategoryItems) {
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold
         )
-        Image(
-            painter = painterResource(id = R.drawable.arrow),
-            contentDescription = "See more",
-            modifier = Modifier.size(26.dp)
+        LooksyButton(
+            //TODO: change to type of category
+            onClick = { NavFunction(Type.Tops.toString()) },
+            picture = {
+                Image(
+                    painter = painterResource(id = R.drawable.arrow),
+                    contentDescription = "See more",
+                    modifier = Modifier.size(26.dp)
+                )
+            }
         )
-
     }
 }
 

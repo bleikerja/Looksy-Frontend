@@ -15,10 +15,11 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.example.looksy.dataClassClones.*
 import com.example.looksy.ViewModels.ClothesViewModel
-import com.example.looksy.dataClassClones.Type
 import com.example.looksy.screens.AddNewClothesScreen
 import com.example.looksy.screens.CameraScreenPermission
+import com.example.looksy.screens.SpecificCategoryScreen
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -30,6 +31,7 @@ interface NavigationDestination {
 }
 
 object RouteArgs {
+    var TYPE = "imageType"
     const val IMAGE_URI = "imageUri"
     const val ID = "id"
 }
@@ -41,6 +43,14 @@ sealed class Routes(override val route: String) : NavigationDestination {
     data object Details : Routes("details/{${RouteArgs.ID}}") {
         fun createRoute(id: Int): String {
             return "details/$id"
+        }
+    }
+    data object SpecificCategory : Routes("specific_category/{${RouteArgs.TYPE}}"){
+        fun createRoute(type: String): String {
+            // Wichtig: Pfade enthalten oft Slashes '/', die in URLs Probleme machen.
+            // Wir müssen den Pfad kodieren, bevor wir ihn übergeben.
+            val encodedPath = Uri.encode(type)
+            return "specific_category/$encodedPath"
         }
     }
 
@@ -59,6 +69,19 @@ val sampleCategories = listOf(
     Category("Glasses", R.drawable.glasses_category),
     Category("Shoes", R.drawable.shoes_category),
     Category("Watch", R.drawable.watch_category)
+)
+val sampleItems1 = listOf(
+    Item("Black T-shirt", R.drawable.black_t_shirt),
+    Item("Grey T-shirt", R.drawable.white_t_shirt)
+)
+
+val sampleItems2 = listOf(
+    Item("Orange Cardigan", R.drawable.orange_cardigan),
+    Item("Colorful Sweater", R.drawable.colorful_sweater)
+)
+val sampleCategoryItems = listOf(
+    CategoryItems("T-shirts", sampleItems1),
+    CategoryItems("Sweaters", sampleItems2)
 )
 
 @Composable
@@ -103,8 +126,34 @@ fun NavHostContainer(
             CategoriesScreen(
                 categories = sampleCategories,
                 categoryItems = categoryItems,
+                onClick = { type->
+                    val finalRoute=Routes.SpecificCategory.createRoute(type)
+                    navController.navigate(finalRoute)
+                }
             )
 
+        }
+
+        // Entspricht: Routes.SpecificCategory
+        composable(
+            route = Routes.SpecificCategory.route,
+            arguments = listOf(navArgument(RouteArgs.TYPE) { type = NavType.StringType })
+        ) { backStackEntry ->
+            val encodedPath = backStackEntry.arguments?.getString(RouteArgs.TYPE)
+            val type = encodedPath?.let { Uri.decode(it) }
+
+            if (type != null /* && clothesData != null */) {
+                SpecificCategoryScreen(
+                    type = Type.valueOf(type),
+                    onOpenDetails = { index ->
+                        val finalRoute=Routes.Details.createRoute(index)
+                        navController.navigate(finalRoute)
+                    },
+                    onGoBack = {
+                        navController.navigate(Routes.ChoseClothes.route)
+                    }
+                )
+            }
         }
 
         // Entspricht: Routes.Details
