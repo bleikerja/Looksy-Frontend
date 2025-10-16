@@ -126,7 +126,7 @@ fun ClothInformationScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.padding(bottom = 20.dp)
         ) {
-            Information("Waschhinweise", clothesData.washingNotes.toString())
+            Information("Waschhinweise", clothesData.washingNotes.displayName)
             Information("Typ", clothesData.type.displayName)
             Information("Material", clothesData.material.displayName)
             Information("Größe", clothesData.size.displayName)
