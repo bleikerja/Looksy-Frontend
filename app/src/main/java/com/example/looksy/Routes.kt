@@ -17,7 +17,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.looksy.dataClassClones.*
 import com.example.looksy.ViewModels.ClothesViewModel
-import com.example.looksy.dataClassClones.Clothes
 import com.example.looksy.dataClassClones.Type
 import com.example.looksy.screens.AddNewClothesScreen
 import com.example.looksy.screens.CameraScreenPermission
@@ -82,7 +81,7 @@ fun NavHostContainer(
 ) {
     val allClothesFromDb by viewModel.allClothes.collectAsState(initial = emptyList())
     val categoryItems = allClothesFromDb.groupBy { it.type }.map { (type, items) ->
-        CategoryItems(categoryName = type.name, items = items)
+        CategoryItems(category = type, items = items)
     }
 
     var top by remember(allClothesFromDb) { mutableStateOf(allClothesFromDb.firstOrNull { it.type == Type.Tops }) }
