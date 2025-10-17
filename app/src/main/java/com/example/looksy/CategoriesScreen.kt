@@ -39,10 +39,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.looksy.dataClassClones.Clothes
+import com.example.looksy.dataClassClones.Type
 
 data class Category(val name: String, val iconRes: Int)
 data class Item(val name: String, val imageRes: Int)
-data class CategoryItems(val categoryName: String, val items: List<Clothes>)
+data class CategoryItems(val category: Type, val items: List<Clothes>)
 
 var NavFunction: (String) -> Unit = {}
 
@@ -171,14 +172,13 @@ fun ItemsTitle(categoryItem: CategoryItems) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "${categoryItem.categoryName} (${categoryItem.items.size})",
+            text = "${categoryItem.category} (${categoryItem.items.size})",
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold
         )
 
         LooksyButton(
-            //TODO: change to type of category
-            onClick = { NavFunction(categoryItem.categoryName) },
+            onClick = { NavFunction(categoryItem.category.name) },
             picture = {
                 Image(
                     painter = painterResource(id = R.drawable.arrow),

@@ -21,10 +21,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -124,25 +120,25 @@ fun ClothInformationScreen(
                 .padding(bottom = 20.dp)
         )
 
-        Text("Information", fontSize = 30.sp, modifier = Modifier.align(Alignment.Start))
+        Text("Informationen", fontSize = 30.sp, modifier = Modifier.align(Alignment.Start))
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.padding(bottom = 20.dp)
         ) {
-            Information("Waschhinweise", clothesData.washingNotes.toString())
-            Information("Type", clothesData.type.toString())
-            Information("Material", clothesData.material.toString())
-            Information("Größe", clothesData.size.toString())
-            Information("Season", clothesData.seasonUsage.toString())
-            Information("Status", if (clothesData.clean) "clean" else "dirty")
+            Information("Waschhinweise", clothesData.washingNotes.displayName)
+            Information("Typ", clothesData.type.displayName)
+            Information("Material", clothesData.material.displayName)
+            Information("Größe", clothesData.size.displayName)
+            Information("Saison", clothesData.seasonUsage.displayName)
+            Information("Status", if (clothesData.clean) "sauber" else "schmutzig")
         }
         Button(onClick = { onConfirmOutfit(clothesData.id) }) {
             Text("${clothesData.type} auswählen")
         }
 
         Text(
-            "other ${clothesData.type}",
+            "siehe auch",
             fontSize = 30.sp,
             modifier = Modifier.align(Alignment.Start)
         )
