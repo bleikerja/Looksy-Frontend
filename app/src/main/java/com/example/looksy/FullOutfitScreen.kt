@@ -29,59 +29,128 @@ import com.example.looksy.ui.theme.LooksyTheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FullOutfitScreen(
-    top: Clothes,
-    pants: Clothes,
+    top: Clothes? = null,
+    pants: Clothes? = null,
+    dress: Clothes? = null,
+    jacket: Clothes? = null,
+    skirt: Clothes? = null,
     onClick: (Int) -> Unit = {}
 ) {
+    if (top == null && dress == null) {
+        TODO("Trow Exeption: Du kannst nicht nackt losgehen")
+    }
+    if (pants == null && skirt == null) {
+        TODO("Trow Exeption: Du kannst nicht nackt losgehen")
+    }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(249, 246, 242))
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            "Dein heutiges Outfit",
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.height(16.dp))
 
-        Column(
-            modifier = Modifier
+            Row(modifier = Modifier
+            .fillMaxSize()
+            .background(Color(249, 246, 242))
+            .padding(16.dp),
+            ){
+            Column(modifier = Modifier
                 .fillMaxSize()
                 .background(Color(249, 246, 242))
                 .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally) {
+                if (top != null) {
+                    OutfitPart(
+                        imageResId = top.imagePath,
+                        { onClick(top.id) },
+                        modifier = Modifier.weight(1f)
+                    )
+                } else {
+                    OutfitPart(
+                        imageResId = dress!!.imagePath,
+                        { onClick(dress.id) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                if (pants != null) {
+                    OutfitPart(
+                        imageResId = pants.imagePath,
+                        onClick = { onClick(pants.id) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                else {
+                    OutfitPart(
+                        imageResId = skirt!!.imagePath,
+                        onClick = { onClick(skirt.id) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+            if (jacket != null || (skirt != null && pants != null)) {
+                Column(modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(249, 246, 242))
+                    .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally) {
+                    if (jacket != null) {
+                        OutfitPart(
+                            imageResId = jacket.imagePath,
+                            { onClick(jacket.id) },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    if (skirt != null && pants != null) {
+                        OutfitPart(
+                            imageResId = skirt.imagePath,
+                            { onClick(skirt.id) },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+    @Composable
+    fun OutfitPart(imageResId: Any?, onClick: () -> Unit, modifier: Modifier = Modifier) {
+        Row(
+            modifier = modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
         ) {
-            Text(
-                "Dein heutiges Outfit",
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.primary
+            AsyncImage(
+                model = imageResId,
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .padding(end = 16.dp),
+                contentDescription = "Kleidungsstück",
             )
-            Spacer(modifier = Modifier.height(16.dp))
-            OutfitPart(imageResId = top.imagePath, { onClick(top.id) }, modifier = Modifier.weight(1f))
-            OutfitPart(imageResId = pants.imagePath, { onClick(pants.id) }, modifier = Modifier.weight(1f))
+            LooksyButton(
+                onClick = onClick,
+                modifier = Modifier.align(Alignment.CenterVertically),
+                picture = { Icon(Icons.Default.Create, contentDescription = "") })
         }
     }
 
-
-@Composable
-fun OutfitPart(imageResId: Any?, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
-    ) {
-        AsyncImage(
-            model = imageResId,
-            modifier = Modifier
-                .fillMaxHeight()
-                .padding(end = 16.dp),
-            contentDescription = "Kleidungsstück",
-        )
-        LooksyButton(
-            onClick = onClick,
-            modifier = Modifier.align(Alignment.CenterVertically),
-            picture = { Icon(Icons.Default.Create, contentDescription = "") })
+    @Preview(showBackground = true)
+    @Composable
+    fun FullOutfitPreview() {
+        LooksyTheme {
+            FullOutfitScreen(
+                top = allClothes[2],
+                pants = allClothes[1],
+                skirt = allClothes[0],
+                onClick = { }
+            )
+        }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun FullOutfitPreview() {
-    LooksyTheme {
-        FullOutfitScreen(
-            top = allClothes[2],
-            pants = allClothes[1],
-            onClick = { }
-        )
-    }
-}
