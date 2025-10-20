@@ -3,6 +3,7 @@ package com.example.looksy
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,9 +16,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -143,13 +141,13 @@ fun ItemsBlock(categoryItem: CategoryItems) {
     Column {
         ItemsTitle(categoryItem = categoryItem)
         Spacer(modifier = Modifier.height(8.dp))
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
+        Row(
+            //columns = GridCells.Fixed(2),
             horizontalArrangement = Arrangement.spacedBy(5.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.height(170.dp) // Adjust height as needed
+            //verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.height(170.dp).horizontalScroll(rememberScrollState())
         ) {
-            items(categoryItem.items) { item ->
+            categoryItem.items.forEach { item ->
                 ItemContainer(
                     item = item,
                     modifier = Modifier
@@ -267,5 +265,4 @@ fun CategoriesScreenPreview() {
         )
     }
 */
-    //ToDo: Get informaton in fun CategoriesScreen from Backend
 }
