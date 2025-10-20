@@ -99,27 +99,28 @@ fun NavHostContainer(
 
     LaunchedEffect(allClothesFromDb) {
         if (allClothesFromDb.isNotEmpty() && top == null && dress == null) {
+            val cleanClothes = allClothesFromDb.filter { it.clean }
             val searchForTops = listOf(true, false).random()
             var randomTop: Clothes? = null
             var randomDress: Clothes? = null
             if (searchForTops) {
-                randomTop = allClothesFromDb.filter { it.type == Type.Tops }.randomOrNull()
+                randomTop = cleanClothes.filter { it.type == Type.Tops }.randomOrNull()
             } else {
-                randomDress = allClothesFromDb.filter { it.type == Type.Dress }.randomOrNull()
+                randomDress = cleanClothes.filter { it.type == Type.Dress }.randomOrNull()
             }
 
             if (randomTop == null && randomDress == null) {
                 if (searchForTops) {
-                    randomDress = allClothesFromDb.filter { it.type == Type.Dress }.randomOrNull()
+                    randomDress = cleanClothes.filter { it.type == Type.Dress }.randomOrNull()
                 } else {
-                    randomTop = allClothesFromDb.filter { it.type == Type.Tops }.randomOrNull()
+                    randomTop = cleanClothes.filter { it.type == Type.Tops }.randomOrNull()
                 }
             }
 
-            val randomPants = allClothesFromDb.filter { it.type == Type.Pants }.randomOrNull()
-            val randomSkirt = allClothesFromDb.filter { it.type == Type.Skirt }.randomOrNull()
+            val randomPants = cleanClothes.filter { it.type == Type.Pants }.randomOrNull()
+            val randomSkirt = cleanClothes.filter { it.type == Type.Skirt }.randomOrNull()
 
-            val randomJacket = allClothesFromDb.filter { it.type == Type.Jacket }.randomOrNull()
+            val randomJacket = cleanClothes.filter { it.type == Type.Jacket }.randomOrNull()
             val finalTop = randomTop
             val finalPants = randomPants
             var finalSkirt = randomSkirt
@@ -159,6 +160,13 @@ fun NavHostContainer(
                     dress = currentDress,
                     onClick = { clothesId ->
                         navController.navigate(Routes.Details.createRoute(clothesId))
+                    },
+                    onConfirm = { wornClothesList ->
+                        wornClothesList.forEach { cloth ->
+                            val updatedCloth = cloth.copy(clean = false)
+                            viewModel.update(updatedCloth)
+                        }
+                        navController.popBackStack()
                     })
             } else {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
