@@ -52,8 +52,10 @@ fun CameraScreenPermission(onImageCaptured: (Uri) -> Unit) {
     if (cameraPermissionState.status.isGranted) {
         CameraScreen(onImageCaptured = onImageCaptured)
     } else {
-        Button(onClick = { cameraPermissionState.launchPermissionRequest() }) {
-            Text("Kamera-Zugriff erlauben")
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Button(onClick = { cameraPermissionState.launchPermissionRequest() }) {
+                Text("Kamera-Zugriff erlauben")
+            }
         }
     }
 
