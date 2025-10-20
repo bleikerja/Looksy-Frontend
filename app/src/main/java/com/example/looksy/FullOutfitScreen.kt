@@ -71,8 +71,9 @@ fun FullOutfitScreen(
                         modifier = Modifier.align(Alignment.CenterVertically)
                     )
                     Spacer(modifier = Modifier.weight(1f))
-                    IconButton(onClick = { onWashingMachine() }) {
+                    IconButton(onClick = { onWashingMachine() }, modifier = Modifier.size(50.dp)) {
                         Icon(
+                            modifier = Modifier.fillMaxSize(),
                             imageVector = Icons.Default.LocalLaundryService,
                             contentDescription = "Zur Waschmaschine"
                         )
@@ -119,14 +120,14 @@ fun FullOutfitScreen(
             }
             IconButton(
                 onClick = onGenerateRandom,
-                modifier = Modifier
+                modifier = Modifier.padding(bottom = 16.dp).size(50.dp)
                     .align(Alignment.BottomStart)
-                    .size(50.dp)
-                    .padding(16.dp)
+
             ) {
                 Icon(
                     imageVector = Icons.Default.Shuffle, // Gutes Icon für "Zufall"
-                    contentDescription = "Zufälliges Outfit generieren"
+                    contentDescription = "Zufälliges Outfit generieren",
+                    modifier = Modifier.fillMaxSize()
                 )
             }
             /*
@@ -148,8 +149,8 @@ fun FullOutfitScreen(
                     .fillMaxWidth(0.5f)
             )
              */
-            IconButton(modifier=Modifier.align(Alignment.BottomEnd).size(50.dp)
-                .padding(16.dp),onClick = {
+            IconButton(modifier=Modifier.align(Alignment.BottomEnd).padding(16.dp).size(50.dp)
+                ,onClick = {
                 // Dieselbe Logik wie vorher im großen Button
                 val wornClothes = listOfNotNull(top, pants, dress, jacket, skirt)
                 scope.launch {
@@ -162,7 +163,8 @@ fun FullOutfitScreen(
             }) {
                 Icon(
                     imageVector = Icons.Default.Check, // Haken-Icon
-                    contentDescription = "Outfit anziehen"
+                    contentDescription = "Outfit anziehen",
+                    modifier = Modifier.fillMaxSize()
                 )
             }
             SnackbarHost(
@@ -176,19 +178,18 @@ fun FullOutfitScreen(
                 onClick = onGenerateRandom,
                 modifier = Modifier
                     .align(Alignment.BottomStart)
-                    .size(50.dp)
                     .padding(16.dp)
+                    .size(50.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.Shuffle, // Gutes Icon für "Zufall"
-                    contentDescription = "Zufälliges Outfit generieren"
+                    contentDescription = "Zufälliges Outfit generieren",
+                    modifier = Modifier.fillMaxSize()
                 )
             }
-            IconButton(
-                onClick = { onWashingMachine() },
-                modifier = Modifier.align(Alignment.TopEnd)
-            ) {
+            IconButton(onClick = { onWashingMachine() }, modifier = Modifier.size(50.dp).align(Alignment.TopEnd)) {
                 Icon(
+                    modifier = Modifier.fillMaxSize(),
                     imageVector = Icons.Default.LocalLaundryService,
                     contentDescription = "Zur Waschmaschine"
                 )
@@ -202,7 +203,7 @@ fun FullOutfitScreen(
 @Composable
 fun OutfitPart(imageResId: Any?, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().padding(start = 15.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
