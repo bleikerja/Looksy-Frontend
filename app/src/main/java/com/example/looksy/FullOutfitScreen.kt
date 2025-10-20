@@ -1,7 +1,9 @@
 package com.example.looksy
 
+import androidx.activity.result.launch
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,11 +14,18 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Create
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.looksy.dataClassClones.Clothes
 import com.example.looksy.ui.theme.LooksyTheme
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,7 +44,8 @@ fun FullOutfitScreen(
     dress: Clothes? = null,
     jacket: Clothes? = null,
     skirt: Clothes? = null,
-    onClick: (Int) -> Unit = {}
+    onClick: (Int) -> Unit = {},
+    onConfirm: (List<Clothes>) -> Unit = {}
 ) {
     if (top == null && dress == null) {
         throw NotImplementedError("Trow Exeption: Du kannst nicht nackt losgehen")
@@ -42,55 +53,80 @@ fun FullOutfitScreen(
     if (pants == null && skirt == null) {
         throw NotImplementedError("Trow Exeption: Du kannst nicht nackt losgehen")
     }
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(249, 246, 242))
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            "Dein heutiges Outfit",
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.primary
-        )
-        Spacer(modifier = Modifier.height(16.dp))
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(249, 246, 242))
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                "Dein heutiges Outfit",
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.height(16.dp))
 
-        jacket?.let {
-            OutfitPart(
-                imageResId = it.imagePath,
-                onClick = { onClick(it.id) },
-                modifier = Modifier.weight(1f)
-            )
+            jacket?.let {
+                OutfitPart(
+                    imageResId = it.imagePath,
+                    onClick = { onClick(it.id) },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            dress?.let {
+                OutfitPart(
+                    imageResId = it.imagePath,
+                    onClick = { onClick(it.id) },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            top?.let {
+                OutfitPart(
+                    imageResId = it.imagePath,
+                    onClick = { onClick(it.id) },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            skirt?.let {
+                OutfitPart(
+                    imageResId = it.imagePath,
+                    onClick = { onClick(it.id) },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            pants?.let {
+                OutfitPart(
+                    imageResId = it.imagePath,
+                    onClick = { onClick(it.id) },
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
-        dress?.let {
-            OutfitPart(
-                imageResId = it.imagePath,
-                onClick = { onClick(it.id) },
-                modifier = Modifier.weight(1f)
-            )
-        }
-        top?.let {
-            OutfitPart(
-                imageResId = it.imagePath,
-                onClick = { onClick(it.id) },
-                modifier = Modifier.weight(1f)
-            )
-        }
-        skirt?.let {
-            OutfitPart(
-                imageResId = it.imagePath,
-                onClick = { onClick(it.id) },
-                modifier = Modifier.weight(1f)
-            )
-        }
-        pants?.let {
-            OutfitPart(
-                imageResId = it.imagePath,
-                onClick = { onClick(it.id) },
-                modifier = Modifier.weight(1f)
-            )
-        }
+        Button(
+            onClick = {
+                val wornClothes = listOfNotNull(top, pants, dress, jacket, skirt)
+                scope.launch {
+                    snackbarHostState.showSnackbar(
+                        message = "Schön, dass dir das Outfit gefällt und du es anziehst",
+                        duration = SnackbarDuration.Short
+                    )
+                    onConfirm(wornClothes)
+                }
+            },
+            content = { Text("Outfit anziehen") },
+            modifier = Modifier
+                .align(Alignment.BottomEnd) // Positioniert ihn unten in der Mitte der Box
+                .padding(bottom = 12.dp)      // Gibt ihm etwas Abstand vom unteren Rand
+                .fillMaxWidth(0.5f)
+        )
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
     }
 }
 
