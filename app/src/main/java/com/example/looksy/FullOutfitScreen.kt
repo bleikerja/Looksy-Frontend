@@ -37,10 +37,10 @@ fun FullOutfitScreen(
     onClick: (Int) -> Unit = {}
 ) {
     if (top == null && dress == null) {
-        TODO("Trow Exeption: Du kannst nicht nackt losgehen")
+        throw NotImplementedError("Trow Exeption: Du kannst nicht nackt losgehen")
     }
     if (pants == null && skirt == null) {
-        TODO("Trow Exeption: Du kannst nicht nackt losgehen")
+        throw NotImplementedError("Trow Exeption: Du kannst nicht nackt losgehen")
     }
     Column(
         modifier = Modifier
@@ -56,66 +56,40 @@ fun FullOutfitScreen(
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-            Row(modifier = Modifier
-            .fillMaxSize()
-            .background(Color(249, 246, 242))
-            .padding(16.dp),
-            ){
-            Column(modifier = Modifier
-                .fillMaxSize()
-                .background(Color(249, 246, 242))
-                .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally) {
-                if (top != null) {
-                    OutfitPart(
-                        imageResId = top.imagePath,
-                        { onClick(top.id) },
-                        modifier = Modifier.weight(1f)
-                    )
-                } else {
-                    OutfitPart(
-                        imageResId = dress!!.imagePath,
-                        { onClick(dress.id) },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                if (pants != null) {
-                    OutfitPart(
-                        imageResId = pants.imagePath,
-                        onClick = { onClick(pants.id) },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                else {
-                    OutfitPart(
-                        imageResId = skirt!!.imagePath,
-                        onClick = { onClick(skirt.id) },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-            if (jacket != null || (skirt != null && pants != null)) {
-                Column(modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color(249, 246, 242))
-                    .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally) {
-                    if (jacket != null) {
-                        OutfitPart(
-                            imageResId = jacket.imagePath,
-                            { onClick(jacket.id) },
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                    if (skirt != null && pants != null) {
-                        OutfitPart(
-                            imageResId = skirt.imagePath,
-                            { onClick(skirt.id) },
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
-            }
+        jacket?.let {
+            OutfitPart(
+                imageResId = it.imagePath,
+                onClick = { onClick(it.id) },
+                modifier = Modifier.weight(1f)
+            )
+        }
+        dress?.let {
+            OutfitPart(
+                imageResId = it.imagePath,
+                onClick = { onClick(it.id) },
+                modifier = Modifier.weight(1f)
+            )
+        }
+        top?.let {
+            OutfitPart(
+                imageResId = it.imagePath,
+                onClick = { onClick(it.id) },
+                modifier = Modifier.weight(1f)
+            )
+        }
+        pants?.let {
+            OutfitPart(
+                imageResId = it.imagePath,
+                onClick = { onClick(it.id) },
+                modifier = Modifier.weight(1f)
+            )
+        }
+        skirt?.let {
+            OutfitPart(
+                imageResId = it.imagePath,
+                onClick = { onClick(it.id) },
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }

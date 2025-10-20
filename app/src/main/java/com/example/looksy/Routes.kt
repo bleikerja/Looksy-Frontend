@@ -2,8 +2,14 @@ package com.example.looksy
 
 import android.content.Context
 import android.net.Uri
+import androidx.activity.result.launch
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,6 +26,7 @@ import com.example.looksy.ViewModels.ClothesViewModel
 import com.example.looksy.screens.AddNewClothesScreen
 import com.example.looksy.screens.CameraScreenPermission
 import com.example.looksy.screens.SpecificCategoryScreen
+import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -156,43 +163,127 @@ fun NavHostContainer(
             if (clothesId != null) {
                 val clothesData by viewModel.getClothesById(clothesId)
                     .collectAsState(initial = null)
+                val snackbarHostState = remember { SnackbarHostState() }
+                val scope = rememberCoroutineScope()
 
                 clothesData?.let { cloth ->
-                    ClothInformationScreen(
-                        clothesData = cloth,
-                        viewModel = viewModel,
-                        onNavigateToDetails = { newId ->
-                            navController.navigate(Routes.Details.createRoute(newId)) { launchSingleTop = true }
-                        },
-                        onNavigateBack = { navController.popBackStack() },
-                        onConfirmOutfit = { confirmedId ->
-                            val selectedCloth = allClothesFromDb.find { it.id == confirmedId }
-                            selectedCloth?.let {
-                                when (it.type) {
-                                    Type.Tops -> {
-                                        top = it
-                                        dress = null
-                                    }
-                                    Type.Pants -> {
-                                        pants = it
-                                    }
-                                    Type.Jacket -> jacket = it
-                                    Type.Skirt -> {
-                                        skirt = it
-                                        dress = null
-                                    }
-                                    Type.Dress -> {
-                                        dress = it
-                                        top = null
-                                        skirt = null
+                    Scaffold(
+                        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+                    ) { innerPadding ->
+                        ClothInformationScreen(
+                            modifier = Modifier.padding(innerPadding),
+                            clothesData = cloth,
+                            viewModel = viewModel,
+                            onNavigateToDetails = { newId ->
+                                navController.navigate(Routes.Details.createRoute(newId)) {
+                                    launchSingleTop = true
+                                }
+                            },
+                            onNavigateBack = { navController.popBackStack() },
+                            onConfirmOutfit = { confirmedId ->
+                                val selectedCloth = allClothesFromDb.find { it.id == confirmedId }
+                                selectedCloth?.let {
+                                    when (it.type) {
+                                        Type.Tops -> {
+                                            top = it
+                                            dress = null
+                                        }
+
+                                        Type.Pants -> {
+                                            pants = it
+                                        }
+
+                                        Type.Jacket -> jacket = it
+                                        Type.Skirt -> {
+                                            skirt = it
+                                            dress = null
+                                        }
+
+                                        Type.Dress -> {
+                                            dress = it
+                                            top = null
+                                            skirt = null
+                                        }
                                     }
                                 }
+                                navController.navigate(Routes.Home.route) {
+                                    popUpTo(Routes.Home.route) { inclusive = true }
+                                }
+                            },
+                            onDeselectOutfit = {
+                                var canNavigateBack = false
+                                val message =
+                                    "Du kannst nicht das letzte Ober- oder Unterteil ablegen!"
+                                when (cloth.type) {
+                                    Type.Tops -> {
+                                        // Prevent deselecting top if no dress is selected
+                                        if (dress == null) {
+                                            scope.launch {
+                                                snackbarHostState.showSnackbar(
+                                                    message = message,
+                                                    duration = SnackbarDuration.Long
+                                                )
+                                            }
+                                        } else {
+                                            top = null
+                                            canNavigateBack = true
+                                        }
+                                    }
+
+                                    Type.Pants -> {
+                                        // Prevent deselecting top if no dress is selected
+                                        if (skirt == null) {
+                                            scope.launch {
+                                                snackbarHostState.showSnackbar(
+                                                    message = message,
+                                                    duration = SnackbarDuration.Long
+                                                )
+                                            }
+                                        } else {
+                                            pants = null
+                                            canNavigateBack = true
+                                        }
+                                    }
+
+                                    Type.Jacket -> {
+                                        jacket = null
+                                        canNavigateBack = true}
+                                    Type.Skirt -> {
+                                        // Prevent deselecting top if no dress is selected
+                                        if (pants == null) {
+                                            scope.launch {
+                                                snackbarHostState.showSnackbar(
+                                                    message = message,
+                                                    duration = SnackbarDuration.Long
+                                                )
+                                            }
+                                        } else {
+                                            skirt = null
+                                            canNavigateBack = true
+                                        }
+                                    }
+
+                                    Type.Dress -> {
+                                        // Prevent deselecting top if no dress is selected
+                                        if (top == null) {
+                                            scope.launch {
+                                                snackbarHostState.showSnackbar(
+                                                    message = message,
+                                                    duration = SnackbarDuration.Long
+                                                )
+                                            }
+                                        } else {
+                                            dress = null
+                                            canNavigateBack = true
+                                        }
+                                    }
+                                }
+                                if(canNavigateBack) {
+                                    navController.popBackStack()
+                                }
                             }
-                            navController.navigate(Routes.Home.route) {
-                                popUpTo(Routes.Home.route) { inclusive = true }
-                            }
-                        }
-                    )
+                        )
+                    }
                 }
             }
         }
