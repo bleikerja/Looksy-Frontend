@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import com.example.looksy.dataClassClones.Clothes
 import com.example.looksy.dataClassClones.Type
 import kotlinx.coroutines.flow.Flow
@@ -23,4 +24,6 @@ interface ClothesDao {
     @Query("SELECT * FROM clothes_table WHERE type = :type")
     fun getByType(type: Type): Flow<List<Clothes>>
 
+    @Update
+    suspend fun update(clothes: Clothes)
 }

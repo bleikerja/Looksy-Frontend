@@ -20,4 +20,7 @@ class ClothesRepository(private val clothesDao: ClothesDao) {
         return clothesDao.getByType(type)
     }
 
+    suspend fun update(clothes: Clothes) {
+        clothesDao.update(clothes)
+    }
 }

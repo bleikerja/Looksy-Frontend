@@ -2,7 +2,6 @@ package com.example.looksy
 
 import android.content.Context
 import android.net.Uri
-import androidx.activity.result.launch
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -68,6 +67,10 @@ sealed class Routes(override val route: String) : NavigationDestination {
             return "add_new_clothes/$imageUri"
         }
     }
+
+    data object EditClothes : Routes("edit_clothes/{${RouteArgs.ID}}") {
+        fun createRoute(id: Int) = "edit_clothes/$id"
+    }
 }
 
 val sampleCategories = listOf(
@@ -88,7 +91,6 @@ fun NavHostContainer(
     val categoryItems = allClothesFromDb.groupBy { it.type }.map { (type, items) ->
         CategoryItems(category = type, items = items)
     }
-
     var top by remember { mutableStateOf<Clothes?>(null) }
     var pants by remember { mutableStateOf<Clothes?>(null) }
     var jacket by remember { mutableStateOf<Clothes?>(null) }
@@ -323,6 +325,9 @@ fun NavHostContainer(
                                 if(canNavigateBack) {
                                     navController.popBackStack()
                                 }
+                            },
+                            onNavigateToEdit = { editId ->
+                                navController.navigate(Routes.EditClothes.createRoute(editId))
                             }
                         )
                     }
@@ -344,26 +349,44 @@ fun NavHostContainer(
             arguments = listOf(navArgument(RouteArgs.IMAGE_URI) { type = NavType.StringType })
         ) { backStackEntry ->
             val encodedUriString = backStackEntry.arguments?.getString(RouteArgs.IMAGE_URI)
-            if (encodedUriString != null) {
-                val context = LocalContext.current
-                AddNewClothesScreen(
-                    imageUriString = encodedUriString,
-                    onSave = { newClothesData, _ ->
-                        val uriToSave = encodedUriString.toUri()
+            val context = LocalContext.current
+            AddNewClothesScreen(
+                imageUriString = encodedUriString,
+                viewModel = viewModel, // ViewModel übergeben
+                clothesIdToEdit = null, // Explizit sagen: Das ist der "NEU"-Modus
+                onSave = { newClothesData ->
+                    val uriToSave = encodedUriString?.toUri()
+                    if (uriToSave != null) {
+                        // Bild permanent speichern (nur bei neuen Bildern)
                         val permanentPath = saveImagePermanently(context, uriToSave)
                         if (permanentPath != null) {
                             val finalClothes = newClothesData.copy(imagePath = permanentPath)
-                            viewModel.insert(finalClothes)
-                            navController.navigate(Routes.Home.route) {
-                                popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                                launchSingleTop = true
-                            }
+                            viewModel.insert(finalClothes) // Wichtig: INSERT
+                            // Zurück navigieren
+                            navController.popBackStack(Routes.Home.route, false)
                         }
+                    }
+                },
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Routes.EditClothes.route,
+            arguments = listOf(navArgument(RouteArgs.ID) { type = NavType.IntType })
+        ) { backStackEntry ->
+            val clothesId = backStackEntry.arguments?.getInt(RouteArgs.ID)
+            if (clothesId != null) {
+                AddNewClothesScreen(
+                    imageUriString = null,
+                    viewModel = viewModel,
+                    clothesIdToEdit = clothesId,
+                    onSave = { updatedClothesData ->
+                        viewModel.update(updatedClothesData)
+                        navController.popBackStack()
                     },
-                    onRetakePhoto = { navController.navigate(Routes.Scan.route) }
+                    onNavigateBack = { navController.popBackStack() }
                 )
-            } else {
-                navController.popBackStack()
             }
         }
     }

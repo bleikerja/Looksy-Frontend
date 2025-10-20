@@ -58,6 +58,10 @@ class ClothesViewModel(private val repository: ClothesRepository) : ViewModel() 
         return repository.getClothesByType(type)
     }
 
+    fun update(clothes: Clothes) = viewModelScope.launch {
+        repository.update(clothes) // Ruft die update-Methode des Repositories auf
+    }
+
     companion object
 
 }
