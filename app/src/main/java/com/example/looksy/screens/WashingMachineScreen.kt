@@ -46,6 +46,7 @@ import com.example.looksy.R
 import com.example.looksy.dataClassClones.Clothes
 import java.io.File
 import androidx.core.net.toUri
+import com.example.looksy.dataClassClones.WashingNotes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,7 +61,7 @@ fun WashingMachineScreen(
     val washingNotesToShow by remember(selectedIds, dirtyClothes) {
         mutableStateOf(
             dirtyClothes
-                .filter { it.id in selectedIds }
+                .filter { it.id in selectedIds && it.washingNotes != WashingNotes.None }
                 .map { it.washingNotes }
                 .distinct() // Zeige jeden Waschhinweis nur einmal an
         )

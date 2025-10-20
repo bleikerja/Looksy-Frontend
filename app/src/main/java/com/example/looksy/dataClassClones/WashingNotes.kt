@@ -2,10 +2,14 @@ package com.example.looksy.dataClassClones
 
 //TODO: add more Washing notes
 enum class WashingNotes (val displayName: String){
-    Temperature30("Waschen 30 °C"),
+    None("-"),
+    DontWash("Nicht Waschen"),
+    Temperature30("Waschen 30°C"),
+    Temperature40("Waschen 40°C"),
+    Temperature60("Waschen 60°C"),
     Hand ("Handwäsche"),
-    Dying ("Trocknen"),
-    Dryer("Trockner");
+    Dryer("Trockner"),
+    NoDryer("Kein Trockner");
 
     override fun toString(): String {
         return this.displayName
