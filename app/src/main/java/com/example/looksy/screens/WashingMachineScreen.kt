@@ -154,45 +154,45 @@ fun WashingMachineScreen(
                     }
                 }
             }
-        }
-        if (dirtyClothes.isEmpty()) {
-            // Zeige eine "Alles sauber"-Nachricht an
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    "Alles sauber! ✨",
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                )
-            }
-        } else {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(horizontal = 8.dp),
-                contentPadding = PaddingValues(bottom = 80.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(dirtyClothes) { clothItem ->
-                    val isSelected = clothItem.id in selectedIds
-                    WashingItemContainer(
-                        item = clothItem,
-                        isSelected = isSelected,
-                        onClick = {
-                            selectedIds = if (isSelected) {
-                                selectedIds - clothItem.id
-                            } else {
-                                selectedIds + clothItem.id
-                            }
-                        }
+            if (dirtyClothes.isEmpty()) {
+                // Zeige eine "Alles sauber"-Nachricht an
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        "Alles sauber! ✨",
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                     )
+                }
+            } else {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .padding(horizontal = 8.dp),
+                    contentPadding = PaddingValues(bottom = 80.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(dirtyClothes) { clothItem ->
+                        val isSelected = clothItem.id in selectedIds
+                        WashingItemContainer(
+                            item = clothItem,
+                            isSelected = isSelected,
+                            onClick = {
+                                selectedIds = if (isSelected) {
+                                    selectedIds - clothItem.id
+                                } else {
+                                    selectedIds + clothItem.id
+                                }
+                            }
+                        )
+                    }
                 }
             }
         }
