@@ -62,6 +62,14 @@ class ClothesViewModel(private val repository: ClothesRepository) : ViewModel() 
         repository.update(clothes) // Ruft die update-Methode des Repositories auf
     }
 
+    fun delete(clothes: Clothes) = viewModelScope.launch {
+        repository.delete(clothes)
+    }
+
+    suspend fun getByIdDirect(id: Int): Clothes? {
+        return repository.getByIdDirect(id)
+    }
+
     companion object
 
 }

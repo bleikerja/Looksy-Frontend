@@ -12,6 +12,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -58,6 +60,7 @@ fun AddNewClothesScreen(
     viewModel: ClothesViewModel,
     onSave: (newItem: Clothes) -> Unit,
     onNavigateBack: () -> Unit,
+    onDelete: () -> Unit = {},
     modifier: Modifier = Modifier,
     clothesIdToEdit: Int? = null
 ) {
@@ -74,6 +77,7 @@ fun AddNewClothesScreen(
     var type by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.type) }
     var material by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.material) }
     var washingNotes by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.washingNotes) }
+    var clean by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.clean ?: true) }
 
     val isFormValid =
                 size != null && season != null && type != null && material != null && washingNotes != null
@@ -86,6 +90,24 @@ fun AddNewClothesScreen(
             // Fallback
             else -> null
         }
+    }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    if (showDeleteDialog) {
+        AlertDialog(        onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Löschen bestätigen") },
+            text = { Text("Möchtest du dieses Kleidungsstück wirklich endgültig löschen?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onDelete()
+                        showDeleteDialog = false
+                    }
+                ) { Text("Löschen") }
+            },
+            dismissButton = {
+                Button(onClick = { showDeleteDialog = false }) { Text("Abbrechen") }
+            }
+        )
     }
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -106,6 +128,17 @@ fun AddNewClothesScreen(
                         )
                     }
                 },
+                actions = {
+                    // Zeige den Mülleimer-Button nur im Bearbeiten-Modus an
+                    if (clothesIdToEdit != null) {
+                        IconButton(onClick = onDelete) {
+                            Icon(
+                                imageVector = Icons.Default.Delete, // Standard-Mülleimer-Icon
+                                contentDescription = "Löschen"
+                            )
+                        }
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         },
@@ -120,7 +153,7 @@ fun AddNewClothesScreen(
                         seasonUsage = season!!,
                         type = type!!,
                         material = material!!,
-                        clean = clothesToEdit?.clean ?: true, // Behalte den alten Status oder setze auf sauber
+                        clean = clean, // Behalte den alten Status oder setze auf sauber
                         washingNotes = washingNotes!!,
                         // Der imagePath wird erst in Routes.kt final gesetzt!
                         imagePath = clothesToEdit?.imagePath ?: ""
@@ -153,13 +186,17 @@ fun AddNewClothesScreen(
                 material = material,
                 onMaterialChange = { material = it },
                 washingNotes = washingNotes,
-                onWashingNotesChange = { washingNotes = it }
+                onWashingNotesChange = { washingNotes = it },
+                clean = clean,
+                onCleanChange = { clean = it },
+                edit = (clothesIdToEdit != null)
             )
         }
     }
 }
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 private fun AddNewClothesForm(
@@ -174,6 +211,9 @@ private fun AddNewClothesForm(
     onMaterialChange: (Material) -> Unit,
     washingNotes: WashingNotes?,
     onWashingNotesChange: (WashingNotes) -> Unit,
+    clean: Boolean,
+    onCleanChange: (Boolean) -> Unit,
+    edit: Boolean,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -243,6 +283,43 @@ private fun AddNewClothesForm(
                 onWashingNotesChange
             )
 
+        }
+        if (edit){
+            item {
+                var expanded by remember { mutableStateOf(false) }
+                val options = listOf("Sauber", "Schmutzig")
+                val selectedText = if (clean) "Sauber" else "Schmutzig"
+
+                ExposedDropdownMenuBox(
+                    expanded = expanded,
+                    onExpandedChange = { expanded = !expanded }
+                ) {
+                    TextField(
+                        modifier = Modifier.menuAnchor(),
+                        readOnly = true,
+                        value = selectedText,
+                        onValueChange = {},
+                        label = { Text("Sauberkeit") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                        colors = ExposedDropdownMenuDefaults.textFieldColors(),
+                    )
+                    ExposedDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false },
+                    ) {
+                        options.forEach { selectionOption ->
+                            DropdownMenuItem(
+                                text = { Text(selectionOption) },
+                                onClick = {
+                                    // Wandle den ausgewählten Text zurück in einen Boolean um
+                                    onCleanChange(selectionOption == "Sauber")
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }

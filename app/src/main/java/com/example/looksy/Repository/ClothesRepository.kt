@@ -23,4 +23,12 @@ class ClothesRepository(private val clothesDao: ClothesDao) {
     suspend fun update(clothes: Clothes) {
         clothesDao.update(clothes)
     }
+
+    suspend fun delete(clothes: Clothes) {
+        clothesDao.delete(clothes)
+    }
+
+    suspend fun getByIdDirect(id: Int): Clothes? {
+        return clothesDao.getByIdDirect(id)
+    }
 }

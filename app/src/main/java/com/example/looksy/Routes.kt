@@ -384,6 +384,7 @@ fun NavHostContainer(
             arguments = listOf(navArgument(RouteArgs.ID) { type = NavType.IntType })
         ) { backStackEntry ->
             val clothesId = backStackEntry.arguments?.getInt(RouteArgs.ID)
+            val scope = rememberCoroutineScope()
             if (clothesId != null) {
                 AddNewClothesScreen(
                     imageUriString = null,
@@ -393,7 +394,20 @@ fun NavHostContainer(
                         viewModel.update(updatedClothesData)
                         navController.popBackStack()
                     },
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateBack = { navController.popBackStack() },
+                    onDelete = {
+                        scope.launch {
+                            // Rufe die neue suspend-Funktion auf
+                            val clothesToDelete = viewModel.getByIdDirect(clothesId) // Kein .value mehr!
+                            if (clothesToDelete != null) {
+                                viewModel.delete(clothesToDelete)
+                            }
+                            // Navigiere nach dem Löschen zurück zum Home-Screen
+                            navController.navigate(Routes.Home.route) {
+                                popUpTo(Routes.Home.route) { inclusive = true }
+                            }
+                        }
+                    },
                 )
             }
         }
