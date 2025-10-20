@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -17,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -85,7 +87,8 @@ fun ClothInformationScreen(
     onNavigateToDetails: (Int) -> Unit,
     onNavigateBack: () -> Unit,
     onConfirmOutfit: (Int) -> Unit,
-    onDeselectOutfit: (Int) -> Unit
+    onDeselectOutfit: (Int) -> Unit,
+    onNavigateToEdit: (Int) -> Unit
 ) {
 
     Column(
@@ -114,6 +117,14 @@ fun ClothInformationScreen(
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.align(Alignment.CenterVertically)
             )
+            Spacer(modifier = Modifier.weight(1f))
+            IconButton(onClick = { onNavigateToEdit(clothesData.id) }) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "Bearbeiten",
+                    modifier = Modifier.padding(end = 10.dp)
+                )
+            }
         }
         ClothImage(
             clothesData.imagePath, modifier = Modifier
