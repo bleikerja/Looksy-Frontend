@@ -79,11 +79,13 @@ var allClothes = listOf(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ClothInformationScreen(
+    modifier: Modifier = Modifier,
     clothesData: Clothes,
     viewModel: ClothesViewModel,
     onNavigateToDetails: (Int) -> Unit,
     onNavigateBack: () -> Unit,
-    onConfirmOutfit: (Int) -> Unit
+    onConfirmOutfit: (Int) -> Unit,
+    onDeselectOutfit: (Int) -> Unit
 ) {
 
     Column(
@@ -133,10 +135,17 @@ fun ClothInformationScreen(
             Information("Saison", clothesData.seasonUsage.displayName)
             Information("Status", if (clothesData.clean) "sauber" else "schmutzig")
         }
-        Button(onClick = { onConfirmOutfit(clothesData.id) }) {
-            Text("${clothesData.type} auswählen")
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Button(onClick = {onDeselectOutfit(clothesData.id)}){
+                Text("${clothesData.type} entfernen")
+            }
+            Button(onClick = { onConfirmOutfit(clothesData.id) }) {
+                Text("${clothesData.type} auswählen")
+            }
         }
-
         Text(
             "siehe auch",
             fontSize = 30.sp,

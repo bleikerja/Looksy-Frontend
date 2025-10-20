@@ -2,8 +2,14 @@ package com.example.looksy
 
 import android.content.Context
 import android.net.Uri
+import androidx.activity.result.launch
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,6 +27,7 @@ import com.example.looksy.dataClassClones.Type
 import com.example.looksy.screens.AddNewClothesScreen
 import com.example.looksy.screens.CameraScreenPermission
 import com.example.looksy.screens.SpecificCategoryScreen
+import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -49,16 +56,12 @@ sealed class Routes(override val route: String) : NavigationDestination {
 
     data object SpecificCategory : Routes("specific_category/{${RouteArgs.TYPE}}") {
         fun createRoute(type: String): String {
-            // Wichtig: Pfade enthalten oft Slashes '/', die in URLs Probleme machen.
-            // Wir müssen den Pfad kodieren, bevor wir ihn übergeben.
             val encodedPath = Uri.encode(type)
             return "specific_category/$encodedPath"
         }
     }
 
-    // Ziel mit Argument. Der String definiert den Pfad und den Platzhalter für das Argument.
     data object AddNewClothes : Routes("add_new_clothes/{${RouteArgs.IMAGE_URI}}") {
-        // Hilfsfunktion, um die vollständige Route sicher zu erstellen
         fun createRoute(imageUri: String): String {
             return "add_new_clothes/$imageUri"
         }
@@ -86,20 +89,29 @@ fun NavHostContainer(
 
     var top by remember(allClothesFromDb) { mutableStateOf(allClothesFromDb.firstOrNull { it.type == Type.Tops }) }
     var pants by remember(allClothesFromDb) { mutableStateOf(allClothesFromDb.firstOrNull { it.type == Type.Pants }) }
+    var jacket by remember(allClothesFromDb) { mutableStateOf(allClothesFromDb.firstOrNull { it.type == Type.Jacket }) }
+    var skirt by remember(allClothesFromDb) { mutableStateOf(allClothesFromDb.firstOrNull { it.type == Type.Skirt }) }
+    var dress by remember(allClothesFromDb) { mutableStateOf(allClothesFromDb.firstOrNull { it.type == Type.Dress }) }
 
     NavHost(
         navController = navController,
         startDestination = Routes.Home.route,
         modifier = modifier
     ) {
-        // Entspricht: Routes.Home
         composable(Routes.Home.route) {
             val currentTop = top
             val currentPants = pants
-            if (currentTop != null && currentPants != null) {
+            val currentJacket = jacket
+            val currentSkirt = skirt
+            val currentDress = dress
+
+            if ((currentTop != null || currentDress != null) && (currentPants != null || currentSkirt != null)) {
                 FullOutfitScreen(
                     top = currentTop,
                     pants = currentPants,
+                    jacket = currentJacket,
+                    skirt = currentSkirt,
+                    dress = currentDress,
                     onClick = { clothesId ->
                         navController.navigate(Routes.Details.createRoute(clothesId))
                     })
@@ -110,7 +122,6 @@ fun NavHostContainer(
             }
         }
 
-        // Entspricht: Routes.ChoseClothes
         composable(Routes.ChoseClothes.route) {
             CategoriesScreen(
                 categories = sampleCategories,
@@ -123,10 +134,8 @@ fun NavHostContainer(
                     navController.navigate(Routes.Details.createRoute(itemId))
                 }
             )
-
         }
 
-        // Entspricht: Routes.SpecificCategory
         composable(
             route = Routes.SpecificCategory.route,
             arguments = listOf(navArgument(RouteArgs.TYPE) { type = NavType.StringType })
@@ -134,7 +143,7 @@ fun NavHostContainer(
             val encodedPath = backStackEntry.arguments?.getString(RouteArgs.TYPE)
             val type = encodedPath?.let { Uri.decode(it) }
 
-            if (type != null /* && clothesData != null */) {
+            if (type != null) {
                 SpecificCategoryScreen(
                     type = Type.valueOf(type),
                     viewModel = viewModel,
@@ -142,98 +151,177 @@ fun NavHostContainer(
                         val finalRoute = Routes.Details.createRoute(index)
                         navController.navigate(finalRoute)
                     },
-                    onGoBack = {
-                        navController.navigate(Routes.ChoseClothes.route)
-                    }
+                    onGoBack = { navController.popBackStack() }
                 )
             }
         }
 
-        // Entspricht: Routes.Details
         composable(
             route = Routes.Details.route,
             arguments = listOf(navArgument(RouteArgs.ID) { type = NavType.IntType })
         ) { backStackEntry ->
-            // 1. Argument auslesen und dekodieren
             val clothesId = backStackEntry.arguments?.getInt(RouteArgs.ID)
             if (clothesId != null) {
                 val clothesData by viewModel.getClothesById(clothesId)
                     .collectAsState(initial = null)
+                val snackbarHostState = remember { SnackbarHostState() }
+                val scope = rememberCoroutineScope()
 
                 clothesData?.let { cloth ->
-                    ClothInformationScreen(
-                        clothesData = cloth,
-                        viewModel = viewModel,
-                        onNavigateToDetails = { newId ->
-                            navController.navigate(Routes.Details.createRoute(newId)) {
-                                launchSingleTop = true
-                            }
-                        },
-                        onNavigateBack = { navController.popBackStack() },
-                        onConfirmOutfit = { confirmedId ->
-                            val selectedCloth = allClothesFromDb.find { it.id == confirmedId }
-                            selectedCloth?.let {
-                                when (it.type) {
-                                    Type.Tops -> top = it
-                                    Type.Pants -> pants = it
-                                    else -> {}
+                    Scaffold(
+                        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+                    ) { innerPadding ->
+                        ClothInformationScreen(
+                            modifier = Modifier.padding(innerPadding),
+                            clothesData = cloth,
+                            viewModel = viewModel,
+                            onNavigateToDetails = { newId ->
+                                navController.navigate(Routes.Details.createRoute(newId)) {
+                                    launchSingleTop = true
+                                }
+                            },
+                            onNavigateBack = { navController.popBackStack() },
+                            onConfirmOutfit = { confirmedId ->
+                                val selectedCloth = allClothesFromDb.find { it.id == confirmedId }
+                                selectedCloth?.let {
+                                    when (it.type) {
+                                        Type.Tops -> {
+                                            top = it
+                                            dress = null
+                                        }
+
+                                        Type.Pants -> {
+                                            pants = it
+                                        }
+
+                                        Type.Jacket -> jacket = it
+                                        Type.Skirt -> {
+                                            skirt = it
+                                            dress = null
+                                        }
+
+                                        Type.Dress -> {
+                                            dress = it
+                                            top = null
+                                            skirt = null
+                                        }
+                                    }
+                                }
+                                navController.navigate(Routes.Home.route) {
+                                    popUpTo(Routes.Home.route) { inclusive = true }
+                                }
+                            },
+                            onDeselectOutfit = {
+                                var canNavigateBack = false
+                                val message =
+                                    "Du kannst nicht das letzte Ober- oder Unterteil ablegen!"
+                                when (cloth.type) {
+                                    Type.Tops -> {
+                                        // Prevent deselecting top if no dress is selected
+                                        if (dress == null) {
+                                            scope.launch {
+                                                snackbarHostState.showSnackbar(
+                                                    message = message,
+                                                    duration = SnackbarDuration.Long
+                                                )
+                                            }
+                                        } else {
+                                            top = null
+                                            canNavigateBack = true
+                                        }
+                                    }
+
+                                    Type.Pants -> {
+                                        // Prevent deselecting top if no dress is selected
+                                        if (skirt == null) {
+                                            scope.launch {
+                                                snackbarHostState.showSnackbar(
+                                                    message = message,
+                                                    duration = SnackbarDuration.Long
+                                                )
+                                            }
+                                        } else {
+                                            pants = null
+                                            canNavigateBack = true
+                                        }
+                                    }
+
+                                    Type.Jacket -> {
+                                        jacket = null
+                                        canNavigateBack = true}
+                                    Type.Skirt -> {
+                                        // Prevent deselecting top if no dress is selected
+                                        if (pants == null) {
+                                            scope.launch {
+                                                snackbarHostState.showSnackbar(
+                                                    message = message,
+                                                    duration = SnackbarDuration.Long
+                                                )
+                                            }
+                                        } else {
+                                            skirt = null
+                                            canNavigateBack = true
+                                        }
+                                    }
+
+                                    Type.Dress -> {
+                                        // Prevent deselecting top if no dress is selected
+                                        if (top == null) {
+                                            scope.launch {
+                                                snackbarHostState.showSnackbar(
+                                                    message = message,
+                                                    duration = SnackbarDuration.Long
+                                                )
+                                            }
+                                        } else {
+                                            dress = null
+                                            canNavigateBack = true
+                                        }
+                                    }
+                                }
+                                if(canNavigateBack) {
+                                    navController.popBackStack()
                                 }
                             }
-                            navController.navigate(Routes.Home.route) {
-                                popUpTo(Routes.Home.route) { inclusive = true }
-                            }
-                        }
-                    )
+                        )
+                    }
                 }
             }
         }
 
-        // Entspricht: Routes.Scan
         composable(Routes.Scan.route) {
             CameraScreenPermission(
                 onImageCaptured = { tempUri ->
-                    // 1. Kodieren der Uri für eine sichere URL-Übergabe
                     val encodedUri = Uri.encode(tempUri.toString())
-                    // 2. Navigation zum AddNewClothes-Screen mit der Uri als Argument
                     navController.navigate(Routes.AddNewClothes.createRoute(encodedUri))
                 }
             )
         }
 
-        // Entspricht: is Routes.AddNewClothes
         composable(
             route = Routes.AddNewClothes.route,
             arguments = listOf(navArgument(RouteArgs.IMAGE_URI) { type = NavType.StringType })
         ) { backStackEntry ->
-            // Hier holen wir das Argument sicher aus dem Navigations-Aufruf
             val encodedUriString = backStackEntry.arguments?.getString(RouteArgs.IMAGE_URI)
-
             if (encodedUriString != null) {
                 val context = LocalContext.current
-
                 AddNewClothesScreen(
-                    imageUriString = encodedUriString, // Die Uri wird direkt übergeben
-                    onSave = { newClothesData, imageUriStr ->
-                        // Deine Speicherlogik bleibt identisch
+                    imageUriString = encodedUriString,
+                    onSave = { newClothesData, _ ->
                         val uriToSave = encodedUriString.toUri()
                         val permanentPath = saveImagePermanently(context, uriToSave)
                         if (permanentPath != null) {
                             val finalClothes = newClothesData.copy(imagePath = permanentPath)
                             viewModel.insert(finalClothes)
-
-                            // Navigiere zurück zum Home-Screen
                             navController.navigate(Routes.Home.route) {
-                                popUpTo(navController.graph.startDestinationId) {
-                                    inclusive = true
-                                }
-                                launchSingleTop
+                                popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                                launchSingleTop = true
                             }
                         }
                     },
                     onRetakePhoto = { navController.navigate(Routes.Scan.route) }
                 )
             } else {
-                // Sicherheits-Fallback: Wenn die Uri fehlt, gehe einfach zurück.
                 navController.popBackStack()
             }
         }
@@ -241,32 +329,21 @@ fun NavHostContainer(
 }
 
 private fun saveImagePermanently(context: Context, imageUri: Uri): String? {
-    // Die Zeile "val imageUri = Uri.parse(tempUri)" ist jetzt überflüssig.
-
     val currentDate = Date()
     val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(currentDate)
     val fileName = "IMG_$timeStamp.jpg"
-
     val storageDir = File(context.filesDir, "images")
-
     if (!storageDir.exists()) {
         storageDir.mkdirs()
     }
-
     val permanentFile = File(storageDir, fileName)
-
     try {
-        // Öffne einen Input-Stream direkt von der übergebenen URI
-        val inputStream = context.contentResolver.openInputStream(imageUri)
-        val outputStream = FileOutputStream(permanentFile)
-
-        inputStream?.use { input ->
-            outputStream.use { output ->
+        context.contentResolver.openInputStream(imageUri)?.use { input ->
+            FileOutputStream(permanentFile).use { output ->
                 input.copyTo(output)
             }
         }
         return permanentFile.absolutePath
-
     } catch (e: Exception) {
         e.printStackTrace()
         return null
