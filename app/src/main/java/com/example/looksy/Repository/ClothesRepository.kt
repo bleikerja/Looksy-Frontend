@@ -24,6 +24,10 @@ class ClothesRepository(private val clothesDao: ClothesDao) {
         clothesDao.update(clothes)
     }
 
+    suspend fun updateAll(clothes: List<Clothes>) { // <-- Akzeptiert jetzt eine Liste!
+        clothesDao.updateAll(clothes)
+    }
+
     suspend fun delete(clothes: Clothes) {
         clothesDao.delete(clothes)
     }
