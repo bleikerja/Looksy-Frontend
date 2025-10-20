@@ -151,7 +151,7 @@ fun ClothInformationScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             Button(onClick = {onDeselectOutfit(clothesData.id)}){
-                Text("${clothesData.type} entfernen")
+                Text("Aus Outfit entfernen")
             }
             Button(onClick = { onConfirmOutfit(clothesData.id) }) {
                 Text("${clothesData.type} auswählen")
