@@ -91,9 +91,10 @@ fun NavHostContainer(
     viewModel: ClothesViewModel
 ) {
     val allClothesFromDb by viewModel.allClothes.collectAsState(initial = emptyList())
-    val categoryItems = allClothesFromDb.groupBy { it.type }.map { (type, items) ->
-        CategoryItems(category = type, items = items)
-    }
+    val categoryItems =
+        allClothesFromDb.filter { it.clean }.groupBy { it.type }.map { (type, items) ->
+            CategoryItems(category = type, items = items)
+        }
     var top by remember { mutableStateOf<Clothes?>(null) }
     var pants by remember { mutableStateOf<Clothes?>(null) }
     var jacket by remember { mutableStateOf<Clothes?>(null) }
@@ -300,7 +301,9 @@ fun NavHostContainer(
 
                                     Type.Jacket -> {
                                         jacket = null
-                                        canNavigateBack = true}
+                                        canNavigateBack = true
+                                    }
+
                                     Type.Skirt -> {
                                         // Prevent deselecting top if no dress is selected
                                         if (pants == null) {
@@ -331,7 +334,7 @@ fun NavHostContainer(
                                         }
                                     }
                                 }
-                                if(canNavigateBack) {
+                                if (canNavigateBack) {
                                     navController.popBackStack()
                                 }
                             },
@@ -399,7 +402,8 @@ fun NavHostContainer(
                     onDelete = {
                         scope.launch {
                             // Rufe die neue suspend-Funktion auf
-                            val clothesToDelete = viewModel.getByIdDirect(clothesId) // Kein .value mehr!
+                            val clothesToDelete =
+                                viewModel.getByIdDirect(clothesId) // Kein .value mehr!
                             if (clothesToDelete != null) {
                                 viewModel.delete(clothesToDelete)
                             }

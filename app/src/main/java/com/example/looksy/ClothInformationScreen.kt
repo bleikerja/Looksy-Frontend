@@ -172,7 +172,7 @@ fun ClothInformationScreen(
                 .horizontalScroll(rememberScrollState())
                 .height(200.dp)
         ) {
-            similarClothes.filter { it.id != clothesData.id }.forEach { item ->
+            similarClothes.filter { it.clean && it.id != clothesData.id }.forEach { item ->
                 SimilarClothCard(
                     clothes = item,
                     onClick = { onNavigateToDetails(item.id) }
