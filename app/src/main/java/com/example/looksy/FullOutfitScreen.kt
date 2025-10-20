@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.LocalLaundryService
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -32,6 +33,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -50,7 +52,8 @@ fun FullOutfitScreen(
     onClick: (Int) -> Unit = {},
     onConfirm: (List<Clothes>) -> Unit = {},
     onWashingMachine: () -> Unit = {},
-    onGenerateRandom: () -> Unit = {}
+    onGenerateRandom: () -> Unit = {},
+    onCamera: () -> Unit = {}
 ) {
     if ((top != null || dress != null) && (pants != null || skirt != null)) {
         val snackbarHostState = remember { SnackbarHostState() }
@@ -187,14 +190,25 @@ fun FullOutfitScreen(
                     modifier = Modifier.fillMaxSize()
                 )
             }
-            IconButton(onClick = { onWashingMachine() }, modifier = Modifier.size(50.dp).align(Alignment.TopEnd)) {
-                Icon(
-                    modifier = Modifier.fillMaxSize(),
-                    imageVector = Icons.Default.LocalLaundryService,
-                    contentDescription = "Zur Waschmaschine"
-                )
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(textAlign = TextAlign.Center, text = "Kleidung hizufügen oder waschen, um Outfits zu sehen!")
+                Row {
+                    IconButton(onClick = { onWashingMachine() }, modifier = Modifier.size(75.dp)) {
+                        Icon(
+                            modifier = Modifier.fillMaxSize().padding(5.dp),
+                            imageVector = Icons.Default.LocalLaundryService,
+                            contentDescription = "Zur Waschmaschine"
+                        )
+                    }
+                    IconButton(onClick = { onCamera() }, modifier = Modifier.size(75.dp)) {
+                        Icon(
+                            modifier = Modifier.fillMaxSize().padding(5.dp),
+                            imageVector = Icons.Default.PhotoCamera,
+                            contentDescription = "Zur Kamera"
+                        )
+                    }
+                }
             }
-            Text("Füge Kleidung hinzu, um Outfits zu sehen!")
         }
     }
 }
@@ -221,6 +235,7 @@ fun OutfitPart(imageResId: Any?, onClick: () -> Unit, modifier: Modifier = Modif
     }
 }
 
+/*
 @Composable
 private fun EmptyState(
     onAddClothesClick: () -> Unit,
@@ -242,6 +257,7 @@ private fun EmptyState(
         }
     }
 }
+*/
 
 @Preview(showBackground = true)
 @Composable

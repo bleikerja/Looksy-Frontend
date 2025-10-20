@@ -203,7 +203,9 @@ fun NavHostContainer(
                     skirt = newSkirt
                     jacket = newJacket
                     dress = newDress
-                }},)
+                }},
+                onCamera = { navController.navigate(Routes.Scan.route) }
+            )
         }
 
         composable(Routes.ChoseClothes.route) {
