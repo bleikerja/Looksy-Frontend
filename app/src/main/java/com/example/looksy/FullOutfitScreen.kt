@@ -77,14 +77,14 @@ fun FullOutfitScreen(
                 modifier = Modifier.weight(1f)
             )
         }
-        pants?.let {
+        skirt?.let {
             OutfitPart(
                 imageResId = it.imagePath,
                 onClick = { onClick(it.id) },
                 modifier = Modifier.weight(1f)
             )
         }
-        skirt?.let {
+        pants?.let {
             OutfitPart(
                 imageResId = it.imagePath,
                 onClick = { onClick(it.id) },

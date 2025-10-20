@@ -12,6 +12,8 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -87,11 +89,52 @@ fun NavHostContainer(
         CategoryItems(category = type, items = items)
     }
 
-    var top by remember(allClothesFromDb) { mutableStateOf(allClothesFromDb.firstOrNull { it.type == Type.Tops }) }
-    var pants by remember(allClothesFromDb) { mutableStateOf(allClothesFromDb.firstOrNull { it.type == Type.Pants }) }
-    var jacket by remember(allClothesFromDb) { mutableStateOf(allClothesFromDb.firstOrNull { it.type == Type.Jacket }) }
-    var skirt by remember(allClothesFromDb) { mutableStateOf(allClothesFromDb.firstOrNull { it.type == Type.Skirt }) }
-    var dress by remember(allClothesFromDb) { mutableStateOf(allClothesFromDb.firstOrNull { it.type == Type.Dress }) }
+    var top by remember { mutableStateOf<Clothes?>(null) }
+    var pants by remember { mutableStateOf<Clothes?>(null) }
+    var jacket by remember { mutableStateOf<Clothes?>(null) }
+    var skirt by remember { mutableStateOf<Clothes?>(null) }
+    var dress by remember { mutableStateOf<Clothes?>(null) }
+
+    LaunchedEffect(allClothesFromDb) {
+        if (allClothesFromDb.isNotEmpty() && top == null && dress == null) {
+            val searchForTops = listOf(true, false).random()
+            var randomTop: Clothes? = null
+            var randomDress: Clothes? = null
+            if (searchForTops) {
+                randomTop = allClothesFromDb.filter { it.type == Type.Tops }.randomOrNull()
+            } else {
+                randomDress = allClothesFromDb.filter { it.type == Type.Dress }.randomOrNull()
+            }
+
+            if (randomTop == null && randomDress == null) {
+                if (searchForTops) {
+                    randomDress = allClothesFromDb.filter { it.type == Type.Dress }.randomOrNull()
+                } else {
+                    randomTop = allClothesFromDb.filter { it.type == Type.Tops }.randomOrNull()
+                }
+            }
+
+            val randomPants = allClothesFromDb.filter { it.type == Type.Pants }.randomOrNull()
+            val randomSkirt = allClothesFromDb.filter { it.type == Type.Skirt }.randomOrNull()
+
+            val randomJacket = allClothesFromDb.filter { it.type == Type.Jacket }.randomOrNull()
+            val finalTop = randomTop
+            val finalPants = randomPants
+            var finalSkirt = randomSkirt
+            val finalJacket = randomJacket
+            val finalDress = randomDress
+
+            if (finalDress != null) {
+                finalSkirt = null
+            }
+
+            top = finalTop
+            pants = finalPants
+            skirt = finalSkirt
+            jacket = finalJacket
+            dress = finalDress
+        }
+    }
 
     NavHost(
         navController = navController,
@@ -187,7 +230,6 @@ fun NavHostContainer(
                                     when (it.type) {
                                         Type.Tops -> {
                                             top = it
-                                            dress = null
                                         }
 
                                         Type.Pants -> {
@@ -202,7 +244,6 @@ fun NavHostContainer(
 
                                         Type.Dress -> {
                                             dress = it
-                                            top = null
                                             skirt = null
                                         }
                                     }
