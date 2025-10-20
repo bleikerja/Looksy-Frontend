@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -41,81 +42,95 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.net.toUri
 import coil.compose.AsyncImage
 import com.example.looksy.R
+import com.example.looksy.ViewModels.ClothesViewModel
 import com.example.looksy.dataClassClones.Clothes
 import com.example.looksy.dataClassClones.Material
 import com.example.looksy.dataClassClones.Season
 import com.example.looksy.dataClassClones.Size
 import com.example.looksy.dataClassClones.Type
 import com.example.looksy.dataClassClones.WashingNotes
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddNewClothesScreen(
-    imageUriString: String,
-    onSave: (newItem: Clothes, imageUri: Uri) -> Unit,
-    onRetakePhoto: () -> Unit,
+    imageUriString: String?,
+    viewModel: ClothesViewModel,
+    onSave: (newItem: Clothes) -> Unit,
+    onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
+    clothesIdToEdit: Int? = null
 ) {
-    // Zustände für alle Formularfelder
-    var size by remember { mutableStateOf<Size?>(null) }
-    var season by remember { mutableStateOf<Season?>(null) }
-    var type by remember { mutableStateOf<Type?>(null) }
-    var material by remember { mutableStateOf<Material?>(null) }
-    var washingNotes by remember { mutableStateOf<WashingNotes?>(null) }
+    val clothesToEdit by if (clothesIdToEdit != null) {
+        viewModel.getClothesById(clothesIdToEdit).collectAsState(initial = null)
+    } else {
+        // Im "Neu anlegen"-Modus haben wir kein Objekt zum Bearbeiten
+        remember { mutableStateOf(null) }
+    }
+
+    // --- ANPASSUNG: Zustände mit den geladenen Daten initialisieren ---
+    var size by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.size) }
+    var season by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.seasonUsage) }
+    var type by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.type) }
+    var material by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.material) }
+    var washingNotes by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.washingNotes) }
 
     val isFormValid =
-        size != null && season != null && type != null && material != null && washingNotes != null
+                size != null && season != null && type != null && material != null && washingNotes != null
+    val imageToShowUri = remember(clothesToEdit, imageUriString) {
+        when {
+            // Bearbeiten-Modus und es gibt einen Pfad
+            clothesToEdit?.imagePath?.isNotEmpty() == true -> File(clothesToEdit!!.imagePath).toUri()
+            // Neu-Modus mit einer neuen URI von der Kamera
+            imageUriString != null -> imageUriString.toUri()
+            // Fallback
+            else -> null
+        }
+    }
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        "Neues Kleidungsstück",
+                        if (clothesIdToEdit != null) "Kleidung bearbeiten" else "Neues Kleidungsstück",
                         style = MaterialTheme.typography.headlineMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onRetakePhoto) {
+                    IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Foto neu aufnehmen"
                         )
                     }
                 },
-                // Transparenter Hintergrund passt besser zum Design
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         },
         floatingActionButton = {
             Button(
                 onClick = {
-                    // Erstelle das Clothes-Objekt, wenn das Formular gültig ist
-                    val newItem = Clothes(
+                    // Erstelle das Clothes-Objekt, egal ob neu oder bearbeitet
+                    val clothesItem = Clothes(
+                        // Wenn wir bearbeiten, behalte die ID, sonst ist sie 0 (wird von DB auto-generiert)
+                        id = clothesIdToEdit ?: clothesToEdit?.id ?: 0,
                         size = size!!,
                         seasonUsage = season!!,
                         type = type!!,
                         material = material!!,
-                        clean = true,
-                        washingNotes = washingNotes!!
+                        clean = clothesToEdit?.clean ?: true, // Behalte den alten Status oder setze auf sauber
+                        washingNotes = washingNotes!!,
+                        // Der imagePath wird erst in Routes.kt final gesetzt!
+                        imagePath = clothesToEdit?.imagePath ?: ""
                     )
-                    val imageUri = try {
-                        imageUriString.toUri()
-                    } catch (e: IllegalArgumentException) {
-                        // Gib eine leere/ungültige URI zurück, falls der String leer ist.
-                        // Das sollte in der echten App nie passieren, sichert aber die Preview ab.
-                        Uri.EMPTY
-                    }
-
-                    // Rufe onSave nur auf, wenn die URI gültig ist.
-                    if (imageUri != Uri.EMPTY) {
-                        onSave(newItem, imageUri)
-                    }
+                    // Rufe die vereinfachte onSave-Funktion auf
+                    onSave(clothesItem)
                 },
                 enabled = isFormValid // Der Button ist nur klickbar, wenn alle Felder ausgefüllt sind
             ) {
-                Text("Speichern")
+                Text(if (clothesIdToEdit != null) "Änderungen speichern" else "Speichern")
             }
         }
     ) { innerPadding ->
@@ -128,7 +143,7 @@ fun AddNewClothesScreen(
         ) {
             AddNewClothesForm(
                 //modifier = Modifier.padding(innerPadding),
-                imageUriString = imageUriString,
+                imageUri = imageToShowUri,
                 size = size,
                 onSizeChange = { size = it },
                 season = season,
@@ -148,7 +163,7 @@ fun AddNewClothesScreen(
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 private fun AddNewClothesForm(
-    imageUriString: String,
+    imageUri: Uri?,
     size: Size?,
     onSizeChange: (Size) -> Unit,
     season: Season?,
@@ -170,7 +185,7 @@ private fun AddNewClothesForm(
         // --- BILD-VORSCHAU ---
         item {
             AsyncImage(
-                model = imageUriString.ifEmpty { R.drawable.clothicon },
+                model = imageUri ?: R.drawable.clothicon,
                 contentDescription = "Neues Kleidungsstück",
                 modifier = Modifier
                     .fillMaxWidth()
@@ -275,15 +290,23 @@ fun <T> EnumDropdown(
 }
 
 
+@SuppressLint("ViewModelConstructorInComposable")
 @Preview(showBackground = true)
 @Composable
 fun PreviewAddNewClothesScreen() {
+    /*
     AddNewClothesScreen(
         imageUriString = "", // Leere URI für die Vorschau
         onSave = { newItem, imageUri ->
             // In der Vorschau passiert hier nichts.
             println("Preview Save: $newItem, Uri: $imageUri")
         },
-        onRetakePhoto = {}
+        onNavigateBack = {},
+        viewModel = ClothesViewModel(
+            repository =
+        ),
+        clothesIdToEdit = null
     )
+
+     */
 }
