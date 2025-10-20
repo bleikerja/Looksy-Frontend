@@ -28,6 +28,7 @@ import com.example.looksy.dataClassClones.Type
 import com.example.looksy.screens.AddNewClothesScreen
 import com.example.looksy.screens.CameraScreenPermission
 import com.example.looksy.screens.SpecificCategoryScreen
+import com.example.looksy.screens.WashingMachineScreen
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
@@ -49,6 +50,8 @@ sealed class Routes(override val route: String) : NavigationDestination {
     data object Home : Routes("home")
     data object Scan : Routes("scan")
     data object ChoseClothes : Routes("chose clothes")
+
+    data object WashingMachine : Routes("washing_machine")
     data object Details : Routes("details/{${RouteArgs.ID}}") {
         fun createRoute(id: Int): String {
             return "details/$id"
@@ -166,8 +169,8 @@ fun NavHostContainer(
                             val updatedCloth = cloth.copy(clean = false)
                             viewModel.update(updatedCloth)
                         }
-                        navController.popBackStack()
-                    })
+                    },
+                    onWashingMachine = { navController.navigate(Routes.WashingMachine.route) })
             } else {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text("Füge Kleidung hinzu, um Outfits zu sehen!")
@@ -411,6 +414,24 @@ fun NavHostContainer(
                 )
             }
         }
+
+        composable(route = Routes.WashingMachine.route) {
+            // Hole alle schmutzigen Kleidungsstücke aus der Datenbank
+            val dirtyClothes = allClothesFromDb.filter { !it.clean }
+
+            WashingMachineScreen(
+                dirtyClothes = dirtyClothes,
+                onNavigateBack = { navController.popBackStack() },
+                onConfirmWashed = { washedClothes ->
+                    // Markiere alle ausgewählten Teile als 'sauber'
+                    washedClothes.forEach { cloth ->
+                        val updatedCloth = cloth.copy(clean = true)
+                        viewModel.update(updatedCloth)
+                    }
+                }
+            )
+        }
+
     }
 }
 

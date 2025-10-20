@@ -1,6 +1,5 @@
 package com.example.looksy
 
-import androidx.activity.result.launch
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,11 +13,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Create
+import androidx.compose.material.icons.filled.LocalLaundryService
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -45,7 +45,8 @@ fun FullOutfitScreen(
     jacket: Clothes? = null,
     skirt: Clothes? = null,
     onClick: (Int) -> Unit = {},
-    onConfirm: (List<Clothes>) -> Unit = {}
+    onConfirm: (List<Clothes>) -> Unit = {},
+    onWashingMachine: () -> Unit = {},
 ) {
     if (top == null && dress == null) {
         throw NotImplementedError("Trow Exeption: Du kannst nicht nackt losgehen")
@@ -63,11 +64,22 @@ fun FullOutfitScreen(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                "Dein heutiges Outfit",
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.primary
-            )
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    "Dein heutiges Outfit",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.align(Alignment.CenterVertically)
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                IconButton(onClick = { onWashingMachine() }) {
+                    Icon(
+                        imageVector = Icons.Default.LocalLaundryService,
+                        contentDescription = "Zur Waschmaschine"
+                    )
+                }
+            }
+
             Spacer(modifier = Modifier.height(16.dp))
 
             jacket?.let {
@@ -131,36 +143,36 @@ fun FullOutfitScreen(
 }
 
 
-    @Composable
-    fun OutfitPart(imageResId: Any?, onClick: () -> Unit, modifier: Modifier = Modifier) {
-        Row(
-            modifier = modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            AsyncImage(
-                model = imageResId,
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .padding(end = 16.dp),
-                contentDescription = "Kleidungsstück",
-            )
-            LooksyButton(
-                onClick = onClick,
-                modifier = Modifier.align(Alignment.CenterVertically),
-                picture = { Icon(Icons.Default.Create, contentDescription = "") })
-        }
+@Composable
+fun OutfitPart(imageResId: Any?, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
+    ) {
+        AsyncImage(
+            model = imageResId,
+            modifier = Modifier
+                .fillMaxHeight()
+                .padding(end = 16.dp),
+            contentDescription = "Kleidungsstück",
+        )
+        LooksyButton(
+            onClick = onClick,
+            modifier = Modifier.align(Alignment.CenterVertically),
+            picture = { Icon(Icons.Default.Create, contentDescription = "") })
     }
+}
 
-    @Preview(showBackground = true)
-    @Composable
-    fun FullOutfitPreview() {
-        LooksyTheme {
-            FullOutfitScreen(
-                top = allClothes[2],
-                pants = allClothes[1],
-                skirt = allClothes[0],
-                onClick = { }
-            )
-        }
+@Preview(showBackground = true)
+@Composable
+fun FullOutfitPreview() {
+    LooksyTheme {
+        FullOutfitScreen(
+            top = allClothes[2],
+            pants = allClothes[1],
+            skirt = allClothes[0],
+            onClick = { }
+        )
     }
+}
