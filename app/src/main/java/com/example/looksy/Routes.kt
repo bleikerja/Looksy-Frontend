@@ -159,59 +159,51 @@ fun NavHostContainer(
             val currentSkirt = skirt
             val currentDress = dress
 
-            if ((currentTop != null || currentDress != null) && (currentPants != null || currentSkirt != null)) {
-                LaunchedEffect(allClothesFromDb, top, pants, skirt, jacket, dress) {
-                    if (allClothesFromDb.isNotEmpty() && top == null && dress == null) {
-                        // Rufe die neue Funktion auf, um das initiale Outfit zu setzen
-                        generateRandomOutfit(allClothesFromDb) { newTop, newPants, newSkirt, newJacket, newDress ->
-                            top = newTop
-                            pants = newPants
-                            skirt = newSkirt
-                            jacket = newJacket
-                            dress = newDress
-                        }
+            LaunchedEffect(allClothesFromDb, top, pants, skirt, jacket, dress) {
+                if (allClothesFromDb.isNotEmpty() && top == null && dress == null) {
+                    // Rufe die neue Funktion auf, um das initiale Outfit zu setzen
+                    generateRandomOutfit(allClothesFromDb) { newTop, newPants, newSkirt, newJacket, newDress ->
+                        top = newTop
+                        pants = newPants
+                        skirt = newSkirt
+                        jacket = newJacket
+                        dress = newDress
                     }
-                }
-                FullOutfitScreen(
-                    top = currentTop,
-                    pants = currentPants,
-                    jacket = currentJacket,
-                    skirt = currentSkirt,
-                    dress = currentDress,
-                    onClick = { clothesId ->
-                        navController.navigate(Routes.Details.createRoute(clothesId))
-                    },
-                    onConfirm = { wornClothesList ->
-                        val updatedClothesList = wornClothesList.map { it.copy(clean = false) }
-                        viewModel.updateAll(updatedClothesList)
-
-                        val clothesForNewOutfit = allClothesFromDb.map { cloth ->
-                            updatedClothesList.find { it.id == cloth.id } ?: cloth
-                        }
-
-                        generateRandomOutfit(clothesForNewOutfit) { newTop, newPants, newSkirt, newJacket, newDress ->
-                            top = newTop
-                            pants = newPants
-                            skirt = newSkirt
-                            jacket = newJacket
-                            dress = newDress
-                        }
-                    },
-                    onWashingMachine = { navController.navigate(Routes.WashingMachine.route) })
-            } else {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    IconButton(
-                        onClick = { navController.navigate(Routes.WashingMachine.route) },
-                        modifier = Modifier.align(Alignment.TopEnd)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.LocalLaundryService,
-                            contentDescription = "Zur Waschmaschine"
-                        )
-                    }
-                    Text("Füge Kleidung hinzu, um Outfits zu sehen!")
                 }
             }
+            FullOutfitScreen(
+                top = currentTop,
+                pants = currentPants,
+                jacket = currentJacket,
+                skirt = currentSkirt,
+                dress = currentDress,
+                onClick = { clothesId ->
+                    navController.navigate(Routes.Details.createRoute(clothesId))
+                },
+                onConfirm = { wornClothesList ->
+                    val updatedClothesList = wornClothesList.map { it.copy(clean = false) }
+                    viewModel.updateAll(updatedClothesList)
+
+                    val clothesForNewOutfit = allClothesFromDb.map { cloth ->
+                        updatedClothesList.find { it.id == cloth.id } ?: cloth
+                    }
+
+                    generateRandomOutfit(clothesForNewOutfit) { newTop, newPants, newSkirt, newJacket, newDress ->
+                        top = newTop
+                        pants = newPants
+                        skirt = newSkirt
+                        jacket = newJacket
+                        dress = newDress
+                    }
+                },
+                onWashingMachine = { navController.navigate(Routes.WashingMachine.route) },
+                onGenerateRandom = { generateRandomOutfit(allClothesFromDb) { newTop, newPants, newSkirt, newJacket, newDress ->
+                    top = newTop
+                    pants = newPants
+                    skirt = newSkirt
+                    jacket = newJacket
+                    dress = newDress
+                }},)
         }
 
         composable(Routes.ChoseClothes.route) {
