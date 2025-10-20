@@ -61,6 +61,9 @@ class ClothesViewModel(private val repository: ClothesRepository) : ViewModel() 
     fun update(clothes: Clothes) = viewModelScope.launch {
         repository.update(clothes) // Ruft die update-Methode des Repositories auf
     }
+    fun updateAll(clothes: List<Clothes>) = viewModelScope.launch { // <-- Akzeptiert jetzt eine Liste!
+        repository.updateAll(clothes)
+    }
 
     fun delete(clothes: Clothes) = viewModelScope.launch {
         repository.delete(clothes)

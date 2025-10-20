@@ -31,6 +31,9 @@ interface ClothesDao {
     @Update
     suspend fun update(clothes: Clothes)
 
+    @Update
+    suspend fun updateAll(clothes: List<Clothes>)
+
     @Delete
     suspend fun delete(clothes: Clothes)
 }

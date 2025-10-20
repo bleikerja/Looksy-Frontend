@@ -165,10 +165,8 @@ fun NavHostContainer(
                         navController.navigate(Routes.Details.createRoute(clothesId))
                     },
                     onConfirm = { wornClothesList ->
-                        wornClothesList.forEach { cloth ->
-                            val updatedCloth = cloth.copy(clean = false)
-                            viewModel.update(updatedCloth)
-                        }
+                        val updatedClothesList = wornClothesList.map { it.copy(clean = false) }
+                        viewModel.updateAll(updatedClothesList)
                     },
                     onWashingMachine = { navController.navigate(Routes.WashingMachine.route) })
             } else {
