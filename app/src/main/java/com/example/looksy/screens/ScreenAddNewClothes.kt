@@ -44,13 +44,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.net.toUri
 import coil.compose.AsyncImage
 import com.example.looksy.R
-import com.example.looksy.ViewModels.ClothesViewModel
-import com.example.looksy.dataClassClones.Clothes
-import com.example.looksy.dataClassClones.Material
-import com.example.looksy.dataClassClones.Season
-import com.example.looksy.dataClassClones.Size
-import com.example.looksy.dataClassClones.Type
-import com.example.looksy.dataClassClones.WashingNotes
+import com.example.looksy.presentation.viewmodel.ClothesViewModel
+import com.example.looksy.model.Clothes
+import com.example.looksy.model.Material
+import com.example.looksy.model.Season
+import com.example.looksy.model.Size
+import com.example.looksy.model.Type
+import com.example.looksy.model.WashingNotes
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)

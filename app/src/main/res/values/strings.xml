@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">Looksy</string>
+    <string name="error_cannot_deselect_last_item">Du kannst nicht das letzte Ober- oder Unterteil ablegen!</string>
+    <string name="wardrobe_title">Dein Kleiderschrank</string>
+    <string name="nav_chose_clothes">Chose Clothes</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_scan">Scan</string>
 </resources>

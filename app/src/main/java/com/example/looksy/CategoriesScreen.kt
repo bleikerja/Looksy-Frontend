@@ -36,8 +36,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.example.looksy.dataClassClones.Clothes
-import com.example.looksy.dataClassClones.Type
+import com.example.looksy.model.Clothes
+import com.example.looksy.model.Type
 
 data class Category(val name: String, val iconRes: Int)
 data class Item(val name: String, val imageRes: Int)

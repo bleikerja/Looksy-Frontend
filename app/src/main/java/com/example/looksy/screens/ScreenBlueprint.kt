@@ -5,7 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.painterResource
 import com.example.looksy.R
-import com.example.looksy.Routes
+import com.example.looksy.presentation.navigation.Routes
 
 
 import androidx.compose.foundation.layout.padding
@@ -19,10 +19,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.example.looksy.Application.ClothesApplication
-import com.example.looksy.Factory.ClothesViewModelFactory
-import com.example.looksy.NavHostContainer
-import com.example.looksy.ViewModels.ClothesViewModel
+import com.example.looksy.application.ClothesApplication
+import com.example.looksy.di.ClothesViewModelFactory
+import com.example.looksy.presentation.navigation.NavGraph
+import com.example.looksy.presentation.viewmodel.ClothesViewModel
 
 @Composable
 fun ScreenBlueprint(navController: NavHostController) {
@@ -74,7 +74,7 @@ fun ScreenBlueprint(navController: NavHostController) {
             }
         }
     ) { innerPadding ->
-       NavHostContainer(navController = navController, modifier = Modifier.padding(innerPadding), viewModel=viewModelClothes)
+       NavGraph(navController = navController, modifier = Modifier.padding(innerPadding), viewModel=viewModelClothes)
     }
 }
 
