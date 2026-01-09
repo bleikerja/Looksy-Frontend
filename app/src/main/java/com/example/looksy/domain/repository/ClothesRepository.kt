@@ -1,9 +1,9 @@
-package com.example.looksy.Repository
+package com.example.looksy.domain.repository
 
-import com.example.looksy.dataClassClones.Clothes
+import com.example.looksy.data.local.dao.ClothesDao
+import com.example.looksy.model.Clothes
+import com.example.looksy.model.Type
 import kotlinx.coroutines.flow.Flow
-import com.example.looksy.dao.ClothesDao
-import com.example.looksy.dataClassClones.Type
 
 class ClothesRepository(private val clothesDao: ClothesDao) {
     val allClothes: Flow<List<Clothes>> = clothesDao.getAllClothes()
@@ -24,7 +24,7 @@ class ClothesRepository(private val clothesDao: ClothesDao) {
         clothesDao.update(clothes)
     }
 
-    suspend fun updateAll(clothes: List<Clothes>) { // <-- Akzeptiert jetzt eine Liste!
+    suspend fun updateAll(clothes: List<Clothes>) {
         clothesDao.updateAll(clothes)
     }
 

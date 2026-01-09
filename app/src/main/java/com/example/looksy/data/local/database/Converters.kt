@@ -1,24 +1,23 @@
-package com.example.looksy
+package com.example.looksy.data.local.database
 
-import com.example.looksy.dataClassClones.Size
 import androidx.room.TypeConverter
-import com.example.looksy.dataClassClones.Material
-import com.example.looksy.dataClassClones.Season
-import com.example.looksy.dataClassClones.Type
-import com.example.looksy.dataClassClones.WashingNotes
+import com.example.looksy.model.Material
+import com.example.looksy.model.Season
+import com.example.looksy.model.Size
+import com.example.looksy.model.Type
+import com.example.looksy.model.WashingNotes
 
 class Converters {
     @TypeConverter
     fun fromSize(size: Size): String {
-        return size.name // Wandelt z.B. Size._46 in den String "_46" um
+        return size.name
     }
 
     @TypeConverter
     fun toSize(sizeString: String): Size {
-        return Size.valueOf(sizeString) // Wandelt den String "_46" zurück in Size._46 um
+        return Size.valueOf(sizeString)
     }
 
-    // --- Konverter für 'Season' Enum ---
     @TypeConverter
     fun fromSeason(season: Season): String {
         return season.name
@@ -29,7 +28,6 @@ class Converters {
         return Season.valueOf(seasonString)
     }
 
-    // --- Konverter für 'Type' Enum ---
     @TypeConverter
     fun fromType(type: Type): String {
         return type.name
@@ -40,7 +38,6 @@ class Converters {
         return Type.valueOf(typeString)
     }
 
-    // --- Konverter für 'Material' Enum ---
     @TypeConverter
     fun fromMaterial(material: Material): String {
         return material.name
@@ -51,7 +48,6 @@ class Converters {
         return Material.valueOf(materialString)
     }
 
-    // --- Konverter für 'WashingNotes' Enum ---
     @TypeConverter
     fun fromWashingNotes(washingNotes: WashingNotes): String {
         return washingNotes.name

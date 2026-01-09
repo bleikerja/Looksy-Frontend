@@ -43,10 +43,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.looksy.R
-import com.example.looksy.dataClassClones.Clothes
+import com.example.looksy.model.Clothes
 import java.io.File
 import androidx.core.net.toUri
-import com.example.looksy.dataClassClones.WashingNotes
+import com.example.looksy.model.WashingNotes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

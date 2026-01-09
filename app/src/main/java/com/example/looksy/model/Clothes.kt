@@ -1,4 +1,4 @@
-package com.example.looksy.dataClassClones
+package com.example.looksy.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

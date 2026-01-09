@@ -1,13 +1,12 @@
-package com.example.looksy.dataClassClones
+package com.example.looksy.model
 
-//TODO: add more Washing notes
-enum class WashingNotes (val displayName: String){
+enum class WashingNotes(val displayName: String) {
     None("-"),
     DontWash("Nicht Waschen"),
     Temperature30("Waschen 30°C"),
     Temperature40("Waschen 40°C"),
     Temperature60("Waschen 60°C"),
-    Hand ("Handwäsche"),
+    Hand("Handwäsche"),
     Dryer("Trockner"),
     NoDryer("Kein Trockner");
 

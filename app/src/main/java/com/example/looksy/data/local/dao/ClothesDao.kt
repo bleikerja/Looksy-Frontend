@@ -1,4 +1,4 @@
-package com.example.looksy.dao
+package com.example.looksy.data.local.dao
 
 import androidx.room.Dao
 import androidx.room.Delete
@@ -6,8 +6,8 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
-import com.example.looksy.dataClassClones.Clothes
-import com.example.looksy.dataClassClones.Type
+import com.example.looksy.model.Clothes
+import com.example.looksy.model.Type
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -15,9 +15,8 @@ interface ClothesDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(clothes: Clothes)
 
-    // DIESE FUNKTION IST DER SCHLÜSSEL:
     @Query("SELECT * FROM clothes_table ORDER BY id DESC")
-    fun getAllClothes(): Flow<List<Clothes>> // Gibt einen Datenstrom zurück, kein suspend!
+    fun getAllClothes(): Flow<List<Clothes>>
 
     @Query("SELECT * FROM clothes_table WHERE id = :id")
     fun getClothesById(id: Int): Flow<Clothes?>

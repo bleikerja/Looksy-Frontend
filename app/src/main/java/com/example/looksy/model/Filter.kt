@@ -1,4 +1,4 @@
-package com.example.looksy.dataClassClones
+package com.example.looksy.model
 
 class Filter {
     fun byType(type: Type, list: MutableList<Clothes>): MutableList<Clothes> {
