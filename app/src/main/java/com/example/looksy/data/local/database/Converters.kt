@@ -1,11 +1,11 @@
 package com.example.looksy.data.local.database
 
 import androidx.room.TypeConverter
-import com.example.looksy.model.Material
-import com.example.looksy.model.Season
-import com.example.looksy.model.Size
-import com.example.looksy.model.Type
-import com.example.looksy.model.WashingNotes
+import com.example.looksy.data.model.Material
+import com.example.looksy.data.model.Season
+import com.example.looksy.data.model.Size
+import com.example.looksy.data.model.Type
+import com.example.looksy.data.model.WashingNotes
 
 class Converters {
     @TypeConverter

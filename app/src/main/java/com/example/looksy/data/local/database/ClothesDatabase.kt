@@ -6,7 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.example.looksy.data.local.dao.ClothesDao
-import com.example.looksy.model.Clothes
+import com.example.looksy.data.model.Clothes
 
 @Database(entities = [Clothes::class], version = 1, exportSchema = false)
 @TypeConverters(Converters::class)
