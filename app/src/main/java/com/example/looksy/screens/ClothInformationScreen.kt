@@ -1,4 +1,4 @@
-package com.example.looksy
+package com.example.looksy.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -36,6 +36,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.example.looksy.LooksyButton
+import com.example.looksy.R
 import com.example.looksy.presentation.viewmodel.ClothesViewModel
 import com.example.looksy.model.Clothes
 import com.example.looksy.model.Material

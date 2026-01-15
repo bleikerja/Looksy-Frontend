@@ -1,4 +1,4 @@
-package com.example.looksy
+package com.example.looksy.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -18,7 +18,6 @@ import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.LocalLaundryService
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Shuffle
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -37,6 +36,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.example.looksy.LooksyButton
 import com.example.looksy.model.Clothes
 import com.example.looksy.ui.theme.LooksyTheme
 import kotlinx.coroutines.launch

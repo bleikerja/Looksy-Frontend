@@ -1,6 +1,5 @@
 package com.example.looksy.presentation.navigation
 
-import android.content.Context
 import android.net.Uri
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -23,14 +22,17 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.example.looksy.CategoriesScreen
-import com.example.looksy.ClothInformationScreen
-import com.example.looksy.FullOutfitScreen
+import com.example.looksy.screens.CategoriesScreen
+import com.example.looksy.R
+import com.example.looksy.screens.ClothInformationScreen
+import com.example.looksy.screens.FullOutfitScreen
 import com.example.looksy.model.Clothes
 import com.example.looksy.model.Type
 import com.example.looksy.presentation.viewmodel.ClothesViewModel
 import com.example.looksy.screens.AddNewClothesScreen
 import com.example.looksy.screens.CameraScreenPermission
+import com.example.looksy.screens.Category
+import com.example.looksy.screens.CategoryItems
 import com.example.looksy.screens.SpecificCategoryScreen
 import com.example.looksy.screens.WashingMachineScreen
 import com.example.looksy.util.generateRandomOutfit
@@ -46,7 +48,7 @@ fun NavGraph(
     val allClothesFromDb by viewModel.allClothes.collectAsState(initial = emptyList())
     val categoryItems =
         allClothesFromDb.filter { it.clean }.groupBy { it.type }.map { (type, items) ->
-            com.example.looksy.CategoryItems(category = type, items = items)
+            CategoryItems(category = type, items = items)
         }
     
     var top by remember { mutableStateOf<Clothes?>(null) }
@@ -128,11 +130,11 @@ fun NavGraph(
 
         composable(Routes.ChoseClothes.route) {
             val sampleCategories = listOf(
-                com.example.looksy.Category("Shirt", com.example.looksy.R.drawable.shirt_category),
-                com.example.looksy.Category("Pants", com.example.looksy.R.drawable.pants_category),
-                com.example.looksy.Category("Glasses", com.example.looksy.R.drawable.glasses_category),
-                com.example.looksy.Category("Shoes", com.example.looksy.R.drawable.shoes_category),
-                com.example.looksy.Category("Watch", com.example.looksy.R.drawable.watch_category)
+                Category("Shirt", R.drawable.shirt_category),
+                Category("Pants", R.drawable.pants_category),
+                Category("Glasses", R.drawable.glasses_category),
+                Category("Shoes", R.drawable.shoes_category),
+                Category("Watch", R.drawable.watch_category)
             )
             
             CategoriesScreen(
@@ -217,7 +219,7 @@ fun NavGraph(
                             },
                             onDeselectOutfit = {
                                 var canNavigateBack = false
-                                val message = context.getString(com.example.looksy.R.string.error_cannot_deselect_last_item)
+                                val message = context.getString(R.string.error_cannot_deselect_last_item)
                                 
                                 when (cloth.type) {
                                     Type.Tops -> {
