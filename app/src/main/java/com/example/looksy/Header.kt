@@ -1,5 +1,6 @@
 package com.example.looksy
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,37 +19,50 @@ import androidx.compose.ui.unit.dp
 import com.example.looksy.model.Clothes
 
 @Composable
-fun Header(onNavigateBack: () -> Unit,
-           onNavigateToRightIcon: (Int) -> Unit,
-           clothesData: Clothes,
-           headerText: String,
-           rightIconContentDescription: String,
-           rightIcon: ImageVector
-           ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
+fun Header(
+    onNavigateBack: () -> Unit,
+    onNavigateToRightIcon: (Int?) -> Unit,
+    clothesData: Clothes?,
+    headerText: String,
+    rightIconContentDescription: String?,
+    rightIcon: ImageVector?,
+    isFirstHeader: Boolean = false,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        contentAlignment = Alignment.Center
     ) {
-        IconButton(onClick = onNavigateBack) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Zurück",
-                modifier = Modifier.padding(end = 10.dp)
-            )
+        if (!isFirstHeader) {
+            IconButton(
+                onClick = onNavigateBack,
+                modifier = Modifier.align(Alignment.CenterStart)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Zurück"
+                )
+            }
         }
+
         Text(
-            headerText,
+            text = headerText,
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.align(Alignment.CenterVertically)
+            modifier = Modifier.align(Alignment.Center)
         )
-        Spacer(modifier = Modifier.weight(1f))
-        IconButton(onClick = { onNavigateToRightIcon(clothesData.id) }) {
-            Icon(
-                imageVector = rightIcon,
-                contentDescription = rightIconContentDescription,
-                modifier = Modifier.padding(end = 10.dp)
-            )
+
+        if (rightIcon != null && rightIconContentDescription != null) {
+            IconButton(
+                onClick = { onNavigateToRightIcon(clothesData?.id) },
+                modifier = Modifier.align(Alignment.CenterEnd)
+            ) {
+                Icon(
+                    imageVector = rightIcon,
+                    contentDescription = rightIconContentDescription
+                )
+            }
         }
     }
 }
