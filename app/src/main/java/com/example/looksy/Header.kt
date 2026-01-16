@@ -1,10 +1,10 @@
 package com.example.looksy
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
@@ -41,7 +41,8 @@ fun Header(
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Zurück"
+                    contentDescription = "Zurück",
+                    modifier = Modifier.fillMaxSize()
                 )
             }
         }
@@ -60,7 +61,8 @@ fun Header(
             ) {
                 Icon(
                     imageVector = rightIcon,
-                    contentDescription = rightIconContentDescription
+                    contentDescription = rightIconContentDescription,
+                    modifier = Modifier.fillMaxSize()
                 )
             }
         }

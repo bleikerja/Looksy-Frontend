@@ -107,7 +107,7 @@ fun ClothInformationScreen(
             onNavigateBack= onNavigateBack,
             onNavigateToRightIcon = { id ->
                 if (id != null) {
-                    onNavigateToDetails(id)
+                    onNavigateToEdit(id)
                 }
             },
             clothesData = clothesData,

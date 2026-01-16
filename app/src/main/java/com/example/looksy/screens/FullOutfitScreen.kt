@@ -70,7 +70,7 @@ fun FullOutfitScreen(
                 Header(onNavigateBack = {},
                     onNavigateToRightIcon = { onWashingMachine() },
                     clothesData = null,
-                    headerText = "Outfit",
+                    headerText = "Heutiges Outfit",
                     rightIconContentDescription = "Zur Waschmaschine",
                     rightIcon = Icons.Default.LocalLaundryService,
                     isFirstHeader = true)

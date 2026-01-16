@@ -114,9 +114,9 @@ fun AddNewClothesScreen(
         modifier = modifier.fillMaxSize(),
         topBar = { Header(
             onNavigateBack = onNavigateBack,
-            onNavigateToRightIcon = {},
+            onNavigateToRightIcon = { _ -> showDeleteDialog = true },
             clothesData = clothesToEdit,
-            headerText = if (clothesIdToEdit != null) "Kleidungsstück bearbeiten" else "Neues Kleidungsstück",
+            headerText = if (clothesIdToEdit != null) "Bearbeiten" else "Neues Kleidungsstück",
             rightIconContentDescription = if (clothesIdToEdit != null) "Löschen" else null,
             rightIcon = if (clothesIdToEdit != null) Icons.Default.Delete else null
         )
