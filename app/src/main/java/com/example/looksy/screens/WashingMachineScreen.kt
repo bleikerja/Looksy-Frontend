@@ -46,6 +46,7 @@ import com.example.looksy.R
 import com.example.looksy.model.Clothes
 import java.io.File
 import androidx.core.net.toUri
+import com.example.looksy.Header
 import com.example.looksy.model.WashingNotes
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -69,40 +70,21 @@ fun WashingMachineScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        "Waschmaschine",
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Zurück"
-                        )
+            Header(
+                onNavigateBack = onNavigateBack,
+                onNavigateToRightIcon = {
+                    if (selectedIds.size == dirtyClothes.size) {
+                        // Wenn alles ausgewählt ist, Auswahl aufheben
+                        selectedIds = emptySet()
+                    } else {
+                        // Sonst alles auswählen
+                        selectedIds = dirtyClothes.map { it.id }.toSet()
                     }
-                },
-                actions = {
-                    // "Alle auswählen" / "Auswahl aufheben"-Button
-                    IconButton(onClick = {
-                        if (selectedIds.size == dirtyClothes.size) {
-                            // Wenn alles ausgewählt ist, Auswahl aufheben
-                            selectedIds = emptySet()
-                        } else {
-                            // Sonst alles auswählen
-                            selectedIds = dirtyClothes.map { it.id }.toSet()
-                        }
-                    }) {
-                        Icon(
-                            imageVector = Icons.Default.Checklist,
-                            contentDescription = "Alle auswählen"
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+                                        },
+                clothesData = null,
+                headerText = "Waschmaschine",
+                rightIconContentDescription = "Alle auswählen",
+                rightIcon = Icons.Default.Checklist
             )
         },
         floatingActionButton = {

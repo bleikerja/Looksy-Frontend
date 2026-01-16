@@ -44,6 +44,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.net.toUri
 import coil.compose.AsyncImage
 import com.example.looksy.R
+import com.example.looksy.Header
 import com.example.looksy.presentation.viewmodel.ClothesViewModel
 import com.example.looksy.model.Clothes
 import com.example.looksy.model.Material
@@ -111,36 +112,14 @@ fun AddNewClothesScreen(
     }
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        if (clothesIdToEdit != null) "Kleidung bearbeiten" else "Neues Kleidungsstück",
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Foto neu aufnehmen"
-                        )
-                    }
-                },
-                actions = {
-                    // Zeige den Mülleimer-Button nur im Bearbeiten-Modus an
-                    if (clothesIdToEdit != null) {
-                        IconButton(onClick = onDelete) {
-                            Icon(
-                                imageVector = Icons.Default.Delete, // Standard-Mülleimer-Icon
-                                contentDescription = "Löschen"
-                            )
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-            )
+        topBar = { Header(
+            onNavigateBack = onNavigateBack,
+            onNavigateToRightIcon = { _ -> showDeleteDialog = true },
+            clothesData = clothesToEdit,
+            headerText = if (clothesIdToEdit != null) "Bearbeiten" else "Hinzufügen",
+            rightIconContentDescription = if (clothesIdToEdit != null) "Löschen" else null,
+            rightIcon = if (clothesIdToEdit != null) Icons.Default.Delete else null
+        )
         },
         floatingActionButton = {
             Button(

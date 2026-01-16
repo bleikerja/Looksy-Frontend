@@ -1,4 +1,4 @@
-package com.example.looksy
+package com.example.looksy.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -36,6 +36,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.example.looksy.Header
 import com.example.looksy.model.Clothes
 import com.example.looksy.model.Type
 
@@ -66,11 +67,14 @@ fun CategoriesScreen(
             .padding(top = 10.dp)
             .fillMaxSize()
         ) {
-            //Header()
-            Text(
-                text = "Dein Kleiderschrank",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.primary
+            Header(
+                onNavigateBack = { },
+                onNavigateToRightIcon = { },
+                clothesData = null,
+                headerText = "Dein Kleiderschrank",
+                rightIconContentDescription = null,
+                rightIcon = null,
+                isFirstHeader = true
             )
             //CategoriesBlock(categories = categories)
             Spacer(modifier = Modifier.height(25.dp))
@@ -175,11 +179,11 @@ fun ItemsTitle(categoryItem: CategoryItems) {
             fontWeight = FontWeight.Bold
         )
 
-        LooksyButton(
+        _root_ide_package_.com.example.looksy.LooksyButton(
             onClick = { NavFunction(categoryItem.category.name) },
             picture = {
                 Image(
-                    painter = painterResource(id = R.drawable.arrow),
+                    painter = painterResource(id = _root_ide_package_.com.example.looksy.R.drawable.arrow),
                     contentDescription = "See more",
                     modifier = Modifier.size(26.dp)
                 )
@@ -201,7 +205,7 @@ fun ItemContainer(item: Clothes, modifier: Modifier, onClick: () -> Unit) {
                 .fillMaxWidth()
                 .clickable(onClick = onClick)
                 .aspectRatio(1f), // quadratisch
-            error = painterResource(id = R.drawable.clothicon) // Fallback-Bild
+            error = painterResource(id = _root_ide_package_.com.example.looksy.R.drawable.clothicon) // Fallback-Bild
         )
         Spacer(modifier = Modifier.height(8.dp))
         //Text(text = item.)
@@ -212,8 +216,8 @@ fun ItemContainer(item: Clothes, modifier: Modifier, onClick: () -> Unit) {
 @Composable
 fun CategoriesScreenPreview() {
     val sampleCategories = listOf(
-        Category("Shirts", R.drawable.shirt_category),
-        Category("Pants", R.drawable.pants_category),
+        Category("Shirts", _root_ide_package_.com.example.looksy.R.drawable.shirt_category),
+        Category("Pants", _root_ide_package_.com.example.looksy.R.drawable.pants_category),
         Category("Dresses", android.R.drawable.ic_search_category_default),
         Category("Shorts", android.R.drawable.ic_search_category_default),
         Category("Sweaters`", android.R.drawable.ic_search_category_default),
@@ -223,18 +227,18 @@ fun CategoriesScreenPreview() {
     )
 
     val shirts = listOf(
-        Item("Black T-shirt", R.drawable.black_t_shirt),
-        Item("Grey T-shirt", R.drawable.white_t_shirt)
+        Item("Black T-shirt", _root_ide_package_.com.example.looksy.R.drawable.black_t_shirt),
+        Item("Grey T-shirt", _root_ide_package_.com.example.looksy.R.drawable.white_t_shirt)
     )
 
     val sweaters = listOf(
-        Item("Orange Cardigan", R.drawable.orange_cardigan),
-        Item("Colorful Sweater", R.drawable.colorful_sweater)
+        Item("Orange Cardigan", _root_ide_package_.com.example.looksy.R.drawable.orange_cardigan),
+        Item("Colorful Sweater", _root_ide_package_.com.example.looksy.R.drawable.colorful_sweater)
     )
 
     val pants = listOf(
-        Item("Blue Jeans", R.drawable.orange_cardigan),
-        Item("Cargo Pants", R.drawable.colorful_sweater)
+        Item("Blue Jeans", _root_ide_package_.com.example.looksy.R.drawable.orange_cardigan),
+        Item("Cargo Pants", _root_ide_package_.com.example.looksy.R.drawable.colorful_sweater)
     )
 
     val dresses = listOf(

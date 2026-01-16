@@ -1,4 +1,4 @@
-package com.example.looksy
+package com.example.looksy.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -18,7 +18,6 @@ import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.LocalLaundryService
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Shuffle
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -37,6 +36,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.example.looksy.LooksyButton
+import com.example.looksy.Header
 import com.example.looksy.model.Clothes
 import com.example.looksy.ui.theme.LooksyTheme
 import kotlinx.coroutines.launch
@@ -66,7 +67,14 @@ fun FullOutfitScreen(
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Row(modifier = Modifier.fillMaxWidth()) {
+                Header(onNavigateBack = {},
+                    onNavigateToRightIcon = { onWashingMachine() },
+                    clothesData = null,
+                    headerText = "Heutiges Outfit",
+                    rightIconContentDescription = "Zur Waschmaschine",
+                    rightIcon = Icons.Default.LocalLaundryService,
+                    isFirstHeader = true)
+                /*Row(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         "Dein heutiges Outfit",
                         style = MaterialTheme.typography.headlineSmall,
@@ -82,7 +90,7 @@ fun FullOutfitScreen(
                         )
                     }
                 }
-
+                */
                 Spacer(modifier = Modifier.height(16.dp))
 
                 jacket?.let {
@@ -133,25 +141,6 @@ fun FullOutfitScreen(
                     modifier = Modifier.fillMaxSize()
                 )
             }
-            /*
-            Button(
-                onClick = {
-                    val wornClothes = listOfNotNull(top, pants, dress, jacket, skirt)
-                    scope.launch {
-                        snackbarHostState.showSnackbar(
-                            message = "Schön, dass dir das Outfit gefällt und du es anziehst",
-                            duration = SnackbarDuration.Short
-                        )
-                        onConfirm(wornClothes)
-                    }
-                },
-                content = { Text("Outfit anziehen") },
-                modifier = Modifier
-                    .align(Alignment.BottomEnd) // Positioniert ihn unten in der Mitte der Box
-                    .padding(bottom = 12.dp)      // Gibt ihm etwas Abstand vom unteren Rand
-                    .fillMaxWidth(0.5f)
-            )
-             */
             IconButton(modifier=Modifier.align(Alignment.BottomEnd).padding(16.dp).size(50.dp)
                 ,onClick = {
                 // Dieselbe Logik wie vorher im großen Button

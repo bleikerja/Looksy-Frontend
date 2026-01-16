@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.looksy.LooksyButton
 import com.example.looksy.R
+import com.example.looksy.Header
 import com.example.looksy.presentation.viewmodel.ClothesViewModel
 import com.example.looksy.model.Clothes
 import com.example.looksy.model.Material
@@ -92,24 +93,13 @@ fun SpecificCategoryScreen(
             .fillMaxSize()
             .padding(20.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onGoBack) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Zurück",
-                    modifier = Modifier.padding(end = 10.dp)
-                )
-            }
-            Text(
-                type.toString(),
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.align(Alignment.CenterVertically)
-            )
-        }
+        Header(onNavigateBack = onGoBack,
+            onNavigateToRightIcon = {},
+            clothesData = null,
+            headerText = type.toString(),
+            rightIconContentDescription = null,
+            rightIcon = null)
+
         Spacer(modifier = Modifier.height(20.dp))
 //        TopAppBar(
 //            title = {
