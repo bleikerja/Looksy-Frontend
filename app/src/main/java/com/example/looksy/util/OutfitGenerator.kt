@@ -1,7 +1,7 @@
 package com.example.looksy.util
 
-import com.example.looksy.model.Clothes
-import com.example.looksy.model.Type
+import com.example.looksy.data.model.Clothes
+import com.example.looksy.data.model.Type
 
 data class OutfitResult(
     val top: Clothes?,

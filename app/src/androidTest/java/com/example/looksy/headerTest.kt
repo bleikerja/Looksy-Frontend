@@ -7,7 +7,8 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import com.example.looksy.model.*
+import com.example.looksy.data.model.*
+import com.example.looksy.ui.components.Header
 import org.junit.Rule
 import org.junit.Test
 

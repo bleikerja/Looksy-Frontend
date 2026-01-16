@@ -7,7 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
-import com.example.looksy.screens.ScreenBlueprint
+import com.example.looksy.ui.screens.ScreenBlueprint
 import com.example.looksy.ui.theme.LooksyTheme
 
 class MainActivity : ComponentActivity() {
