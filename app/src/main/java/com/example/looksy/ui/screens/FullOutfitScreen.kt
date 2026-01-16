@@ -21,7 +21,6 @@ import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -38,7 +37,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.looksy.ui.components.LooksyButton
 import com.example.looksy.data.model.Clothes
-import com.example.looksy.Header
+import com.example.looksy.ui.components.Header
 import com.example.looksy.ui.theme.LooksyTheme
 import kotlinx.coroutines.launch
 

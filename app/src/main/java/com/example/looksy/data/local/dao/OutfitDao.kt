@@ -6,7 +6,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
-import com.example.looksy.model.Outfit
+import com.example.looksy.data.model.Outfit
 import kotlinx.coroutines.flow.Flow
 
 @Dao

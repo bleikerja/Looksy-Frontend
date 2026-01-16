@@ -1,8 +1,8 @@
 package com.example.looksy
 
 import com.example.looksy.data.local.dao.OutfitDao
-import com.example.looksy.domain.repository.OutfitRepository
-import com.example.looksy.model.Outfit
+import com.example.looksy.data.repository.OutfitRepository
+import com.example.looksy.data.model.Outfit
 import io.mockk.coVerify
 import io.mockk.coEvery
 import io.mockk.mockk

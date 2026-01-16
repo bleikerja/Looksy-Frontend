@@ -1,13 +1,13 @@
 package com.example.looksy
 
-import com.example.looksy.domain.repository.ClothesRepository
-import com.example.looksy.model.Clothes
-import com.example.looksy.model.Material
-import com.example.looksy.model.Season
-import com.example.looksy.model.Size
-import com.example.looksy.model.Type
-import com.example.looksy.model.WashingNotes
-import com.example.looksy.presentation.viewmodel.ClothesViewModel
+import com.example.looksy.data.repository.ClothesRepository
+import com.example.looksy.data.model.Clothes
+import com.example.looksy.data.model.Material
+import com.example.looksy.data.model.Season
+import com.example.looksy.data.model.Size
+import com.example.looksy.data.model.Type
+import com.example.looksy.data.model.WashingNotes
+import com.example.looksy.ui.viewmodel.ClothesViewModel
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers

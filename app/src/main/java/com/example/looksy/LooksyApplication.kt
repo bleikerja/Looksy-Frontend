@@ -3,7 +3,7 @@ package com.example.looksy
 import android.app.Application
 import com.example.looksy.data.local.database.ClothesDatabase
 import com.example.looksy.data.repository.ClothesRepository
-import com.example.looksy.domain.repository.OutfitRepository
+import com.example.looksy.data.repository.OutfitRepository
 
 class LooksyApplication : Application() {
     // Lazily initialize the database and repository
