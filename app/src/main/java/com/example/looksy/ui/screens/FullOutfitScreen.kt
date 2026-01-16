@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.looksy.ui.components.LooksyButton
 import com.example.looksy.data.model.Clothes
+import com.example.looksy.Header
 import com.example.looksy.ui.theme.LooksyTheme
 import kotlinx.coroutines.launch
 
@@ -66,7 +67,14 @@ fun FullOutfitScreen(
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Row(modifier = Modifier.fillMaxWidth()) {
+                Header(onNavigateBack = {},
+                    onNavigateToRightIcon = { onWashingMachine() },
+                    clothesData = null,
+                    headerText = "Heutiges Outfit",
+                    rightIconContentDescription = "Zur Waschmaschine",
+                    rightIcon = Icons.Default.LocalLaundryService,
+                    isFirstHeader = true)
+                /*Row(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         "Dein heutiges Outfit",
                         style = MaterialTheme.typography.headlineSmall,
@@ -82,7 +90,7 @@ fun FullOutfitScreen(
                         )
                     }
                 }
-
+                */
                 Spacer(modifier = Modifier.height(16.dp))
 
                 jacket?.let {
@@ -133,25 +141,6 @@ fun FullOutfitScreen(
                     modifier = Modifier.fillMaxSize()
                 )
             }
-            /*
-            Button(
-                onClick = {
-                    val wornClothes = listOfNotNull(top, pants, dress, jacket, skirt)
-                    scope.launch {
-                        snackbarHostState.showSnackbar(
-                            message = "Schön, dass dir das Outfit gefällt und du es anziehst",
-                            duration = SnackbarDuration.Short
-                        )
-                        onConfirm(wornClothes)
-                    }
-                },
-                content = { Text("Outfit anziehen") },
-                modifier = Modifier
-                    .align(Alignment.BottomEnd) // Positioniert ihn unten in der Mitte der Box
-                    .padding(bottom = 12.dp)      // Gibt ihm etwas Abstand vom unteren Rand
-                    .fillMaxWidth(0.5f)
-            )
-             */
             IconButton(modifier=Modifier.align(Alignment.BottomEnd).padding(16.dp).size(50.dp)
                 ,onClick = {
                 // Dieselbe Logik wie vorher im großen Button

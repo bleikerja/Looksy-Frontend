@@ -7,11 +7,14 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.example.looksy.data.local.dao.ClothesDao
 import com.example.looksy.data.model.Clothes
+import com.example.looksy.data.local.dao.OutfitDao
+import com.example.looksy.model.Outfit
 
-@Database(entities = [Clothes::class], version = 1, exportSchema = false)
+@Database(entities = [Clothes::class, Outfit::class], version = 2, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class ClothesDatabase : RoomDatabase() {
     abstract fun clothesDao(): ClothesDao
+    abstract fun outfitDao(): OutfitDao
 
     companion object {
         @Volatile

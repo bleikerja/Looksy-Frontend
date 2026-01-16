@@ -46,6 +46,7 @@ import com.example.looksy.data.model.Size
 import com.example.looksy.data.model.Type
 import com.example.looksy.data.model.WashingNotes
 import com.example.looksy.ui.theme.LooksyTheme
+import com.example.looksy.Header
 
 //just from same type
 
@@ -102,32 +103,19 @@ fun ClothInformationScreen(
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onNavigateBack) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Zurück zur Outfitansicht",
-                    modifier = Modifier.padding(end = 10.dp)
-                )
-            }
-            Text(
-                "Details",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.align(Alignment.CenterVertically)
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            IconButton(onClick = { onNavigateToEdit(clothesData.id) }) {
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = "Bearbeiten",
-                    modifier = Modifier.padding(end = 10.dp)
-                )
-            }
-        }
+        Header(
+            onNavigateBack= onNavigateBack,
+            onNavigateToRightIcon = { id ->
+                if (id != null) {
+                    onNavigateToEdit(id)
+                }
+            },
+            clothesData = clothesData,
+            headerText = "Details",
+            rightIconContentDescription = "Bearbeiten",
+            rightIcon = Icons.Default.Edit
+        )
+
         ClothImage(
             clothesData.imagePath, modifier = Modifier
                 .height(300.dp)

@@ -36,6 +36,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.example.looksy.Header
 import com.example.looksy.R
 import com.example.looksy.data.model.Clothes
 import com.example.looksy.data.model.Type
@@ -68,11 +69,14 @@ fun CategoriesScreen(
             .padding(top = 10.dp)
             .fillMaxSize()
         ) {
-            //Header()
-            Text(
-                text = "Dein Kleiderschrank",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.primary
+            Header(
+                onNavigateBack = { },
+                onNavigateToRightIcon = { },
+                clothesData = null,
+                headerText = "Dein Kleiderschrank",
+                rightIconContentDescription = null,
+                rightIcon = null,
+                isFirstHeader = true
             )
             //CategoriesBlock(categories = categories)
             Spacer(modifier = Modifier.height(25.dp))
