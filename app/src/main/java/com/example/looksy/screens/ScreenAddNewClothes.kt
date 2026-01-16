@@ -116,7 +116,7 @@ fun AddNewClothesScreen(
             onNavigateBack = onNavigateBack,
             onNavigateToRightIcon = { _ -> showDeleteDialog = true },
             clothesData = clothesToEdit,
-            headerText = if (clothesIdToEdit != null) "Bearbeiten" else "Neues Kleidungsstück",
+            headerText = if (clothesIdToEdit != null) "Bearbeiten" else "Hinzufügen",
             rightIconContentDescription = if (clothesIdToEdit != null) "Löschen" else null,
             rightIcon = if (clothesIdToEdit != null) Icons.Default.Delete else null
         )
