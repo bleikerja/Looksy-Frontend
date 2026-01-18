@@ -108,7 +108,8 @@ fun ClothInformationScreen(
             clothesData = clothesData,
             headerText = "Details",
             rightIconContentDescription = "Bearbeiten",
-            rightIcon = Icons.Default.Edit
+            rightIcon = Icons.Default.Edit,
+            rightIconSize = 0.7F
         )
 
         ClothImage(
