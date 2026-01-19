@@ -17,18 +17,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.example.looksy.LooksyApplication
 import com.example.looksy.ui.screens.CategoriesScreen
 import com.example.looksy.ui.screens.ClothInformationScreen
 import com.example.looksy.ui.screens.FullOutfitScreen
 import com.example.looksy.R
 import com.example.looksy.data.model.Clothes
+import com.example.looksy.data.model.Outfit
 import com.example.looksy.data.model.Type
 import com.example.looksy.ui.viewmodel.ClothesViewModel
+import com.example.looksy.ui.viewmodel.OutfitViewModel
+import com.example.looksy.ui.viewmodel.OutfitViewModelFactory
 import com.example.looksy.ui.screens.AddNewClothesScreen
 import com.example.looksy.ui.screens.CameraScreenPermission
 import com.example.looksy.ui.screens.Category
@@ -45,6 +50,12 @@ fun NavGraph(
     modifier: Modifier = Modifier,
     viewModel: ClothesViewModel
 ) {
+    val context = LocalContext.current
+    val application = context.applicationContext as LooksyApplication
+    val outfitViewModel: OutfitViewModel = viewModel(
+        factory = OutfitViewModelFactory(application.outfitRepository)
+    )
+    
     val allClothesFromDb by viewModel.allClothes.collectAsState(initial = emptyList())
     val categoryItems =
         allClothesFromDb.filter { it.clean }.groupBy { it.type }.map { (type, items) ->
@@ -124,7 +135,18 @@ fun NavGraph(
                     jacket = outfit.jacket
                     dress = outfit.dress
                 },
-                onCamera = { navController.navigate(Routes.Scan.route) }
+                onCamera = { navController.navigate(Routes.Scan.route) },
+                onSave = {
+                    val outfitToSave = Outfit(
+                        dressId = currentDress?.id,
+                        topsId = currentTop?.id,
+                        skirtId = currentSkirt?.id,
+                        pantsId = currentPants?.id,
+                        jacketId = currentJacket?.id,
+                        isSynced = false
+                    )
+                    outfitViewModel.insert(outfitToSave)
+                }
             )
         }
 
