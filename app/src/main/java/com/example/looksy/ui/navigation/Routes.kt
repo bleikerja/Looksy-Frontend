@@ -14,7 +14,6 @@ object RouteArgs {
 
 sealed class Routes(override val route: String) : NavigationDestination {
     data object Home : Routes("home")
-    data object Scan : Routes("scan")
     data object ChoseClothes : Routes("chose clothes")
 
     data object WashingMachine : Routes("washing_machine")
@@ -38,7 +37,11 @@ sealed class Routes(override val route: String) : NavigationDestination {
         }
     }
 
-    data object EditClothes : Routes("edit_clothes/{${RouteArgs.ID}}") {
-        fun createRoute(id: Int) = "edit_clothes/$id"
+    data object EditClothes : Routes("edit_clothes/{${RouteArgs.ID}}/{${RouteArgs.IMAGE_URI}}") {
+        fun createRoute(id: Int, imageUri: String? = null) = "edit_clothes/$id/$imageUri"
+    }
+
+    data object Scan : Routes("scan/{${RouteArgs.ID}}") {
+        fun createRoute(id: Int?) = "scan/$id"
     }
 }

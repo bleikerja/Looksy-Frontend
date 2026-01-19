@@ -2,6 +2,7 @@ package com.example.looksy.ui.screens
 
 import android.annotation.SuppressLint
 import android.net.Uri
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,12 +13,16 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -56,7 +61,8 @@ fun AddNewClothesScreen(
     onNavigateBack: () -> Unit,
     onDelete: () -> Unit = {},
     modifier: Modifier = Modifier,
-    clothesIdToEdit: Int? = null
+    clothesIdToEdit: Int? = null,
+    onEditImage: () -> Unit = {}
 ) {
     val clothesToEdit by if (clothesIdToEdit != null) {
         viewModel.getClothesById(clothesIdToEdit).collectAsState(initial = null)
@@ -77,10 +83,10 @@ fun AddNewClothesScreen(
                 size != null && season != null && type != null && material != null && washingNotes != null
     val imageToShowUri = remember(clothesToEdit, imageUriString) {
         when {
-            // Bearbeiten-Modus und es gibt einen Pfad
-            clothesToEdit?.imagePath?.isNotEmpty() == true -> File(clothesToEdit!!.imagePath).toUri()
             // Neu-Modus mit einer neuen URI von der Kamera
             imageUriString != null -> imageUriString.toUri()
+            // Bearbeiten-Modus und es gibt einen Pfad
+            clothesToEdit?.imagePath?.isNotEmpty() == true -> File(clothesToEdit!!.imagePath).toUri()
             // Fallback
             else -> null
         }
@@ -149,6 +155,7 @@ fun AddNewClothesScreen(
             AddNewClothesForm(
                 //modifier = Modifier.padding(innerPadding),
                 imageUri = imageToShowUri,
+                onEditImage = onEditImage,
                 size = size,
                 onSizeChange = { size = it },
                 season = season,
@@ -173,6 +180,7 @@ fun AddNewClothesScreen(
 @Composable
 private fun AddNewClothesForm(
     imageUri: Uri?,
+    onEditImage: () -> Unit,
     size: Size?,
     onSizeChange: (Size) -> Unit,
     season: Season?,
@@ -196,17 +204,36 @@ private fun AddNewClothesForm(
     ) {
         // --- BILD-VORSCHAU ---
         item {
-            AsyncImage(
-                model = imageUri ?: R.drawable.clothicon,
-                contentDescription = "Neues Kleidungsstück",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp)),
-                // Mit dieser Konfiguration ist FIT die richtige Wahl.
-                contentScale = ContentScale.Fit,
-                placeholder = painterResource(id = R.drawable.clothicon),
-                error = painterResource(id = R.drawable.wardrobe2icon),
-            )
+            Box {
+                AsyncImage(
+                    model = imageUri ?: R.drawable.clothicon,
+                    contentDescription = "Neues Kleidungsstück",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp)),
+                    // Mit dieser Konfiguration ist FIT die richtige Wahl.
+                    contentScale = ContentScale.Fit,
+                    placeholder = painterResource(id = R.drawable.clothicon),
+                    error = painterResource(id = R.drawable.wardrobe2icon),
+                )
+
+                IconButton(
+                    onClick = { onEditImage() },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(8.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.surface,
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                ) {
+                    Icon(
+                        modifier = Modifier.fillMaxSize().padding(5.dp),
+                        imageVector = Icons.Default.PhotoCamera,
+                        contentDescription = "Zur Kamera"
+                    )
+                }
+            }
         }
 
         // --- EINGABEFELDER ---
