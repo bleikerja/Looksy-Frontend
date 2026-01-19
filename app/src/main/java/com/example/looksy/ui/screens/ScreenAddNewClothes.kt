@@ -2,6 +2,7 @@ package com.example.looksy.ui.screens
 
 import android.annotation.SuppressLint
 import android.net.Uri
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -81,6 +82,7 @@ fun AddNewClothesScreen(
 
     val isFormValid =
                 size != null && season != null && type != null && material != null && washingNotes != null
+    var edited by remember { mutableStateOf(false) }
     val imageToShowUri = remember(clothesToEdit, imageUriString) {
         when {
             // Neu-Modus mit einer neuen URI von der Kamera
@@ -92,27 +94,52 @@ fun AddNewClothesScreen(
         }
     }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showBackDialog by remember { mutableStateOf(false) }
+
+    BackHandler(enabled = true) {
+        if(edited) {
+            showBackDialog = true
+        } else {
+            onNavigateBack()
+        }
+    }
+
     if (showDeleteDialog) {
-        AlertDialog(        onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Löschen bestätigen") },
-            text = { Text("Möchtest du dieses Kleidungsstück wirklich endgültig löschen?") },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        onDelete()
-                        showDeleteDialog = false
-                    }
-                ) { Text("Löschen") }
-            },
-            dismissButton = {
-                Button(onClick = { showDeleteDialog = false }) { Text("Abbrechen") }
+        ConfirmationDialog (
+            title = "Löschen bestätigen",
+            text = "Möchtest du dieses Kleidungsstück wirklich endgültig löschen?",
+            dismissText = "Abbrechen",
+            onDismiss = { showDeleteDialog = false },
+            confirmText = "Löschen",
+            onConfirm = {
+                onDelete()
+                showDeleteDialog = false
+            }
+        )
+    }
+    if (showBackDialog) {
+        ConfirmationDialog (
+            title = "Zurück?",
+            text = "Möchtest du wirklich zurück? Änderungen gehen verloren!",
+            dismissText = "Nein",
+            onDismiss = { showBackDialog = false },
+            confirmText = "Ja",
+            onConfirm = {
+                onNavigateBack()
+                showBackDialog = false
             }
         )
     }
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = { Header(
-            onNavigateBack = onNavigateBack,
+            onNavigateBack = {
+                if(edited) {
+                    showBackDialog = true
+                } else {
+                    onNavigateBack()
+                }
+            },
             onNavigateToRightIcon = { _ -> showDeleteDialog = true },
             clothesData = clothesToEdit,
             headerText = if (clothesIdToEdit != null) "Bearbeiten" else "Hinzufügen",
@@ -155,19 +182,19 @@ fun AddNewClothesScreen(
             AddNewClothesForm(
                 //modifier = Modifier.padding(innerPadding),
                 imageUri = imageToShowUri,
-                onEditImage = onEditImage,
+                onEditImage = { onEditImage(); edited = true },
                 size = size,
-                onSizeChange = { size = it },
+                onSizeChange = { size = it; edited = true },
                 season = season,
-                onSeasonChange = { season = it },
+                onSeasonChange = { season = it; edited = true },
                 type = type,
-                onTypeChange = { type = it },
+                onTypeChange = { type = it; edited = true },
                 material = material,
-                onMaterialChange = { material = it },
+                onMaterialChange = { material = it; edited = true },
                 washingNotes = washingNotes,
-                onWashingNotesChange = { washingNotes = it },
+                onWashingNotesChange = { washingNotes = it; edited = true },
                 clean = clean,
-                onCleanChange = { clean = it },
+                onCleanChange = { clean = it; edited = true },
                 edit = (clothesIdToEdit != null)
             )
         }
@@ -228,7 +255,9 @@ private fun AddNewClothesForm(
                         )
                 ) {
                     Icon(
-                        modifier = Modifier.fillMaxSize().padding(5.dp),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(5.dp),
                         imageVector = Icons.Default.PhotoCamera,
                         contentDescription = "Zur Kamera"
                     )
@@ -365,6 +394,28 @@ fun <T> EnumDropdown(
     }
 }
 
+@Composable
+fun ConfirmationDialog (
+    title: String,
+    text: String,
+    dismissText: String,
+    onDismiss: () -> Unit,
+    confirmText: String,
+    onConfirm: () -> Unit,
+
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = { Text(text) },
+        confirmButton = {
+            Button( onClick = onConfirm ) { Text(confirmText) }
+        },
+        dismissButton = {
+            Button(onClick = onDismiss) { Text(dismissText) }
+        }
+    )
+}
 
 @SuppressLint("ViewModelConstructorInComposable")
 @Preview(showBackground = true)
