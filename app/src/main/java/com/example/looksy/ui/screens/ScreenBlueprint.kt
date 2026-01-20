@@ -30,7 +30,8 @@ fun ScreenBlueprint(navController: NavHostController) {
     val navItems = listOf(
         Triple(Routes.ChoseClothes.route, "Chose Clothes", R.drawable.wardrobeicon),
         Triple(Routes.Home.route, "Home", R.drawable.clothicon),
-        Triple(Routes.Scan.route, "Scan", R.drawable.cameraicon)
+        Triple(Routes.Scan.route, "Scan", R.drawable.cameraicon),
+        Triple(Routes.Scan.route, "Existing Clothes", R.drawable.wardrobe2icon)
     )
     val application = LocalContext.current.applicationContext as LooksyApplication
     val viewModelClothes: ClothesViewModel = viewModel(
