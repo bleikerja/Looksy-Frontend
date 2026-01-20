@@ -16,6 +16,7 @@ sealed class Routes(override val route: String) : NavigationDestination {
     data object Home : Routes("home")
     data object Scan : Routes("scan")
     data object ChoseClothes : Routes("chose clothes")
+    data object ExistingClothes : Routes("existing clothes")
 
     data object WashingMachine : Routes("washing_machine")
     

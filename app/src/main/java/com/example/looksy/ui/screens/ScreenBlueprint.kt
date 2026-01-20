@@ -10,6 +10,8 @@ import com.example.looksy.ui.navigation.Routes
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -30,7 +32,8 @@ fun ScreenBlueprint(navController: NavHostController) {
     val navItems = listOf(
         Triple(Routes.ChoseClothes.route, "Chose Clothes", R.drawable.wardrobeicon),
         Triple(Routes.Home.route, "Home", R.drawable.clothicon),
-        Triple(Routes.Scan.route, "Scan", R.drawable.cameraicon)
+        Triple(Routes.Scan.route, "Scan", R.drawable.cameraicon),
+        Triple(Routes.ExistingClothes.route, "Existing Clothes", R.drawable.heart)
     )
     val application = LocalContext.current.applicationContext as LooksyApplication
     val viewModelClothes: ClothesViewModel = viewModel(
