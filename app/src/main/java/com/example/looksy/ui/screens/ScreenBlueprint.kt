@@ -23,8 +23,10 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.looksy.LooksyApplication
 import com.example.looksy.ui.viewmodel.ClothesViewModelFactory
+import com.example.looksy.ui.viewmodel.OutfitViewModelFactory
 import com.example.looksy.ui.navigation.NavGraph
 import com.example.looksy.ui.viewmodel.ClothesViewModel
+import com.example.looksy.ui.viewmodel.OutfitViewModel
 
 @Composable
 fun ScreenBlueprint(navController: NavHostController) {
@@ -33,11 +35,14 @@ fun ScreenBlueprint(navController: NavHostController) {
         Triple(Routes.ChoseClothes.route, "Chose Clothes", R.drawable.wardrobeicon),
         Triple(Routes.Home.route, "Home", R.drawable.clothicon),
         Triple(Routes.Scan.route, "Scan", R.drawable.cameraicon),
-        Triple(Routes.ExistingClothes.route, "Existing Clothes", R.drawable.heart)
+        Triple(Routes.SavedOutfits.route, "Saved Outfits", R.drawable.outfitsicon)
     )
     val application = LocalContext.current.applicationContext as LooksyApplication
     val viewModelClothes: ClothesViewModel = viewModel(
         factory = ClothesViewModelFactory(application.repository)
+    )
+    val viewModelOutfits: OutfitViewModel = viewModel(
+        factory = OutfitViewModelFactory(application.outfitRepository)
     )
     Scaffold(
         bottomBar = {
@@ -77,7 +82,12 @@ fun ScreenBlueprint(navController: NavHostController) {
             }
         }
     ) { innerPadding ->
-       NavGraph(navController = navController, modifier = Modifier.padding(innerPadding), viewModel=viewModelClothes)
+       NavGraph(
+           navController = navController,
+           modifier = Modifier.padding(innerPadding),
+           viewModel = viewModelClothes,
+           outfitViewModel = viewModelOutfits
+       )
     }
 }
 
