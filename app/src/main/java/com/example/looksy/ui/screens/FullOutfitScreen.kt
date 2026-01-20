@@ -130,21 +130,25 @@ fun FullOutfitScreen(
                     )
                 }
             }
-            Row(
+            IconButton(
+                onClick = onGenerateRandom,
                 modifier = Modifier
                     .align(Alignment.BottomStart)
                     .padding(bottom = 16.dp)
+                    .size(50.dp)
             ) {
-                IconButton(
-                    onClick = onGenerateRandom,
-                    modifier = Modifier.size(50.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Shuffle, // Gutes Icon für "Zufall"
-                        contentDescription = "Zufälliges Outfit generieren",
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
+                Icon(
+                    imageVector = Icons.Default.Shuffle,
+                    contentDescription = "Zufälliges Outfit generieren",
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 IconButton(
                     onClick = {
                         scope.launch {
@@ -155,7 +159,7 @@ fun FullOutfitScreen(
                             onSave()
                         }
                     },
-                    modifier = Modifier.size(50.dp).padding(start = 8.dp)
+                    modifier = Modifier.size(50.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Bookmark,
@@ -163,24 +167,25 @@ fun FullOutfitScreen(
                         modifier = Modifier.fillMaxSize()
                     )
                 }
-            }
-            IconButton(modifier=Modifier.align(Alignment.BottomEnd).padding(16.dp).size(50.dp)
-                ,onClick = {
-                // Dieselbe Logik wie vorher im großen Button
-                val wornClothes = listOfNotNull(top, pants, dress, jacket, skirt)
-                scope.launch {
-                    snackbarHostState.showSnackbar(
-                        "Schön, dass dir das Outfit gefällt und du es anziehst",
-                        duration = SnackbarDuration.Short
+                IconButton(
+                    onClick = {
+                        val wornClothes = listOfNotNull(top, pants, dress, jacket, skirt)
+                        scope.launch {
+                            snackbarHostState.showSnackbar(
+                                "Schön, dass dir das Outfit gefällt und du es anziehst",
+                                duration = SnackbarDuration.Short
+                            )
+                            onConfirm(wornClothes)
+                        }
+                    },
+                    modifier = Modifier.size(50.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Outfit anziehen",
+                        modifier = Modifier.fillMaxSize()
                     )
-                    onConfirm(wornClothes)
                 }
-            }) {
-                Icon(
-                    imageVector = Icons.Default.Check, // Haken-Icon
-                    contentDescription = "Outfit anziehen",
-                    modifier = Modifier.fillMaxSize()
-                )
             }
             SnackbarHost(
                 hostState = snackbarHostState,

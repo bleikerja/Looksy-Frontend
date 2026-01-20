@@ -16,9 +16,9 @@ class SavedOutfitsScreenTest {
         Clothes(
             id = 1,
             type = Type.Tops,
-            size = Size.M,
+            size = Size._M,
             material = Material.Cotton,
-            washingNotes = WashingNotes.Thirty,
+            washingNotes = WashingNotes.Temperature30,
             clean = true,
             seasonUsage = Season.Summer,
             imagePath = "path/to/top.jpg"
@@ -26,19 +26,19 @@ class SavedOutfitsScreenTest {
         Clothes(
             id = 2,
             type = Type.Pants,
-            size = Size.M,
-            material = Material.Denim,
-            washingNotes = WashingNotes.Forty,
+            size = Size._M,
+            material = Material.jeans,
+            washingNotes = WashingNotes.Temperature40,
             clean = true,
-            seasonUsage = Season.AllSeasons,
+            seasonUsage = Season.inBetween,
             imagePath = "path/to/pants.jpg"
         ),
         Clothes(
             id = 3,
             type = Type.Dress,
-            size = Size.S,
-            material = Material.Silk,
-            washingNotes = WashingNotes.Thirty,
+            size = Size._S,
+            material = Material.silk,
+            washingNotes = WashingNotes.Temperature30,
             clean = true,
             seasonUsage = Season.Summer,
             imagePath = "path/to/dress.jpg"
@@ -46,9 +46,9 @@ class SavedOutfitsScreenTest {
         Clothes(
             id = 4,
             type = Type.Jacket,
-            size = Size.L,
+            size = Size._L,
             material = Material.Cotton,
-            washingNotes = WashingNotes.Forty,
+            washingNotes = WashingNotes.Temperature40,
             clean = true,
             seasonUsage = Season.Winter,
             imagePath = "path/to/jacket.jpg"
