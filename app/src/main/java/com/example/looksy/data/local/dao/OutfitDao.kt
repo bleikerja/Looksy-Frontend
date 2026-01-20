@@ -31,4 +31,11 @@ interface OutfitDao {
 
     @Delete
     suspend fun delete(outfit: Outfit)
+    suspend fun findMatchingOutfit(
+        selectedTopId: Int?,
+        selectedDressId: Int?,
+        selectedSkirtId: Int?,
+        selectedPantsId: Int?,
+        selectedJacketId: Int?
+    ): Outfit?
 }
