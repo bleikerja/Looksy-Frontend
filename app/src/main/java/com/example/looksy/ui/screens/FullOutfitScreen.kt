@@ -73,23 +73,6 @@ fun FullOutfitScreen(
                     rightIconContentDescription = "Zur Waschmaschine",
                     rightIcon = Icons.Default.LocalLaundryService,
                     isFirstHeader = true)
-                /*Row(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        "Dein heutiges Outfit",
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.align(Alignment.CenterVertically)
-                    )
-                    Spacer(modifier = Modifier.weight(1f))
-                    IconButton(onClick = { onWashingMachine() }, modifier = Modifier.size(50.dp)) {
-                        Icon(
-                            modifier = Modifier.fillMaxSize(),
-                            imageVector = Icons.Default.LocalLaundryService,
-                            contentDescription = "Zur Waschmaschine"
-                        )
-                    }
-                }
-                */
                 Spacer(modifier = Modifier.height(16.dp))
 
                 jacket?.let {
