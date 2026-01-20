@@ -23,6 +23,8 @@ import com.example.looksy.LooksyApplication
 import com.example.looksy.ui.viewmodel.ClothesViewModelFactory
 import com.example.looksy.ui.navigation.NavGraph
 import com.example.looksy.ui.viewmodel.ClothesViewModel
+import com.example.looksy.ui.viewmodel.OutfitViewModel
+import com.example.looksy.ui.viewmodel.OutfitViewModelFactory
 
 @Composable
 fun ScreenBlueprint(navController: NavHostController) {
@@ -35,6 +37,9 @@ fun ScreenBlueprint(navController: NavHostController) {
     val application = LocalContext.current.applicationContext as LooksyApplication
     val viewModelClothes: ClothesViewModel = viewModel(
         factory = ClothesViewModelFactory(application.repository)
+    )
+    val viewModelOutfit: OutfitViewModel = viewModel(
+        factory = OutfitViewModelFactory(application.outfitRepository)
     )
     Scaffold(
         bottomBar = {
@@ -74,7 +79,12 @@ fun ScreenBlueprint(navController: NavHostController) {
             }
         }
     ) { innerPadding ->
-       NavGraph(navController = navController, modifier = Modifier.padding(innerPadding), viewModel=viewModelClothes)
+       NavGraph(
+           navController = navController,
+           modifier = Modifier.padding(innerPadding),
+           clothesViewModel=viewModelClothes,
+           outfitViewModel = viewModelOutfit
+       )
     }
 }
 
