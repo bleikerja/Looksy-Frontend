@@ -60,7 +60,13 @@ fun NavGraph(
     var dress by remember { mutableStateOf<Clothes?>(null) }
 
     LaunchedEffect(allClothesFromDb) {
-        if (allClothesFromDb.isNotEmpty() && top == null && dress == null) {
+        if (allClothesFromDb.isEmpty()) {
+            top = null
+            pants = null
+            jacket = null
+            skirt = null
+            dress = null
+        } else if (top == null && dress == null) {
             val outfit = generateRandomOutfit(allClothesFromDb)
             top = outfit.top
             pants = outfit.pants

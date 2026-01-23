@@ -190,14 +190,20 @@ class OutfitRepositoryTest {
     }
 
     @Test
-    fun `incrementOutfitPreference() should insert new outfit when no match found`() = runTest {
-        // Given: Kein passendes Outfit in der Datenbank
+    fun `incrementOutfitPreference() should insert new outfit when no match found`() = runTest {// Given: Kein passendes Outfit in der Datenbank
         coEvery {
             outfitDao.findMatchingOutfit(any(), any(), any(), any(), any())
         } returns null
 
         // When: Die Funktion wird aufgerufen
-        outfitRepository.incrementOutfitPreference(10, 20, null, null, null)
+        // Nutze hier benannte Parameter, um sicherzugehen, dass 20 wirklich die pantsId ist
+        outfitRepository.incrementOutfitPreference(
+            selectedTopId = 10,
+            selectedDressId = null,
+            selectedSkirtId = null,
+            selectedPantsId = 20,
+            selectedJacketId = null
+        )
 
         // Then: Verifiziere, dass ein neues Outfit mit Score 1 eingefügt wurde
         coVerify {
