@@ -25,6 +25,7 @@ fun Header(
     headerText: String,
     rightIconContentDescription: String?,
     rightIcon: ImageVector?,
+    rightIconSize: Float = 1F,
     isFirstHeader: Boolean = false,
 ) {
     Box(
@@ -61,7 +62,7 @@ fun Header(
                 Icon(
                     imageVector = rightIcon,
                     contentDescription = rightIconContentDescription,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(rightIconSize)
                 )
             }
         }
