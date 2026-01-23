@@ -57,8 +57,17 @@ fun NavGraph(
     var skirt by remember { mutableStateOf<Clothes?>(null) }
     var dress by remember { mutableStateOf<Clothes?>(null) }
 
+    // Zentraler Effekt zur Synchronisierung des Outfits mit der Datenbank.
+    // Stellt sicher, dass gelöschte oder schmutzige Kleidung sofort aus dem Outfit entfernt wird.
     LaunchedEffect(allClothesFromDb) {
-        if (allClothesFromDb.isNotEmpty() && top == null && dress == null) {
+        top = top?.let { t -> allClothesFromDb.find { it.id == t.id && it.clean && it.type == Type.Tops } }
+        pants = pants?.let { p -> allClothesFromDb.find { it.id == p.id && it.clean && it.type == Type.Pants } }
+        jacket = jacket?.let { j -> allClothesFromDb.find { it.id == j.id && it.clean && it.type == Type.Jacket } }
+        skirt = skirt?.let { s -> allClothesFromDb.find { it.id == s.id && it.clean && it.type == Type.Skirt } }
+        dress = dress?.let { d -> allClothesFromDb.find { it.id == d.id && it.clean && it.type == Type.Dress } }
+
+        // Falls das Outfit unvollständig wird (kein Oberteil/Kleid), generiere ein neues.
+        if (allClothesFromDb.any { it.clean } && top == null && dress == null) {
             val outfit = generateRandomOutfit(allClothesFromDb)
             top = outfit.top
             pants = outfit.pants
@@ -74,46 +83,19 @@ fun NavGraph(
         modifier = modifier
     ) {
         composable(Routes.Home.route) {
-            val currentTop = top
-            val currentPants = pants
-            val currentJacket = jacket
-            val currentSkirt = skirt
-            val currentDress = dress
-
-            LaunchedEffect(allClothesFromDb, top, pants, skirt, jacket, dress) {
-                if (allClothesFromDb.isNotEmpty() && top == null && dress == null) {
-                    val outfit = generateRandomOutfit(allClothesFromDb)
-                    top = outfit.top
-                    pants = outfit.pants
-                    skirt = outfit.skirt
-                    jacket = outfit.jacket
-                    dress = outfit.dress
-                }
-            }
-            
             FullOutfitScreen(
-                top = currentTop,
-                pants = currentPants,
-                jacket = currentJacket,
-                skirt = currentSkirt,
-                dress = currentDress,
+                top = top,
+                pants = pants,
+                jacket = jacket,
+                skirt = skirt,
+                dress = dress,
                 onClick = { clothesId ->
                     navController.navigate(Routes.Details.createRoute(clothesId))
                 },
                 onConfirm = { wornClothesList ->
                     val updatedClothesList = wornClothesList.map { it.copy(clean = false) }
                     viewModel.updateAll(updatedClothesList)
-
-                    val clothesForNewOutfit = allClothesFromDb.map { cloth ->
-                        updatedClothesList.find { it.id == cloth.id } ?: cloth
-                    }
-
-                    val outfit = generateRandomOutfit(clothesForNewOutfit)
-                    top = outfit.top
-                    pants = outfit.pants
-                    skirt = outfit.skirt
-                    jacket = outfit.jacket
-                    dress = outfit.dress
+                    // Sync erfolgt automatisch über den LaunchedEffect.
                 },
                 onWashingMachine = { navController.navigate(Routes.WashingMachine.route) },
                 onGenerateRandom = {
@@ -361,16 +343,6 @@ fun NavGraph(
                             if (permanentPath != null) {
                                 val finalClothes = updatedClothesData.copy(imagePath = permanentPath)
                                 viewModel.update(finalClothes)
-                                finalClothes.let {
-                                    when (it.type) {
-                                        Type.Tops -> if (top?.id == it.id) top = it
-                                        Type.Pants -> if (pants?.id == it.id) pants = it
-                                        Type.Jacket -> if (jacket?.id == it.id) jacket = it
-                                        Type.Skirt -> if (skirt?.id == it.id) skirt = it
-                                        Type.Dress -> if (dress?.id == it.id) dress = it
-                                    }
-                                }
-
                             }
                         } else{
                             viewModel.update(updatedClothesData)
