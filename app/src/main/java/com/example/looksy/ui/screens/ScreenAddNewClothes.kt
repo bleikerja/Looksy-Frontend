@@ -51,6 +51,7 @@ import com.example.looksy.data.model.Season
 import com.example.looksy.data.model.Size
 import com.example.looksy.data.model.Type
 import com.example.looksy.data.model.WashingNotes
+import com.example.looksy.ui.components.ConfirmationDialog
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -394,28 +395,6 @@ fun <T> EnumDropdown(
     }
 }
 
-@Composable
-fun ConfirmationDialog (
-    title: String,
-    text: String,
-    dismissText: String,
-    onDismiss: () -> Unit,
-    confirmText: String,
-    onConfirm: () -> Unit,
-
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = { Text(text) },
-        confirmButton = {
-            Button( onClick = onConfirm ) { Text(confirmText) }
-        },
-        dismissButton = {
-            Button(onClick = onDismiss) { Text(dismissText) }
-        }
-    )
-}
 
 @SuppressLint("ViewModelConstructorInComposable")
 @Preview(showBackground = true)
