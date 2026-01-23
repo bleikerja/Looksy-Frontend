@@ -375,7 +375,7 @@ fun NavGraph(
                             val permanentPath = saveImagePermanently(context, uriToSave)
                             if (permanentPath != null) {
                                 val finalClothes = updatedClothesData.copy(imagePath = permanentPath)
-                                viewModel.update(finalClothes)
+                                clothesViewModel.update(finalClothes)
                                 finalClothes.let {
                                     when (it.type) {
                                         Type.Tops -> if (top?.id == it.id) top = it
@@ -388,7 +388,7 @@ fun NavGraph(
 
                             }
                         } else{
-                            viewModel.update(updatedClothesData)
+                            clothesViewModel.update(updatedClothesData)
                         }
                         navController.popBackStack()
                     },
