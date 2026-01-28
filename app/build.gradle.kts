@@ -68,12 +68,14 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.material.icons.extended)
+    implementation(libs.androidx.navigation.testing)
 
     // Test dependencies
     testImplementation(libs.junit)
-    testImplementation("io.mockk:mockk:1.13.11")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
+    testImplementation(libs.mockk)
+    testImplementation(libs.kotlinx.coroutines.test)
 
+    androidTestImplementation(libs.mockk.android)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
