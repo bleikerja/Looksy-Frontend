@@ -7,10 +7,13 @@ import com.example.looksy.data.remote.dto.WeatherResponse
 import com.example.looksy.data.repository.WeatherRepository
 import io.mockk.coEvery
 import io.mockk.mockk
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
-import org.junit.Assert.*
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 /**
  * Unit tests for WeatherRepository
@@ -18,7 +21,7 @@ import org.junit.Assert.*
  * Tests the Repository's ability to:
  * - Transform API responses into domain models
  * - Handle successful API calls
- * - Propagate exceptions (no error handling in repository)
+ * - Handle API failures
  * - Handle edge cases (empty weather list)
  */
 class WeatherRepositoryTest {
@@ -34,7 +37,7 @@ class WeatherRepositoryTest {
     }
 
     @Test
-    fun `getWeather() should transform API response to Weather model`() = runTest {
+    fun `getWeather() should return Success when API call succeeds`() = runTest {
         // Given
         val mockResponse = WeatherResponse(
             name = "Berlin",
@@ -59,32 +62,34 @@ class WeatherRepositoryTest {
         } returns mockResponse
 
         // When
-        val weather = repository.getWeather(52.52, 13.405)
+        val result = repository.getWeather(52.52, 13.405).first()
 
         // Then
+        assertTrue(result.isSuccess, "Expected successful result")
+        val weather = result.getOrNull()
+        assertNotNull(weather, "Weather should not be null")
         assertEquals("Berlin", weather.locationName)
-        assertEquals(15.5, weather.temperature, 0.01)
-        assertEquals(14.0, weather.feelsLike, 0.01)
+        assertEquals(15.5, weather.temperature)
+        assertEquals(14.0, weather.feelsLike)
         assertEquals("clear sky", weather.description)
         assertEquals(60, weather.humidity)
         assertEquals("https://openweathermap.org/img/w/01d.png", weather.iconUrl)
     }
 
     @Test
-    fun `getWeather() should propagate exception when API call fails`() = runTest {
+    fun `getWeather() should return Failure when API call fails`() = runTest {
         // Given
         val exception = Exception("Network timeout")
         coEvery {
             apiService.getWeatherByLocation(any(), any(), any())
         } throws exception
 
-        // When / Then
-        try {
-            repository.getWeather(52.52, 13.405)
-            fail("Expected exception to be thrown")
-        } catch (e: Exception) {
-            assertEquals("Network timeout", e.message)
-        }
+        // When
+        val result = repository.getWeather(52.52, 13.405).first()
+
+        // Then
+        assertTrue(result.isFailure, "Expected failed result")
+        assertEquals(exception, result.exceptionOrNull())
     }
 
     @Test
@@ -100,10 +105,13 @@ class WeatherRepositoryTest {
         } returns mockResponse
 
         // When
-        val weather = repository.getWeather(52.52, 13.405)
+        val result = repository.getWeather(52.52, 13.405).first()
 
         // Then
-        assertEquals("Description should be empty string", "", weather.description)
-        assertEquals("Icon URL should contain 'null'", "https://openweathermap.org/img/w/null.png", weather.iconUrl)
+        assertTrue(result.isSuccess, "Expected successful result even with empty weather list")
+        val weather = result.getOrNull()
+        assertNotNull(weather)
+        assertEquals("", weather.description, "Description should be empty string")
+        assertEquals("https://openweathermap.org/img/w/null.png", weather.iconUrl, "Icon URL should contain 'null'")
     }
 }

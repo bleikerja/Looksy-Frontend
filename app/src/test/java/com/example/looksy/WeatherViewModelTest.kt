@@ -8,6 +8,7 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -16,7 +17,8 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import org.junit.Assert.*
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * Unit tests for WeatherViewModel
@@ -56,7 +58,7 @@ class WeatherViewModelTest {
             humidity = 60,
             iconUrl = "https://openweathermap.org/img/w/01d.png"
         )
-        coEvery { repository.getWeather(any(), any()) } returns testWeather
+        coEvery { repository.getWeather(any(), any()) } returns flowOf(Result.success(testWeather))
 
         // When
         viewModel.fetchWeather(52.52, 13.405)
@@ -64,17 +66,18 @@ class WeatherViewModelTest {
 
         // Then
         val state = viewModel.weatherState.value
-        assertTrue("Expected Success state but got ${state::class.simpleName}", state is WeatherUiState.Success)
+        assertTrue(state is WeatherUiState.Success, "Expected Success state but got ${state::class.simpleName}")
         assertEquals(testWeather, (state as WeatherUiState.Success).weather)
         assertEquals("Berlin", state.weather.locationName)
-        assertEquals(15.5, state.weather.temperature, 0.01)
+        assertEquals(15.5, state.weather.temperature)
     }
 
     @Test
     fun `fetchWeather() should update state to Error on failure`() = runTest {
         // Given
         val errorMessage = "Network error"
-        coEvery { repository.getWeather(any(), any()) } throws Exception(errorMessage)
+        coEvery { repository.getWeather(any(), any()) } returns
+                flowOf(Result.failure(Exception(errorMessage)))
 
         // When
         viewModel.fetchWeather(52.52, 13.405)
@@ -82,7 +85,7 @@ class WeatherViewModelTest {
 
         // Then
         val state = viewModel.weatherState.value
-        assertTrue("Expected Error state but got ${state::class.simpleName}", state is WeatherUiState.Error)
+        assertTrue(state is WeatherUiState.Error, "Expected Error state but got ${state::class.simpleName}")
         assertEquals(errorMessage, (state as WeatherUiState.Error).message)
     }
 
@@ -90,7 +93,7 @@ class WeatherViewModelTest {
     fun `fetchWeather() should set Loading state initially`() = runTest {
         // Given
         val testWeather = Weather("Berlin", 15.5, 14.0, "clear", 60, "icon.png")
-        coEvery { repository.getWeather(any(), any()) } returns testWeather
+        coEvery { repository.getWeather(any(), any()) } returns flowOf(Result.success(testWeather))
 
         // When
         viewModel.fetchWeather(52.52, 13.405)
@@ -98,8 +101,8 @@ class WeatherViewModelTest {
 
         // Then
         assertTrue(
-            "Expected Loading state but got ${viewModel.weatherState.value::class.simpleName}",
-            viewModel.weatherState.value is WeatherUiState.Loading
+            viewModel.weatherState.value is WeatherUiState.Loading,
+            "Expected Loading state but got ${viewModel.weatherState.value::class.simpleName}"
         )
     }
 }

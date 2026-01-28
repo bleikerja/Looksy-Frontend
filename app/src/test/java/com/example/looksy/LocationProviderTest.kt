@@ -10,7 +10,8 @@ import io.mockk.mockk
 import io.mockk.mockkStatic
 import org.junit.Before
 import org.junit.Test
-import org.junit.Assert.*
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 /**
  * Unit tests for LocationProvider
@@ -48,7 +49,7 @@ class LocationProviderTest {
         val result = locationProvider.hasLocationPermission()
 
         // Then
-        assertTrue("Should return true when COARSE_LOCATION is granted", result)
+        assertTrue(result, "Should return true when COARSE_LOCATION is granted")
     }
 
     @Test
@@ -65,6 +66,6 @@ class LocationProviderTest {
         val result = locationProvider.hasLocationPermission()
 
         // Then
-        assertFalse("Should return false when both permissions are denied", result)
+        assertFalse(result, "Should return false when both permissions are denied")
     }
 }
