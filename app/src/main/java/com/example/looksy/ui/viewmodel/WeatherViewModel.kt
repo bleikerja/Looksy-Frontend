@@ -19,11 +19,11 @@ class WeatherViewModel(
     fun fetchWeather(latitude: Double, longitude: Double) {
         viewModelScope.launch {
             _weatherState.value = WeatherUiState.Loading
-            repository.getWeather(latitude, longitude).collect { result ->
-                _weatherState.value = result.fold(
-                    onSuccess = { WeatherUiState.Success(it) },
-                    onFailure = { WeatherUiState.Error(it.message ?: "Unknown error") }
-                )
+            try {
+                val weather = repository.getWeather(latitude, longitude)
+                _weatherState.value = WeatherUiState.Success(weather)
+            } catch (e: Exception) {
+                _weatherState.value = WeatherUiState.Error(e.message ?: "Unknown error")
             }
         }
     }
