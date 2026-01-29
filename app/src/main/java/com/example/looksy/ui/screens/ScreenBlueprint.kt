@@ -45,7 +45,7 @@ fun ScreenBlueprint(navController: NavHostController) {
     val viewModelClothes: ClothesViewModel = viewModel(
         factory = ClothesViewModelFactory(application.repository)
     )
-    val viewModelOutfits: OutfitViewModel = viewModel(
+    val viewModelOutfit: OutfitViewModel = viewModel(
         factory = OutfitViewModelFactory(application.outfitRepository)
     )
     var nextRoute by remember { mutableStateOf(Routes.Home.route) }
@@ -111,12 +111,12 @@ fun ScreenBlueprint(navController: NavHostController) {
             }
         }
     ) { innerPadding ->
-       NavGraph(
-           navController = navController,
-           modifier = Modifier.padding(innerPadding),
-           viewModel = viewModelClothes,
-           outfitViewModel = viewModelOutfits
-       )
+        NavGraph(
+            navController = navController,
+            modifier = Modifier.padding(innerPadding),
+            clothesViewModel=viewModelClothes,
+            outfitViewModel = viewModelOutfit
+        )
     }
 }
 

@@ -1,7 +1,15 @@
 package com.example.looksy
 
-import com.example.looksy.data.repository.OutfitRepository
+import com.example.looksy.data.repository.ClothesRepository
+import com.example.looksy.data.model.Clothes
+import com.example.looksy.data.model.Material
 import com.example.looksy.data.model.Outfit
+import com.example.looksy.data.model.Season
+import com.example.looksy.data.model.Size
+import com.example.looksy.data.model.Type
+import com.example.looksy.data.model.WashingNotes
+import com.example.looksy.data.repository.OutfitRepository
+import com.example.looksy.ui.viewmodel.ClothesViewModel
 import com.example.looksy.ui.viewmodel.OutfitViewModel
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -41,13 +49,12 @@ class OutfitViewModelTest {
     fun `insert() should call repository's insert`() = testScope.runTest {
         // Given
         val outfit = Outfit(
-            id = 0,
+            id = 1,
             dressId = 1,
-            topsId = 2,
-            skirtId = null,
-            pantsId = 3,
-            jacketId = null,
-            isSynced = false
+            topsId = 3,
+            pantsId = 4,
+            jacketId = 5,
+            skirtId = 6,
         )
 
         // When
@@ -59,65 +66,91 @@ class OutfitViewModelTest {
     }
 
     @Test
-    fun `insert() should save outfit with all clothing pieces`() = testScope.runTest {
+    fun `update() should call repository's update`() = testScope.runTest {
         // Given
         val outfit = Outfit(
-            id = 0,
-            dressId = null,
-            topsId = 1,
-            skirtId = 2,
-            pantsId = 3,
-            jacketId = 4,
-            isSynced = false
-        )
-
-        // When
-        viewModel.insert(outfit)
-        advanceUntilIdle()
-
-        // Then
-        coVerify { repository.insert(outfit) }
-    }
-
-    @Test
-    fun `insert() should save outfit with only some clothing pieces`() = testScope.runTest {
-        // Given
-        val outfit = Outfit(
-            id = 0,
-            dressId = null,
-            topsId = 1,
-            skirtId = null,
-            pantsId = 2,
-            jacketId = null,
-            isSynced = false
-        )
-
-        // When
-        viewModel.insert(outfit)
-        advanceUntilIdle()
-
-        // Then
-        coVerify { repository.insert(outfit) }
-    }
-
-    @Test
-    fun `insert() should save outfit with dress only`() = testScope.runTest {
-        // Given
-        val outfit = Outfit(
-            id = 0,
+            id = 1,
             dressId = 1,
-            topsId = null,
-            skirtId = null,
-            pantsId = null,
-            jacketId = null,
-            isSynced = false
+            topsId = 3,
+            pantsId = 4,
+            jacketId = 5,
+            skirtId = 6,
         )
 
         // When
-        viewModel.insert(outfit)
+        viewModel.update(outfit)
         advanceUntilIdle()
 
         // Then
-        coVerify { repository.insert(outfit) }
+        coVerify { repository.update(outfit) }
+    }
+
+    @Test
+    fun `delete() should call repository's delete`() = testScope.runTest {
+        // Given
+        val outfit = Outfit(
+            id = 1,
+            dressId = 1,
+            topsId = 3,
+            pantsId = 4,
+            jacketId = 5,
+            skirtId = 6,
+        )
+
+        // When
+        viewModel.delete(outfit)
+        advanceUntilIdle()
+
+        // Then
+        coVerify { repository.delete(outfit) }
+    }
+
+    @Test
+    fun `getOutfitById() should call repository's getOutfitById`() {
+        // Given
+        val id = 1
+
+        // When
+        viewModel.getOutfitById(id)
+
+        // Then
+        coVerify { repository.getOutfitById(id) }
+    }
+
+    @Test
+    fun `incrementOutfitPreference() should call repository`() = testScope.runTest {
+        val topId = 10
+        val dressId = null
+        val skirtId = 20
+        val pantsId = null
+        val jacketId = 30
+        viewModel.incrementOutfitPreference(
+            topId,
+            dressId,
+            skirtId,
+            pantsId,
+            jacketId)
+        advanceUntilIdle()
+        coVerify {
+            repository.incrementOutfitPreference(
+                topId,
+                dressId,
+                skirtId,
+                pantsId,
+                jacketId
+            )
+        }
+    }
+    @Test
+    fun `incrementOutfitPreference() should handle all null IDs`() = testScope.runTest {
+
+        // When
+        viewModel.incrementOutfitPreference(null, null, null, null, null)
+        advanceUntilIdle()
+
+        // Then
+        coVerify {
+            repository.incrementOutfitPreference(null, null, null, null, null)
+        }
     }
 }

@@ -2,6 +2,7 @@ package com.example.looksy.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.example.looksy.data.repository.ClothesRepository
 import com.example.looksy.data.repository.OutfitRepository
 
 class OutfitViewModelFactory(

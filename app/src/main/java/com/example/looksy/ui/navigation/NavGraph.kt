@@ -30,7 +30,7 @@ import com.example.looksy.data.model.Clothes
 import com.example.looksy.data.model.Outfit
 import com.example.looksy.data.model.Type
 import com.example.looksy.ui.viewmodel.ClothesViewModel
-import com.example.looksy.ui.viewmodel.OutfitViewModel
+//import com.example.looksy.ui.viewmodel.OutfitViewModel
 import com.example.looksy.ui.screens.AddNewClothesScreen
 import com.example.looksy.ui.screens.CameraScreenPermission
 import com.example.looksy.ui.screens.Category
@@ -38,6 +38,7 @@ import com.example.looksy.ui.screens.CategoryItems
 import com.example.looksy.ui.screens.SavedOutfitsScreen
 import com.example.looksy.ui.screens.SpecificCategoryScreen
 import com.example.looksy.ui.screens.WashingMachineScreen
+import com.example.looksy.ui.viewmodel.OutfitViewModel
 import com.example.looksy.util.generateRandomOutfit
 import com.example.looksy.util.saveImagePermanently
 import kotlinx.coroutines.launch
@@ -46,10 +47,10 @@ import kotlinx.coroutines.launch
 fun NavGraph(
     navController: NavHostController,
     modifier: Modifier = Modifier,
-    viewModel: ClothesViewModel,
+    clothesViewModel: ClothesViewModel,
     outfitViewModel: OutfitViewModel
 ) {
-    val allClothesFromDb by viewModel.allClothes.collectAsState(initial = emptyList())
+    val allClothesFromDb by clothesViewModel.allClothes.collectAsState(initial = emptyList())
     val categoryItems =
         allClothesFromDb.filter { it.clean }.groupBy { it.type }.map { (type, items) ->
             CategoryItems(category = type, items = items)
@@ -62,7 +63,13 @@ fun NavGraph(
     var dress by remember { mutableStateOf<Clothes?>(null) }
 
     LaunchedEffect(allClothesFromDb) {
-        if (allClothesFromDb.isNotEmpty() && top == null && dress == null) {
+        if (allClothesFromDb.isEmpty()) {
+            top = null
+            pants = null
+            jacket = null
+            skirt = null
+            dress = null
+        } else if (top == null && dress == null) {
             val outfit = generateRandomOutfit(allClothesFromDb)
             top = outfit.top
             pants = outfit.pants
@@ -105,8 +112,15 @@ fun NavGraph(
                     navController.navigate(Routes.Details.createRoute(clothesId))
                 },
                 onConfirm = { wornClothesList ->
+                    outfitViewModel.incrementOutfitPreference(
+                        currentTop?.id,
+                        currentDress?.id,
+                        currentSkirt?.id,
+                        currentPants?.id,
+                        currentJacket?.id
+                    )
                     val updatedClothesList = wornClothesList.map { it.copy(clean = false) }
-                    viewModel.updateAll(updatedClothesList)
+                    clothesViewModel.updateAll(updatedClothesList)
 
                     val clothesForNewOutfit = allClothesFromDb.map { cloth ->
                         updatedClothesList.find { it.id == cloth.id } ?: cloth
@@ -176,7 +190,7 @@ fun NavGraph(
             if (type != null) {
                 SpecificCategoryScreen(
                     type = Type.valueOf(type),
-                    viewModel = viewModel,
+                    viewModel = clothesViewModel,
                     onOpenDetails = { index ->
                         val finalRoute = Routes.Details.createRoute(index)
                         navController.navigate(finalRoute)
@@ -192,7 +206,7 @@ fun NavGraph(
         ) { backStackEntry ->
             val clothesId = backStackEntry.arguments?.getInt(RouteArgs.ID)
             if (clothesId != null) {
-                val clothesData by viewModel.getClothesById(clothesId)
+                val clothesData by clothesViewModel.getClothesById(clothesId)
                     .collectAsState(initial = null)
                 val snackbarHostState = remember { SnackbarHostState() }
                 val scope = rememberCoroutineScope()
@@ -205,7 +219,7 @@ fun NavGraph(
                         ClothInformationScreen(
                             modifier = Modifier.padding(innerPadding),
                             clothesData = cloth,
-                            viewModel = viewModel,
+                            viewModel = clothesViewModel,
                             onNavigateToDetails = { newId ->
                                 navController.navigate(Routes.Details.createRoute(newId)) {
                                     launchSingleTop = true
@@ -337,7 +351,7 @@ fun NavGraph(
             val context = LocalContext.current
             AddNewClothesScreen(
                 imageUriString = encodedUriString,
-                viewModel = viewModel,
+                viewModel = clothesViewModel,
                 clothesIdToEdit = null,
                 onSave = { newClothesData ->
                     val uriToSave = encodedUriString?.toUri()
@@ -345,7 +359,7 @@ fun NavGraph(
                         val permanentPath = saveImagePermanently(context, uriToSave)
                         if (permanentPath != null) {
                             val finalClothes = newClothesData.copy(imagePath = permanentPath)
-                            viewModel.insert(finalClothes)
+                            clothesViewModel.insert(finalClothes)
                             navController.popBackStack(Routes.Home.route, false)
                         }
                     }
@@ -368,7 +382,7 @@ fun NavGraph(
                 val context = LocalContext.current
                 AddNewClothesScreen(
                     imageUriString = if(encodedUriString.isNullOrEmpty()) null else encodedUriString,
-                    viewModel = viewModel,
+                    viewModel = clothesViewModel,
                     clothesIdToEdit = clothesId,
                     onSave = { updatedClothesData ->
                         if(!encodedUriString.isNullOrEmpty()){
@@ -376,7 +390,7 @@ fun NavGraph(
                             val permanentPath = saveImagePermanently(context, uriToSave)
                             if (permanentPath != null) {
                                 val finalClothes = updatedClothesData.copy(imagePath = permanentPath)
-                                viewModel.update(finalClothes)
+                                clothesViewModel.update(finalClothes)
                                 finalClothes.let {
                                     when (it.type) {
                                         Type.Tops -> if (top?.id == it.id) top = it
@@ -389,16 +403,16 @@ fun NavGraph(
 
                             }
                         } else{
-                            viewModel.update(updatedClothesData)
+                            clothesViewModel.update(updatedClothesData)
                         }
                         navController.popBackStack()
                     },
                     onNavigateBack = { navController.popBackStack() },
                     onDelete = {
                         scope.launch {
-                            val clothesToDelete = viewModel.getByIdDirect(clothesId)
+                            val clothesToDelete = clothesViewModel.getByIdDirect(clothesId)
                             if (clothesToDelete != null) {
-                                viewModel.delete(clothesToDelete)
+                                clothesViewModel.delete(clothesToDelete)
                             }
                             navController.navigate(Routes.Home.route) {
                                 popUpTo(Routes.Home.route) { inclusive = true }
@@ -419,7 +433,7 @@ fun NavGraph(
                 onConfirmWashed = { washedClothes ->
                     washedClothes.forEach { cloth ->
                         val updatedCloth = cloth.copy(clean = true)
-                        viewModel.update(updatedCloth)
+                        clothesViewModel.update(updatedCloth)
                     }
                 }
             )
@@ -465,7 +479,7 @@ fun NavGraph(
                         },
                         onConfirm = { wornClothesList ->
                             val updatedClothesList = wornClothesList.map { it.copy(clean = false) }
-                            viewModel.updateAll(updatedClothesList)
+                            clothesViewModel.updateAll(updatedClothesList)
                             navController.popBackStack()
                         },
                         onWashingMachine = { navController.navigate(Routes.WashingMachine.route) },
