@@ -13,9 +13,3 @@
 .externalNativeBuild
 .cxx
 local.properties
-# IntelliJ IDEA
-*.iml
-.idea/
-!.idea/codeStyles/
-!.idea/inspectionProfiles/
-!.idea/runConfigurations/

@@ -2,15 +2,17 @@ package com.example.looksy.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.example.looksy.data.repository.WeatherRepository
+import com.example.looksy.data.repository.ClothesRepository
+import com.example.looksy.data.repository.OutfitRepository
 
-class WeatherViewModelFactory(
-    private val repository: WeatherRepository
+class OutfitViewModelFactory(
+    private val repository: OutfitRepository
 ) : ViewModelProvider.Factory {
+
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(WeatherViewModel::class.java)) {
+        if (modelClass.isAssignableFrom(OutfitViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return WeatherViewModel(repository) as T
+            return OutfitViewModel(repository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

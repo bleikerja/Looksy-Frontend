@@ -73,7 +73,6 @@ fun FullOutfitScreen(
                     rightIconContentDescription = "Zur Waschmaschine",
                     rightIcon = Icons.Default.LocalLaundryService,
                     isFirstHeader = true)
-                
                 Spacer(modifier = Modifier.height(16.dp))
 
                 jacket?.let {
@@ -127,9 +126,7 @@ fun FullOutfitScreen(
             IconButton(modifier=Modifier.align(Alignment.BottomEnd).padding(16.dp).size(50.dp)
                 ,onClick = {
                 val wornClothes = listOfNotNull(top, pants, dress, jacket, skirt)
-                // Erst die Logik ausführen
                 onConfirm(wornClothes)
-                // Dann die Snackbar (ohne die Logik zu blockieren)
                 scope.launch {
                     snackbarHostState.showSnackbar(
                         "Schön, dass dir das Outfit gefällt und du es anziehst",
@@ -204,7 +201,7 @@ fun OutfitPart(imageResId: Any?, onClick: () -> Unit, modifier: Modifier = Modif
         LooksyButton(
             onClick = onClick,
             modifier = Modifier.align(Alignment.CenterVertically),
-            picture = { Icon(Icons.Default.Create, contentDescription = "") })
+            picture = { Icon(Icons.Default.Create, contentDescription = "Bearbeiten") })
     }
 }
 

@@ -4,7 +4,6 @@ import com.example.looksy.data.remote.dto.WeatherResponse
 import retrofit2.http.GET
 import retrofit2.http.Query
 
-
 interface WeatherApiService {
     @GET("weather")
     suspend fun getWeatherByLocation(

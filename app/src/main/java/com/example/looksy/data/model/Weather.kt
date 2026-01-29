@@ -1,5 +1,4 @@
 package com.example.looksy.data.model
-
 data class Weather(
     val locationName: String,
     val temperature: Double,
