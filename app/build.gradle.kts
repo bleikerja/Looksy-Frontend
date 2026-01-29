@@ -95,4 +95,5 @@ dependencies {
     implementation(libs.play.services.location)
 
     testImplementation(libs.mockk)
+    testImplementation(kotlin("test"))
 }
