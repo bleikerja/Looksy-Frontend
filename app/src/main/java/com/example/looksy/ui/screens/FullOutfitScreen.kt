@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.LocalLaundryService
@@ -53,7 +54,8 @@ fun FullOutfitScreen(
     onConfirm: (List<Clothes>) -> Unit = {},
     onWashingMachine: () -> Unit = {},
     onGenerateRandom: () -> Unit = {},
-    onCamera: () -> Unit = {}
+    onCamera: () -> Unit = {},
+    onSave: () -> Unit = {}
 ) {
     if ((top != null || dress != null) && (pants != null || skirt != null)) {
         val snackbarHostState = remember { SnackbarHostState() }
@@ -73,23 +75,6 @@ fun FullOutfitScreen(
                     rightIconContentDescription = "Zur Waschmaschine",
                     rightIcon = Icons.Default.LocalLaundryService,
                     isFirstHeader = true)
-                /*Row(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        "Dein heutiges Outfit",
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.align(Alignment.CenterVertically)
-                    )
-                    Spacer(modifier = Modifier.weight(1f))
-                    IconButton(onClick = { onWashingMachine() }, modifier = Modifier.size(50.dp)) {
-                        Icon(
-                            modifier = Modifier.fillMaxSize(),
-                            imageVector = Icons.Default.LocalLaundryService,
-                            contentDescription = "Zur Waschmaschine"
-                        )
-                    }
-                }
-                */
                 Spacer(modifier = Modifier.height(16.dp))
 
                 jacket?.let {
@@ -130,33 +115,60 @@ fun FullOutfitScreen(
             }
             IconButton(
                 onClick = onGenerateRandom,
-                modifier = Modifier.padding(bottom = 16.dp).size(50.dp)
+                modifier = Modifier
                     .align(Alignment.BottomStart)
-
+                    .padding(bottom = 16.dp)
+                    .size(50.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Default.Shuffle, // Gutes Icon für "Zufall"
+                    imageVector = Icons.Default.Shuffle,
                     contentDescription = "Zufälliges Outfit generieren",
                     modifier = Modifier.fillMaxSize()
                 )
             }
-            IconButton(modifier=Modifier.align(Alignment.BottomEnd).padding(16.dp).size(50.dp)
-                ,onClick = {
-                // Dieselbe Logik wie vorher im großen Button
-                val wornClothes = listOfNotNull(top, pants, dress, jacket, skirt)
-                scope.launch {
-                    snackbarHostState.showSnackbar(
-                        "Schön, dass dir das Outfit gefällt und du es anziehst",
-                        duration = SnackbarDuration.Short
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                IconButton(
+                    onClick = {
+                        scope.launch {
+                            snackbarHostState.showSnackbar(
+                                "Outfit gespeichert",
+                                duration = SnackbarDuration.Short
+                            )
+                            onSave()
+                        }
+                    },
+                    modifier = Modifier.size(50.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Bookmark,
+                        contentDescription = "Outfit speichern",
+                        modifier = Modifier.fillMaxSize()
                     )
-                    onConfirm(wornClothes)
                 }
-            }) {
-                Icon(
-                    imageVector = Icons.Default.Check, // Haken-Icon
-                    contentDescription = "Outfit anziehen",
-                    modifier = Modifier.fillMaxSize()
-                )
+                IconButton(
+                    onClick = {
+                        val wornClothes = listOfNotNull(top, pants, dress, jacket, skirt)
+                        scope.launch {
+                            snackbarHostState.showSnackbar(
+                                "Schön, dass dir das Outfit gefällt und du es anziehst",
+                                duration = SnackbarDuration.Short
+                            )
+                            onConfirm(wornClothes)
+                        }
+                    },
+                    modifier = Modifier.size(50.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Outfit anziehen",
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             }
             SnackbarHost(
                 hostState = snackbarHostState,
@@ -173,7 +185,7 @@ fun FullOutfitScreen(
                     .size(50.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Default.Shuffle, // Gutes Icon für "Zufall"
+                    imageVector = Icons.Default.Shuffle,
                     contentDescription = "Zufälliges Outfit generieren",
                     modifier = Modifier.fillMaxSize()
                 )
@@ -219,33 +231,9 @@ fun OutfitPart(imageResId: Any?, onClick: () -> Unit, modifier: Modifier = Modif
         LooksyButton(
             onClick = onClick,
             modifier = Modifier.align(Alignment.CenterVertically),
-            picture = { Icon(Icons.Default.Create, contentDescription = "") })
+            picture = { Icon(Icons.Default.Create, contentDescription = "Bearbeiten") })
     }
 }
-
-/*
-@Composable
-private fun EmptyState(
-    onAddClothesClick: () -> Unit,
-    onChooseCategoryClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("Füge Kleidung hinzu, um Outfits zu erstellen")
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = onAddClothesClick) {
-                Text("Kleidung hinzufügen")
-            }
-            Button(onClick = onChooseCategoryClick) {
-                Text("Kategorie auswählen")
-            }
-        }
-    }
-}
-*/
 
 @Preview(showBackground = true)
 @Composable

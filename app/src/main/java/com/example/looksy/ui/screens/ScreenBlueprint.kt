@@ -27,8 +27,10 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.looksy.LooksyApplication
 import com.example.looksy.ui.components.ConfirmationDialog
 import com.example.looksy.ui.viewmodel.ClothesViewModelFactory
+import com.example.looksy.ui.viewmodel.OutfitViewModelFactory
 import com.example.looksy.ui.navigation.NavGraph
 import com.example.looksy.ui.viewmodel.ClothesViewModel
+import com.example.looksy.ui.viewmodel.OutfitViewModel
 
 @Composable
 fun ScreenBlueprint(navController: NavHostController) {
@@ -36,12 +38,15 @@ fun ScreenBlueprint(navController: NavHostController) {
     val navItems = listOf(
         Triple(Routes.ChoseClothes.route, "Chose Clothes", R.drawable.wardrobeicon),
         Triple(Routes.Home.route, "Home", R.drawable.clothicon),
-        Triple(Routes.Scan.createRoute(-1), "Scan", R.drawable.cameraicon),
-        Triple(Routes.ExistingClothes.route, "Existing Clothes", R.drawable.heart)
+        Triple(Routes.Scan.route, "Scan", R.drawable.cameraicon),
+        Triple(Routes.SavedOutfits.route, "Saved Outfits", R.drawable.heart)
     )
     val application = LocalContext.current.applicationContext as LooksyApplication
     val viewModelClothes: ClothesViewModel = viewModel(
         factory = ClothesViewModelFactory(application.repository)
+    )
+    val viewModelOutfit: OutfitViewModel = viewModel(
+        factory = OutfitViewModelFactory(application.outfitRepository)
     )
     var nextRoute by remember { mutableStateOf(Routes.Home.route) }
     var showBackDialog by remember { mutableStateOf(false) }
@@ -106,7 +111,12 @@ fun ScreenBlueprint(navController: NavHostController) {
             }
         }
     ) { innerPadding ->
-       NavGraph(navController = navController, modifier = Modifier.padding(innerPadding), viewModel=viewModelClothes)
+        NavGraph(
+            navController = navController,
+            modifier = Modifier.padding(innerPadding),
+            clothesViewModel=viewModelClothes,
+            outfitViewModel = viewModelOutfit
+        )
     }
 }
 
