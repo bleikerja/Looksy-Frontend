@@ -13,6 +13,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.*
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
@@ -22,6 +25,7 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.looksy.LooksyApplication
+import com.example.looksy.ui.components.ConfirmationDialog
 import com.example.looksy.ui.viewmodel.ClothesViewModelFactory
 import com.example.looksy.ui.viewmodel.OutfitViewModelFactory
 import com.example.looksy.ui.navigation.NavGraph
@@ -44,6 +48,26 @@ fun ScreenBlueprint(navController: NavHostController) {
     val viewModelOutfits: OutfitViewModel = viewModel(
         factory = OutfitViewModelFactory(application.outfitRepository)
     )
+    var nextRoute by remember { mutableStateOf(Routes.Home.route) }
+    var showBackDialog by remember { mutableStateOf(false) }
+    if (showBackDialog) {
+        ConfirmationDialog (
+            title = "Achtung!",
+            text = "mögliche Änderungen gehen verloren!",
+            dismissText = "Abbrechen",
+            onDismiss = { showBackDialog = false },
+            confirmText = "Weiter",
+            onConfirm = {
+                navController.navigate(nextRoute){
+                    popUpTo(navController.graph.startDestinationId) {
+                    }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+                showBackDialog = false
+            }
+        )
+    }
     Scaffold(
         bottomBar = {
             NavigationBar {
@@ -55,11 +79,16 @@ fun ScreenBlueprint(navController: NavHostController) {
                         selected = currentDestination?.hierarchy?.any { it.route == route } == true,
                         onClick = {
                             // Navigation zum neuen Ziel auslösen.
-                            navController.navigate(route){
+                            if(currentDestination?.route != Routes.EditClothes.route){
+                                navController.navigate(route){
                                     popUpTo(navController.graph.startDestinationId) {
                                     }
                                     launchSingleTop = true
                                     restoreState = true
+                                }
+                            }else {
+                                nextRoute = route
+                                showBackDialog = true
                             }
                         },
                         label = null,

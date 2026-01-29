@@ -140,6 +140,7 @@ fun NavGraph(
                     )
                     outfitViewModel.insert(outfitToSave)
                 }
+
             )
         }
 
@@ -299,7 +300,7 @@ fun NavGraph(
                                 }
                             },
                             onNavigateToEdit = { editId ->
-                                navController.navigate(Routes.EditClothes.createRoute(editId))
+                                navController.navigate(Routes.EditClothes.createRoute(editId, ""))
                             }
                         )
                     }
@@ -307,11 +308,23 @@ fun NavGraph(
             }
         }
 
-        composable(Routes.Scan.route) {
+        composable(
+            route = Routes.Scan.route,
+            arguments = listOf(navArgument(RouteArgs.ID) { type = NavType.IntType })
+        ) { backStackEntry ->
+            val clothesId = backStackEntry.arguments?.getInt(RouteArgs.ID)
             CameraScreenPermission(
                 onImageCaptured = { tempUri ->
                     val encodedUri = Uri.encode(tempUri.toString())
-                    navController.navigate(Routes.AddNewClothes.createRoute(encodedUri))
+                    if(clothesId == -1 || clothesId == null){
+                        navController.navigate(Routes.AddNewClothes.createRoute(encodedUri))
+                    } else {
+                        navController.navigate(Routes.EditClothes.createRoute(clothesId, encodedUri)) {
+                            popUpTo(Routes.EditClothes.route) {
+                                inclusive = true
+                            }
+                        }
+                    }
                 }
             )
         }
@@ -343,17 +356,41 @@ fun NavGraph(
 
         composable(
             route = Routes.EditClothes.route,
-            arguments = listOf(navArgument(RouteArgs.ID) { type = NavType.IntType })
+            arguments = listOf(
+                navArgument(RouteArgs.ID) { type = NavType.IntType },
+                navArgument(RouteArgs.IMAGE_URI) { type = NavType.StringType }
+            )
         ) { backStackEntry ->
             val clothesId = backStackEntry.arguments?.getInt(RouteArgs.ID)
+            val encodedUriString = backStackEntry.arguments?.getString(RouteArgs.IMAGE_URI)
             val scope = rememberCoroutineScope()
             if (clothesId != null) {
+                val context = LocalContext.current
                 AddNewClothesScreen(
-                    imageUriString = null,
+                    imageUriString = if(encodedUriString.isNullOrEmpty()) null else encodedUriString,
                     viewModel = viewModel,
                     clothesIdToEdit = clothesId,
                     onSave = { updatedClothesData ->
-                        viewModel.update(updatedClothesData)
+                        if(!encodedUriString.isNullOrEmpty()){
+                            val uriToSave = encodedUriString.toUri()
+                            val permanentPath = saveImagePermanently(context, uriToSave)
+                            if (permanentPath != null) {
+                                val finalClothes = updatedClothesData.copy(imagePath = permanentPath)
+                                viewModel.update(finalClothes)
+                                finalClothes.let {
+                                    when (it.type) {
+                                        Type.Tops -> if (top?.id == it.id) top = it
+                                        Type.Pants -> if (pants?.id == it.id) pants = it
+                                        Type.Jacket -> if (jacket?.id == it.id) jacket = it
+                                        Type.Skirt -> if (skirt?.id == it.id) skirt = it
+                                        Type.Dress -> if (dress?.id == it.id) dress = it
+                                    }
+                                }
+
+                            }
+                        } else{
+                            viewModel.update(updatedClothesData)
+                        }
                         navController.popBackStack()
                     },
                     onNavigateBack = { navController.popBackStack() },
@@ -368,6 +405,7 @@ fun NavGraph(
                             }
                         }
                     },
+                    onEditImage = { navController.navigate(Routes.Scan.createRoute(clothesId)) }
                 )
             }
         }
