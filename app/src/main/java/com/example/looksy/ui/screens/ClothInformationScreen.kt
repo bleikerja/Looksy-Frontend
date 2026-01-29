@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -17,7 +18,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.LocalLaundryService
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -42,6 +46,7 @@ import com.example.looksy.data.model.Type
 import com.example.looksy.data.model.WashingNotes
 import com.example.looksy.ui.theme.LooksyTheme
 import com.example.looksy.ui.components.Header
+import kotlin.math.floor
 
 //just from same type
 
@@ -82,6 +87,7 @@ fun ClothInformationScreen(
     modifier: Modifier = Modifier,
     clothesData: Clothes,
     viewModel: ClothesViewModel,
+    onMoveToWashingMachine: () -> Unit,
     onNavigateToDetails: (Int) -> Unit,
     onNavigateBack: () -> Unit,
     onConfirmOutfit: (Int) -> Unit,
@@ -130,7 +136,39 @@ fun ClothInformationScreen(
             Information("Material", clothesData.material.displayName)
             Information("Größe", clothesData.size.displayName)
             Information("Saison", clothesData.seasonUsage.displayName)
-            Information("Status", if (clothesData.clean) "sauber" else "schmutzig")
+            Information("Status",
+                if (clothesData.clean){
+                    if(clothesData.wornSince == null && clothesData.daysWorn == 0) {
+                        "sauber"
+                    }else {
+                        var daysWorn = clothesData.daysWorn
+                        if(clothesData.wornSince != null) daysWorn += floor(((System.currentTimeMillis() - clothesData.wornSince) / (1000 * 60 * 60 * 24)).toDouble()).toInt() + 1
+                        "$daysWorn Tag" + if (daysWorn < 2) "" else "e"
+                    }
+                } else "schmutzig",
+                modifier = if(clothesData.clean && clothesData.daysWorn != 0 && !clothesData.selected) Modifier.fillMaxWidth(0.3f) else Modifier
+            )
+
+            if(clothesData.clean && clothesData.daysWorn != 0 && !clothesData.selected) {
+                IconButton(
+                    onClick = {
+                        onMoveToWashingMachine()
+                        if(clothesData.selected) {
+                            onDeselectOutfit(clothesData.id)
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth(0.15f)
+                        .fillMaxHeight()
+                        .align(Alignment.CenterVertically)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.LocalLaundryService,
+                        contentDescription = "zu Waschmaschine hinzufügen",
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            }
         }
         Row(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -193,9 +231,9 @@ fun SimilarClothCard(
 
 
 @Composable
-fun Information(name: String, value: String) {
+fun Information(name: String, value: String, modifier: Modifier = Modifier) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .shadow(10.dp, RoundedCornerShape(20))
             .fillMaxWidth(0.45f)
             .background(Color.White, shape = RoundedCornerShape(20))

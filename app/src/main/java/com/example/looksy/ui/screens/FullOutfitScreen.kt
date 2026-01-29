@@ -12,12 +12,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.LocalLaundryService
 import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Shuffle
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -26,8 +33,11 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -51,6 +61,7 @@ fun FullOutfitScreen(
     skirt: Clothes? = null,
     onClick: (Int) -> Unit = {},
     onConfirm: (List<Clothes>) -> Unit = {},
+    onMoveToWashingMachine: (List<Clothes>, List<Clothes>) -> Unit = { _, _ -> },
     onWashingMachine: () -> Unit = {},
     onGenerateRandom: () -> Unit = {},
     onCamera: () -> Unit = {}
@@ -59,6 +70,7 @@ fun FullOutfitScreen(
         val snackbarHostState = remember { SnackbarHostState() }
         val scope = rememberCoroutineScope()
         Box(modifier = Modifier.fillMaxSize()) {
+            val confirmedOutfit = listOfNotNull(top, pants, dress, jacket, skirt).any { !it.selected }
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -128,35 +140,119 @@ fun FullOutfitScreen(
                     )
                 }
             }
-            IconButton(
-                onClick = onGenerateRandom,
-                modifier = Modifier.padding(bottom = 16.dp).size(50.dp)
-                    .align(Alignment.BottomStart)
+            if(confirmedOutfit){
+                IconButton(
+                    onClick = onGenerateRandom,
+                    modifier = Modifier
+                        .padding(bottom = 16.dp)
+                        .size(50.dp)
+                        .align(Alignment.BottomStart)
 
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Shuffle, // Gutes Icon für "Zufall"
-                    contentDescription = "Zufälliges Outfit generieren",
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-            IconButton(modifier=Modifier.align(Alignment.BottomEnd).padding(16.dp).size(50.dp)
-                ,onClick = {
-                // Dieselbe Logik wie vorher im großen Button
-                val wornClothes = listOfNotNull(top, pants, dress, jacket, skirt)
-                scope.launch {
-                    snackbarHostState.showSnackbar(
-                        "Schön, dass dir das Outfit gefällt und du es anziehst",
-                        duration = SnackbarDuration.Short
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Shuffle, // Gutes Icon für "Zufall"
+                        contentDescription = "Zufälliges Outfit generieren",
+                        modifier = Modifier.fillMaxSize()
                     )
-                    onConfirm(wornClothes)
                 }
-            }) {
-                Icon(
-                    imageVector = Icons.Default.Check, // Haken-Icon
-                    contentDescription = "Outfit anziehen",
-                    modifier = Modifier.fillMaxSize()
-                )
+                IconButton(modifier=Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp)
+                    .size(50.dp)
+                    ,onClick = {
+                        // Dieselbe Logik wie vorher im großen Button
+                        val wornClothes = listOfNotNull(top, pants, dress, jacket, skirt)
+                        onConfirm(wornClothes)
+                        scope.launch {
+                            snackbarHostState.showSnackbar(
+                                "Schön, dass dir das Outfit gefällt und du es anziehst",
+                                duration = SnackbarDuration.Short
+                            )
+                        }
+                    }) {
+                    Icon(
+                        imageVector = Icons.Default.Check, // Haken-Icon
+                        contentDescription = "Outfit anziehen",
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            }else {
+                var showConfirmDialog by remember { mutableStateOf(false) }
+                IconButton(modifier=Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp)
+                    .size(50.dp)
+                    ,onClick = {
+                        showConfirmDialog = true
+                    }) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = "Neues Outfit",
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+                if(showConfirmDialog){
+                    val wornClothes = listOfNotNull(top, pants, dress, jacket, skirt)
+                    var selectedIds by remember { mutableStateOf(wornClothes.map { it.id }.toSet()) }
+                    AlertDialog(
+                        onDismissRequest = { showConfirmDialog = false },
+                        title = {
+                            Text(text = "Neues Outfit")
+                        },
+                        text = {
+                            Column {
+                                Text(
+                                    text = "Welche Kleider sollen als schmutzig markiert werden?",
+                                    modifier = Modifier.padding(bottom = 12.dp)
+                                )
+
+                                LazyVerticalGrid(
+                                    columns = GridCells.Fixed(2),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    items(wornClothes) { clothItem ->
+                                        val isSelected = clothItem.id in selectedIds
+
+                                        WashingItemContainer(
+                                            item = clothItem,
+                                            isSelected = isSelected,
+                                            onClick = {
+                                                selectedIds =
+                                                    if (isSelected) selectedIds - clothItem.id
+                                                    else selectedIds + clothItem.id
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        },
+                        confirmButton = {
+                            Button(
+                                onClick = {
+                                    onMoveToWashingMachine(
+                                        wornClothes.filter { it.id in selectedIds },
+                                        wornClothes.filter { it.id !in selectedIds }
+                                    )
+
+                                    showConfirmDialog = false
+                                }
+                            ) {
+                                Text("Weiter")
+                            }
+                        },
+                        dismissButton = {
+                            Button(
+                                onClick = { showConfirmDialog = false }
+                            ) {
+                                Text("Abbrechen")
+                            }
+                        },
+                        shape = RoundedCornerShape(16.dp)
+                    )
+
+                }
+
             }
             SnackbarHost(
                 hostState = snackbarHostState,
