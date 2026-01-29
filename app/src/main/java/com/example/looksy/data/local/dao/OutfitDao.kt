@@ -31,4 +31,20 @@ interface OutfitDao {
 
     @Delete
     suspend fun delete(outfit: Outfit)
+    @Query("""
+        SELECT * FROM outfits_table 
+        WHERE (topsId IS :selectedTopId) 
+        AND (dressId IS :selectedDressId) 
+        AND (skirtId IS :selectedSkirtId) 
+        AND (pantsId IS :selectedPantsId) 
+        AND (jacketId IS :selectedJacketId) 
+        LIMIT 1
+    """)
+    suspend fun findMatchingOutfit(
+        selectedTopId: Int?,
+        selectedDressId: Int?,
+        selectedSkirtId: Int?,
+        selectedPantsId: Int?,
+        selectedJacketId: Int?
+    ): Outfit?
 }

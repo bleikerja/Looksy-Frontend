@@ -165,4 +165,51 @@ class OutfitRepositoryTest {
         assertEquals(outfit, result)
         coVerify { outfitDao.getByIdDirect(id) }
     }
+    @Test
+    fun `incrementOutfitPreference() should increment count and update when outfit exists`() = runTest {
+        // Given: Ein existierendes Outfit mit aktuellem Score 5
+        val existingOutfit = Outfit(
+            id = 100,
+            topsId = 1,
+            pantsId = 2,
+            preference = 5
+        )
+
+        // Mocking: Das DAO findet dieses Outfit
+        coEvery {
+            outfitDao.findMatchingOutfit(1, 2, null, null, null)
+        } returns existingOutfit
+
+        // When: Die Funktion wird aufgerufen
+        outfitRepository.incrementOutfitPreference(1, 2, null, null, null)
+
+        // Then: Verifiziere, dass update mit Score 6 gerufen wurde
+        coVerify {
+            outfitDao.update(match { it.id == 100 && it.preference == 6 })
+        }
+    }
+
+    @Test
+    fun `incrementOutfitPreference() should insert new outfit when no match found`() = runTest {// Given: Kein passendes Outfit in der Datenbank
+        coEvery {
+            outfitDao.findMatchingOutfit(any(), any(), any(), any(), any())
+        } returns null
+
+        // When: Die Funktion wird aufgerufen
+        // Nutze hier benannte Parameter, um sicherzugehen, dass 20 wirklich die pantsId ist
+        outfitRepository.incrementOutfitPreference(
+            selectedTopId = 10,
+            selectedDressId = null,
+            selectedSkirtId = null,
+            selectedPantsId = 20,
+            selectedJacketId = null
+        )
+
+        // Then: Verifiziere, dass ein neues Outfit mit Score 1 eingefügt wurde
+        coVerify {
+            outfitDao.insert(match {
+                it.topsId == 10 && it.pantsId == 20 && it.preference == 1
+            })
+        }
+    }
 }

@@ -46,8 +46,23 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+    buildFeatures {
+        compose = true
+    }
     testOptions {
         unitTests.isReturnDefaultValues = true
+    }
+    packaging {resources {
+        // Schließt die doppelt vorhandenen Lizenzdateien aus
+        excludes += "/META-INF/LICENSE.md"
+        excludes += "/META-INF/LICENSE-notice.md"
+
+        // Optional: Schließt auch andere oft konfliktbehaftete Dateien aus
+        excludes += "/META-INF/AL2.0"
+        excludes += "/META-INF/LGPL2.1"
+        excludes += "/META-INF/LICENSE.txt"
+        excludes += "/META-INF/NOTICE.txt"
+    }
     }
 }
 
@@ -73,12 +88,15 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.compose.foundation.layout)
+    implementation(libs.androidx.navigation.testing)
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.material.icons.extended)
 
     // Test dependencies
     testImplementation(libs.junit)
+    //testImplementation(libs.mockk.v11311)
+    androidTestImplementation("io.mockk:mockk-android:1.13.11")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
     testImplementation(libs.mockk)
     testImplementation(kotlin("test"))
