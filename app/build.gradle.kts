@@ -95,7 +95,7 @@ dependencies {
 
     // Test dependencies
     testImplementation(libs.junit)
-    testImplementation("io.mockk:mockk:1.13.11")
+    //testImplementation(libs.mockk.v11311)
     androidTestImplementation("io.mockk:mockk-android:1.13.11")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
     testImplementation(libs.mockk)
