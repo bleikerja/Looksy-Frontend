@@ -103,6 +103,11 @@ fun NavGraph(
                 onConfirm = { wornClothesList ->
                     val updatedClothesList = wornClothesList.map { it.copy(clean = false) }
                     viewModel.updateAll(updatedClothesList)
+                    viewModel.incrementClothesPreference(wornClothesList) // Hier wird die Einzel-Präferenz erhöht
+                    wornClothesList.forEach { cloth ->
+                        val updatedCloth = cloth.copy(clean = true)
+                        viewModel.update(updatedCloth)
+                    }
 
                     val clothesForNewOutfit = allClothesFromDb.map { cloth ->
                         updatedClothesList.find { it.id == cloth.id } ?: cloth
@@ -115,7 +120,10 @@ fun NavGraph(
                     jacket = outfit.jacket
                     dress = outfit.dress
                 },
-                onWashingMachine = { navController.navigate(Routes.WashingMachine.route) },
+                onWashingMachine = {
+
+
+                    navController.navigate(Routes.WashingMachine.route) },
                 onGenerateRandom = {
                     val outfit = generateRandomOutfit(allClothesFromDb)
                     top = outfit.top

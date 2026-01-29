@@ -49,6 +49,18 @@ android {
     testOptions {
         unitTests.isReturnDefaultValues = true
     }
+    packaging {resources {
+        // Schließt die doppelt vorhandenen Lizenzdateien aus
+        excludes += "/META-INF/LICENSE.md"
+        excludes += "/META-INF/LICENSE-notice.md"
+
+        // Optional: Schließt auch andere oft konfliktbehaftete Dateien aus
+        excludes += "/META-INF/AL2.0"
+        excludes += "/META-INF/LGPL2.1"
+        excludes += "/META-INF/LICENSE.txt"
+        excludes += "/META-INF/NOTICE.txt"
+    }
+    }
 }
 
 dependencies {
@@ -76,6 +88,7 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.material.icons.extended)
+    implementation(libs.androidx.navigation.testing)
 
     // Test dependencies
     testImplementation(libs.junit)
@@ -86,6 +99,7 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
+    androidTestImplementation("io.mockk:mockk-android:1.13.11")
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation(libs.retrofit.core)

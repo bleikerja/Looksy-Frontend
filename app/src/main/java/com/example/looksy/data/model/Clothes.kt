@@ -16,5 +16,7 @@ data class Clothes(
     val washingNotes: WashingNotes,
 
     val imagePath: String = "",
-    val isSynced: Boolean = false
+    val isSynced: Boolean = false,
+
+    val wornClothes: Int = 0
 )

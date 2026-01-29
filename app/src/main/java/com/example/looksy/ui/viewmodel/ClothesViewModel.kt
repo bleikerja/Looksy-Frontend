@@ -44,6 +44,13 @@ class ClothesViewModel(private val repository: ClothesRepository) : ViewModel() 
         repository.delete(clothes)
     }
 
+    fun incrementClothesPreference(clothes: List<Clothes>) {
+        viewModelScope.launch {
+            val updatedList = clothes.map { it.copy(wornClothes = it.wornClothes + 1) }
+            repository.updateAll(updatedList)
+        }
+    }
+
     suspend fun getByIdDirect(id: Int): Clothes? {
         return repository.getByIdDirect(id)
     }
