@@ -121,6 +121,11 @@ fun NavGraph(
                     )
                     val updatedClothesList = wornClothesList.map { it.copy(clean = false) }
                     clothesViewModel.updateAll(updatedClothesList)
+                    clothesViewModel.incrementClothesPreference(wornClothesList) // Hier wird die Einzel-Präferenz erhöht
+                    wornClothesList.forEach { cloth ->
+                        val updatedCloth = cloth.copy(clean = true)
+                        clothesViewModel.update(updatedCloth)
+                    }
 
                     val clothesForNewOutfit = allClothesFromDb.map { cloth ->
                         updatedClothesList.find { it.id == cloth.id } ?: cloth
