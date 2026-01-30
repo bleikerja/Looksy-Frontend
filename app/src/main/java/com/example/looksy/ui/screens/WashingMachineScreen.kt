@@ -178,7 +178,7 @@ fun WashingMachineScreen(
 }
 
 @Composable
-private fun WashingItemContainer(
+fun WashingItemContainer(
     item: Clothes,
     isSelected: Boolean,
     onClick: () -> Unit

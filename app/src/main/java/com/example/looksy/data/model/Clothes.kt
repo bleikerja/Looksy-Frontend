@@ -12,8 +12,12 @@ data class Clothes(
     val seasonUsage: Season,
     val type: Type,
     val material: Material,
+    val wornSince: Long? = null,
+    val daysWorn: Int = 0,
     val clean: Boolean,
     val washingNotes: WashingNotes,
+
+    val selected: Boolean = false,
 
     val imagePath: String = "",
     val isSynced: Boolean = false,
