@@ -12,9 +12,13 @@ import com.example.looksy.ui.navigation.NavGraph
 import com.example.looksy.ui.navigation.Routes
 import com.example.looksy.ui.viewmodel.ClothesViewModel
 import com.example.looksy.ui.viewmodel.OutfitViewModel
+import com.example.looksy.util.OutfitResult
+import com.example.looksy.util.generateRandomOutfit
+import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkStatic
 import io.mockk.verify
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert
@@ -22,6 +26,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+//import com.example.looksy.util.OutfitResultimport com.example.looksy.util.generateRandomOutfit
 
 @RunWith(AndroidJUnit4::class)
 class NavGraphTest {
@@ -34,39 +39,81 @@ class NavGraphTest {
     private lateinit var navController: TestNavHostController
 
     private val testTop = Clothes(
-        id = 1, type = Type.Tops, clean = true, size = Size._M,
-        seasonUsage = Season.inBetween, material = Material.Cotton,
+        id = 1,
+        type = Type.Tops,
+        clean = true,
+        size = Size._M,
+        seasonUsage = Season.inBetween,
+        material = Material.Cotton,
         washingNotes = WashingNotes.Temperature30,
         imagePath = "android.resource://com.example.looksy/${R.drawable.shirt_category}",
         isSynced = false,
-        wornClothes = 5 // Startwert für den Test
+        wornClothes = 5
     )
 
     private val testPants = Clothes(
-        id = 2, type = Type.Pants, clean = true, size = Size._M,
-        seasonUsage = Season.inBetween, material = Material.Cotton,
+        id = 2,
+        type = Type.Pants,
+        clean = true,
+        size = Size._M,
+        seasonUsage = Season.inBetween,
+        material = Material.Cotton,
         washingNotes = WashingNotes.Temperature30,
         imagePath = "android.resource://com.example.looksy/${R.drawable.jeans}",
         isSynced = false,
-        wornClothes = 2 // Startwert für den Test
+        wornClothes = 2
+    )
+    private val testSkirt = Clothes(
+        id = 3,
+        type = Type.Skirt,
+        clean = true,
+        size = Size._M,
+        seasonUsage = Season.inBetween,
+        material = Material.Cotton,
+        washingNotes = WashingNotes.Temperature30,
+        imagePath = "android.resource://com.example.looksy/${R.drawable.jeans}",
+        isSynced = false
     )
 
-    private val clothesFlow = MutableStateFlow(listOf(testTop, testPants))
-
+    private val clothesFlow = MutableStateFlow(listOf(testTop, testPants, testSkirt))
     @Before
     fun setup() {
+        mockkStatic("com.example.looksy.util.OutfitGeneratorKt")
+        every { generateRandomOutfit(any()) } returns OutfitResult(
+            top = testTop,
+            pants = testPants,
+            skirt = testSkirt,
+            jacket = null,
+            dress = null
+        )
         every { clothesViewModel.allClothes } returns clothesFlow
-        every { clothesViewModel.getClothesById(any()) } returns MutableStateFlow(testTop)
 
-        // Mock für incrementClothesPreference: Aktualisiert den State im Flow
+        every { clothesViewModel.getClothesById(any()) } answers {
+            val id = it.invocation.args[0] as Int
+            MutableStateFlow(clothesFlow.value.find { it.id == id })
+        }
+
+        coEvery { clothesViewModel.getByIdDirect(any()) } answers {
+            val id = it.invocation.args[0] as Int
+            clothesFlow.value.find { it.id == id }
+        }
+
+        coEvery { clothesViewModel.delete(any()) } answers {
+            val toDelete = it.invocation.args[0] as Clothes
+            val currentList = clothesFlow.value.toMutableList()
+            currentList.removeAll { item -> item.id == toDelete.id }
+            clothesFlow.value = currentList
+            mockk(relaxed = true)
+        }
+
         every { clothesViewModel.incrementClothesPreference(any()) } answers {
             val itemsToIncrement = it.invocation.args[0] as List<Clothes>
             val currentItems = clothesFlow.value.toMutableList()
             itemsToIncrement.forEach { item ->
                 val index = currentItems.indexOfFirst { it.id == item.id }
                 if (index != -1) {
-                    val current = currentItems[index]
-                    currentItems[index] = current.copy(wornClothes = current.wornClothes + 1)
+                    currentItems[index] =
+                        currentItems[index].copy(wornClothes = currentItems[index].wornClothes + 1)
                 }
             }
             clothesFlow.value = currentItems
@@ -74,7 +121,6 @@ class NavGraphTest {
 
         composeTestRule.setContent {
             navController = TestNavHostController(LocalContext.current)
-            // WICHTIG: Behebt java.lang.ClassCastException
             navController.navigatorProvider.addNavigator(ComposeNavigator())
 
             NavGraph(
@@ -92,10 +138,39 @@ class NavGraphTest {
 
         // Verifizierung (coVerify für suspend Funktionen im Repository/ViewModel)
         coVerify(timeout = 2000) {
-            outfitViewModel.incrementOutfitPreference(1, null, null, 2, null)
+            outfitViewModel.incrementOutfitPreference(
+                1, null, 3, 2,
+                selectedJacketId = null
+            )
             clothesViewModel.updateAll(any())
         }
     }
+
+    @OptIn(ExperimentalTestApi::class)
+    @Test
+    fun generatorUpdatesAfterAOutfitpartIsDeleted() {
+        composeTestRule.runOnUiThread {
+            navController.navigate(Routes.Home.route)
+        }
+        composeTestRule.waitUntilAtLeastOneExists(hasClickAction())
+        // 1. Home Screen: Klicke auf den Stift-Button des Rocks
+        composeTestRule.onAllNodesWithContentDescription("Bearbeiten")[1].performClick()
+        // 2. Details Screen
+        composeTestRule.waitUntilExactlyOneExists(hasText("Details"), 5000)
+        composeTestRule.onNodeWithContentDescription("Bearbeiten").performClick()
+        // 3. Edit Screen
+        composeTestRule.waitUntilExactlyOneExists(hasText("Bearbeiten"), 5000)
+        composeTestRule.onNodeWithContentDescription("Löschen").performClick()
+        // 4. Confirmation Dialog
+        composeTestRule.onNodeWithText("Löschen").performClick()
+        // VERIFIKATION: Prüfe nur die ID
+        coVerify { clothesViewModel.delete(match { it.id == testSkirt.id }) }
+        composeTestRule.waitForIdle()
+        assert(navController.currentDestination?.route == Routes.Home.route)
+        assert(clothesFlow.value.size == 2)
+        assert(clothesFlow.value.none { it.id == testSkirt.id })
+    }
+
     @Test
     fun clothesPreferenceIncrementsOnConfirm() {
         // 1. Ursprüngliche Werte festhalten
@@ -127,15 +202,20 @@ class NavGraphTest {
             navController.navigate(Routes.ChoseClothes.route)
         }
 
-        composeTestRule.onNodeWithText("Oberteil", substring = true).assertIsDisplayed()
 
         // Wir klicken auf den Pfeil ("See more") in der Sektion
         composeTestRule.onAllNodes(
-            hasContentDescription("See more") and
-                    hasAnySibling(hasText("Oberteil", substring = true))
+            hasContentDescription("See more") and hasAnySibling(
+                hasText(
+                    "Oberteil",
+                    substring = true
+                )
+            )
         ).onFirst().performClick()
 
-        Assert.assertEquals(Routes.SpecificCategory.route, navController.currentDestination?.route)
+        Assert.assertEquals(
+            Routes.SpecificCategory.route, navController.currentDestination?.route
+        )
     }
 
     @Test
@@ -145,7 +225,8 @@ class NavGraphTest {
         }
         composeTestRule.waitForIdle()
         // Button-Text ist dynamisch: "${Type.Tops} auswählen" -> "Tops auswählen"
-        composeTestRule.onNodeWithText("${Type.Tops} auswählen", ignoreCase = true).performClick()
+        composeTestRule.onNodeWithText("${Type.Tops} auswählen", ignoreCase = true)
+            .performClick()
 
         Assert.assertEquals(Routes.Home.route, navController.currentDestination?.route)
     }
@@ -163,12 +244,12 @@ class NavGraphTest {
         val context = composeTestRule.activity
         val expectedErrorMessage = context.getString(R.string.error_cannot_deselect_last_item)
         composeTestRule.waitUntil(timeoutMillis = 5000) {
-            composeTestRule
-                .onAllNodesWithText(expectedErrorMessage, substring = true)
+            composeTestRule.onAllNodesWithText(expectedErrorMessage, substring = true)
                 .fetchSemanticsNodes().isNotEmpty()
         }
 
-        composeTestRule.onNodeWithText(expectedErrorMessage, substring = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText(expectedErrorMessage, substring = true)
+            .assertIsDisplayed()
     }
 
     @Test
@@ -209,17 +290,18 @@ class NavGraphTest {
             imagePath = "",
             isSynced = false
         )
-        every { clothesViewModel.allClothes } returns MutableStateFlow(listOf(testTop, testPants))
+        every { clothesViewModel.allClothes } returns MutableStateFlow(
+            listOf(
+                testTop, testPants
+            )
+        )
 
         // ContentDescription aus deinem FullOutfitScreen
-        composeTestRule.onNodeWithContentDescription("Zufälliges Outfit generieren").performClick()
+        composeTestRule.onNodeWithContentDescription("Zufälliges Outfit generieren")
+            .performClick()
 
         Assert.assertEquals(
-            Routes.Home.route,
-            navController.currentBackStackEntry?.destination?.route
+            Routes.Home.route, navController.currentBackStackEntry?.destination?.route
         )
-    }
-    private fun assertEquals(expected: String?, actual: String?) {
-        Assert.assertEquals(expected, actual)
     }
 }

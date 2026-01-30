@@ -30,7 +30,6 @@ import com.example.looksy.data.model.Clothes
 import com.example.looksy.data.model.Outfit
 import com.example.looksy.data.model.Type
 import com.example.looksy.ui.viewmodel.ClothesViewModel
-//import com.example.looksy.ui.viewmodel.OutfitViewModel
 import com.example.looksy.ui.screens.AddNewClothesScreen
 import com.example.looksy.ui.screens.CameraScreenPermission
 import com.example.looksy.ui.screens.Category
@@ -62,14 +61,17 @@ fun NavGraph(
     var skirt by remember { mutableStateOf<Clothes?>(null) }
     var dress by remember { mutableStateOf<Clothes?>(null) }
 
+    // Zentraler Effekt zur Synchronisierung des Outfits mit der Datenbank.
+    // Stellt sicher, dass gelöschte oder schmutzige Kleidung sofort aus dem Outfit entfernt wird.
     LaunchedEffect(allClothesFromDb) {
-        if (allClothesFromDb.isEmpty()) {
-            top = null
-            pants = null
-            jacket = null
-            skirt = null
-            dress = null
-        } else if (top == null && dress == null) {
+        top = top?.let { t -> allClothesFromDb.find { it.id == t.id && it.clean && it.type == Type.Tops } }
+        pants = pants?.let { p -> allClothesFromDb.find { it.id == p.id && it.clean && it.type == Type.Pants } }
+        jacket = jacket?.let { j -> allClothesFromDb.find { it.id == j.id && it.clean && it.type == Type.Jacket } }
+        skirt = skirt?.let { s -> allClothesFromDb.find { it.id == s.id && it.clean && it.type == Type.Skirt } }
+        dress = dress?.let { d -> allClothesFromDb.find { it.id == d.id && it.clean && it.type == Type.Dress } }
+
+        // Falls das Outfit unvollständig wird (kein Oberteil/Kleid), generiere ein neues.
+        if (allClothesFromDb.any { it.clean } && top == null && dress == null) {
             val outfit = generateRandomOutfit(allClothesFromDb)
             top = outfit.top
             pants = outfit.pants
@@ -85,53 +87,35 @@ fun NavGraph(
         modifier = modifier
     ) {
         composable(Routes.Home.route) {
-            val currentTop = top
-            val currentPants = pants
-            val currentJacket = jacket
-            val currentSkirt = skirt
-            val currentDress = dress
-
-            LaunchedEffect(allClothesFromDb, top, pants, skirt, jacket, dress) {
-                if (allClothesFromDb.isNotEmpty() && top == null && dress == null) {
-                    val outfit = generateRandomOutfit(allClothesFromDb)
-                    top = outfit.top
-                    pants = outfit.pants
-                    skirt = outfit.skirt
-                    jacket = outfit.jacket
-                    dress = outfit.dress
-                }
-            }
-            
             FullOutfitScreen(
-                top = currentTop,
-                pants = currentPants,
-                jacket = currentJacket,
-                skirt = currentSkirt,
-                dress = currentDress,
+                top = top,
+                pants = pants,
+                jacket = jacket,
+                skirt = skirt,
+                dress = dress,
                 onClick = { clothesId ->
                     navController.navigate(Routes.Details.createRoute(clothesId))
                 },
                 onConfirm = { wornClothesList ->
+                    // 1. Präferenzen erhöhen
                     outfitViewModel.incrementOutfitPreference(
-                        currentTop?.id,
-                        currentDress?.id,
-                        currentSkirt?.id,
-                        currentPants?.id,
-                        currentJacket?.id
+                        top?.id,
+                        dress?.id,
+                        skirt?.id,
+                        pants?.id,
+                        jacket?.id
                     )
+                    clothesViewModel.incrementClothesPreference(wornClothesList)
+
+                    // 2. Kleidung als schmutzig markieren
                     val updatedClothesList = wornClothesList.map { it.copy(clean = false) }
                     clothesViewModel.updateAll(updatedClothesList)
-                    clothesViewModel.incrementClothesPreference(wornClothesList) // Hier wird die Einzel-Präferenz erhöht
-                    wornClothesList.forEach { cloth ->
-                        val updatedCloth = cloth.copy(clean = true)
-                        clothesViewModel.update(updatedCloth)
-                    }
 
-                    val clothesForNewOutfit = allClothesFromDb.map { cloth ->
-                        updatedClothesList.find { it.id == cloth.id } ?: cloth
+                    // 3. Neues Outfit generieren (aus den verbleibenden sauberen Sachen)
+                    val remainingClean = allClothesFromDb.filter { cloth ->
+                        updatedClothesList.none { it.id == cloth.id } && cloth.clean 
                     }
-
-                    val outfit = generateRandomOutfit(clothesForNewOutfit)
+                    val outfit = generateRandomOutfit(remainingClean)
                     top = outfit.top
                     pants = outfit.pants
                     skirt = outfit.skirt
@@ -147,19 +131,18 @@ fun NavGraph(
                     jacket = outfit.jacket
                     dress = outfit.dress
                 },
-                onCamera = { navController.navigate(Routes.Scan.route) },
+                onCamera = { navController.navigate(Routes.Scan.createRoute(-1)) },
                 onSave = {
                     val outfitToSave = Outfit(
-                        dressId = currentDress?.id,
-                        topsId = currentTop?.id,
-                        skirtId = currentSkirt?.id,
-                        pantsId = currentPants?.id,
-                        jacketId = currentJacket?.id,
+                        dressId = dress?.id,
+                        topsId = top?.id,
+                        skirtId = skirt?.id,
+                        pantsId = pants?.id,
+                        jacketId = jacket?.id,
                         isSynced = false
                     )
                     outfitViewModel.insert(outfitToSave)
                 }
-
             )
         }
 
@@ -466,7 +449,6 @@ fun NavGraph(
                     .collectAsState(initial = null)
 
                 outfitData?.let { outfit ->
-                    // Finde die Kleidungsstücke für dieses Outfit
                     val outfitTop = outfit.topsId?.let { id -> allClothesFromDb.find { it.id == id } }
                     val outfitPants = outfit.pantsId?.let { id -> allClothesFromDb.find { it.id == id } }
                     val outfitDress = outfit.dressId?.let { id -> allClothesFromDb.find { it.id == id } }
@@ -489,7 +471,7 @@ fun NavGraph(
                         },
                         onWashingMachine = { navController.navigate(Routes.WashingMachine.route) },
                         onGenerateRandom = { },
-                        onCamera = { navController.navigate(Routes.Scan.route) }
+                        onCamera = { navController.navigate(Routes.Scan.createRoute(-1)) }
                     )
                 }
             }

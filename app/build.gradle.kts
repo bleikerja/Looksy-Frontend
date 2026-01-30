@@ -97,8 +97,8 @@ dependencies {
     // Test dependencies
     testImplementation(libs.junit)
     //testImplementation(libs.mockk.v11311)
-    androidTestImplementation("io.mockk:mockk-android:1.13.11")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
+    androidTestImplementation(libs.mockk.android)
+    testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockk)
     testImplementation(kotlin("test"))
 
