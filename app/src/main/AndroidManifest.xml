@@ -5,6 +5,19 @@
     <uses-feature android:name="android.hardware.camera.any"
         android:required="true" />
     <uses-permission android:name="android.permission.CAMERA" />
+
+
+    <!-- Internet permission for weather API calls -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    
+    <!-- Location permissions for weather based on device location -->
+    <!-- COARSE_LOCATION: Network-based location (faster, less battery) -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    
+    <!-- FINE_LOCATION: GPS-based location (more accurate, more battery) -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+    
     <application
         android:name=".LooksyApplication"
         android:allowBackup="true"
