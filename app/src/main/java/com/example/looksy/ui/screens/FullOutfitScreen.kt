@@ -134,12 +134,12 @@ fun FullOutfitScreen(
             ) {
                 IconButton(
                     onClick = {
+                        onSave()
                         scope.launch {
                             snackbarHostState.showSnackbar(
                                 "Outfit gespeichert",
                                 duration = SnackbarDuration.Short
                             )
-                            onSave()
                         }
                     },
                     modifier = Modifier.size(50.dp)
@@ -153,12 +153,12 @@ fun FullOutfitScreen(
                 IconButton(
                     onClick = {
                         val wornClothes = listOfNotNull(top, pants, dress, jacket, skirt)
+                        onConfirm(wornClothes)
                         scope.launch {
                             snackbarHostState.showSnackbar(
                                 "Schön, dass dir das Outfit gefällt und du es anziehst",
                                 duration = SnackbarDuration.Short
                             )
-                            onConfirm(wornClothes)
                         }
                     },
                     modifier = Modifier.size(50.dp)
@@ -240,9 +240,9 @@ fun OutfitPart(imageResId: Any?, onClick: () -> Unit, modifier: Modifier = Modif
 fun FullOutfitPreview() {
     LooksyTheme {
         FullOutfitScreen(
-            top = allClothes[2],
-            pants = allClothes[1],
-            skirt = allClothes[0],
+            top = null,
+            pants = null,
+            skirt = null,
             onClick = { }
         )
     }
