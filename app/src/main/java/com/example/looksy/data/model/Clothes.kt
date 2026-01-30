@@ -20,5 +20,7 @@ data class Clothes(
     val selected: Boolean = false,
 
     val imagePath: String = "",
-    val isSynced: Boolean = false
+    val isSynced: Boolean = false,
+
+    val wornClothes: Int = 0
 )
