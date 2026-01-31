@@ -97,7 +97,11 @@ fun NavGraph(
                     navController.navigate(Routes.Details.createRoute(clothesId))
                 },
                 onConfirm = { wornClothesList ->
-                    // 1. Präferenzen erhöhen
+                    // 1. Kleidung als ausgewählt markieren
+                    val updatedClothesList = wornClothesList.map { it.copy(wornSince = System.currentTimeMillis(), selected = true) }
+                    clothesViewModel.updateAll(updatedClothesList)
+
+                    // 2. Präferenzen erhöhen
                     outfitViewModel.incrementOutfitPreference(
                         topId,
                         dressId,
@@ -106,10 +110,6 @@ fun NavGraph(
                         jacketId
                     )
                     clothesViewModel.incrementClothesPreference(wornClothesList)
-
-                    // 2. Kleidung als ausgewählt markieren
-                    val updatedClothesList = wornClothesList.map { it.copy(wornSince = System.currentTimeMillis(), selected = true) }
-                    clothesViewModel.updateAll(updatedClothesList)
                 },
                 onMoveToWashingMachine = { dirtyClothesList, cleanClothesList ->
                     topId = null
