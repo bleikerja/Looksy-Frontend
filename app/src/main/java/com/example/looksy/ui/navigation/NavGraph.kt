@@ -102,6 +102,7 @@ fun NavGraph(
                     clothesViewModel.updateAll(updatedClothesList)
 
                     // 2. Präferenzen erhöhen
+                    clothesViewModel.incrementClothesPreference(wornClothesList)
                     outfitViewModel.incrementOutfitPreference(
                         topId,
                         dressId,
@@ -109,7 +110,6 @@ fun NavGraph(
                         pantsId,
                         jacketId
                     )
-                    clothesViewModel.incrementClothesPreference(wornClothesList)
                 },
                 onMoveToWashingMachine = { dirtyClothesList, cleanClothesList ->
                     topId = null
