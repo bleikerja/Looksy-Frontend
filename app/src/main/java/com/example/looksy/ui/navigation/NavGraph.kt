@@ -17,20 +17,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.example.looksy.LooksyApplication
 import com.example.looksy.ui.screens.CategoriesScreen
 import com.example.looksy.ui.screens.ClothInformationScreen
 import com.example.looksy.ui.screens.FullOutfitScreen
+import com.example.looksy.ui.screens.WeatherScreen
 import com.example.looksy.R
 import com.example.looksy.data.model.Clothes
 import com.example.looksy.data.model.Outfit
 import com.example.looksy.data.model.Type
 import com.example.looksy.ui.viewmodel.ClothesViewModel
-//import com.example.looksy.ui.viewmodel.OutfitViewModel
+import com.example.looksy.ui.viewmodel.WeatherViewModel
 import com.example.looksy.ui.screens.AddNewClothesScreen
 import com.example.looksy.ui.screens.CameraScreenPermission
 import com.example.looksy.ui.screens.Category
@@ -48,7 +51,8 @@ fun NavGraph(
     navController: NavHostController,
     modifier: Modifier = Modifier,
     clothesViewModel: ClothesViewModel,
-    outfitViewModel: OutfitViewModel
+    outfitViewModel: OutfitViewModel,
+    weatherViewModel: WeatherViewModel
 ) {
     val allClothesFromDb by clothesViewModel.allClothes.collectAsState(initial = emptyList())
     val categoryItems =
@@ -85,6 +89,19 @@ fun NavGraph(
         modifier = modifier
     ) {
         composable(Routes.Home.route) {
+            val application = LocalContext.current.applicationContext as LooksyApplication
+            val weatherState by weatherViewModel.weatherState.collectAsState()
+            val scope = rememberCoroutineScope()
+            
+            // Fetch weather on launch if location permission is granted
+            LaunchedEffect(Unit) {
+                if (application.locationProvider.hasLocationPermission()) {
+                    application.locationProvider.getCurrentLocation().onSuccess { location ->
+                        weatherViewModel.fetchWeather(location.latitude, location.longitude)
+                    }
+                }
+            }
+            
             val currentTop = top
             val currentPants = pants
             val currentJacket = jacket
@@ -108,6 +125,8 @@ fun NavGraph(
                 jacket = currentJacket,
                 skirt = currentSkirt,
                 dress = currentDress,
+                weatherState = weatherState,
+                onWeatherClick = { navController.navigate(Routes.Weather.route) },
                 onClick = { clothesId ->
                     navController.navigate(Routes.Details.createRoute(clothesId))
                 },
@@ -147,7 +166,7 @@ fun NavGraph(
                     jacket = outfit.jacket
                     dress = outfit.dress
                 },
-                onCamera = { navController.navigate(Routes.Scan.route) },
+                onCamera = { navController.navigate(Routes.Scan.createRoute(-1)) },
                 onSave = {
                     val outfitToSave = Outfit(
                         dressId = currentDress?.id,
@@ -329,7 +348,10 @@ fun NavGraph(
 
         composable(
             route = Routes.Scan.route,
-            arguments = listOf(navArgument(RouteArgs.ID) { type = NavType.IntType })
+            arguments = listOf(navArgument(RouteArgs.ID) { 
+                type = NavType.IntType
+                defaultValue = -1
+            })
         ) { backStackEntry ->
             val clothesId = backStackEntry.arguments?.getInt(RouteArgs.ID)
             CameraScreenPermission(
@@ -489,10 +511,20 @@ fun NavGraph(
                         },
                         onWashingMachine = { navController.navigate(Routes.WashingMachine.route) },
                         onGenerateRandom = { },
-                        onCamera = { navController.navigate(Routes.Scan.route) }
+                        onCamera = { navController.navigate(Routes.Scan.createRoute(-1)) }
                     )
                 }
             }
+        }
+
+        composable(route = Routes.Weather.route) {
+            val application = LocalContext.current.applicationContext as LooksyApplication
+            
+            WeatherScreen(
+                weatherViewModel = weatherViewModel,
+                locationProvider = application.locationProvider,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
     }
 }
