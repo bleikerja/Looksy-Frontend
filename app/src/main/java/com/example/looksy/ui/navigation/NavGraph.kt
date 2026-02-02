@@ -166,7 +166,7 @@ fun NavGraph(
                     jacket = outfit.jacket
                     dress = outfit.dress
                 },
-                onCamera = { navController.navigate(Routes.Scan.createRoute(-1)) },
+                onCamera = { navController.navigate(Routes.Scan.route) },
                 onSave = {
                     val outfitToSave = Outfit(
                         dressId = currentDress?.id,
@@ -511,7 +511,7 @@ fun NavGraph(
                         },
                         onWashingMachine = { navController.navigate(Routes.WashingMachine.route) },
                         onGenerateRandom = { },
-                        onCamera = { navController.navigate(Routes.Scan.createRoute(-1)) }
+                        onCamera = { navController.navigate(Routes.Scan.route) }
                     )
                 }
             }
