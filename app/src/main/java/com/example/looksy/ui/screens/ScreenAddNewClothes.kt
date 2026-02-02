@@ -19,6 +19,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenu
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
@@ -80,6 +81,7 @@ fun AddNewClothesScreen(
     var material by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.material) }
     var washingNotes by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.washingNotes) }
     var clean by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.clean ?: true) }
+    var color by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.color) }
 
     val isFormValid =
                 size != null && season != null && type != null && material != null && washingNotes != null
@@ -163,7 +165,8 @@ fun AddNewClothesScreen(
                         clean = clean, // Behalte den alten Status oder setze auf sauber
                         washingNotes = washingNotes!!,
                         // Der imagePath wird erst in Routes.kt final gesetzt!
-                        imagePath = clothesToEdit?.imagePath ?: ""
+                        imagePath = clothesToEdit?.imagePath ?: "",
+                        color = color?.takeIf { it.isNotBlank() }
                     )
                     // Rufe die vereinfachte onSave-Funktion auf
                     onSave(clothesItem)
@@ -195,6 +198,8 @@ fun AddNewClothesScreen(
                 onMaterialChange = { material = it; edited = true },
                 washingNotes = washingNotes,
                 onWashingNotesChange = { washingNotes = it; edited = true },
+                color = color,
+                onColorChange = { color = it; edited = true },
                 clean = clean,
                 onCleanChange = { clean = it; edited = true },
                 edit = (clothesIdToEdit != null)
@@ -207,6 +212,11 @@ fun AddNewClothesScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
+private val COLOR_OPTIONS = listOf(
+    null, "Schwarz", "Weiß", "Braun", "Beige", "Grau",
+    "Blau", "Navy", "Rot", "Burgunder", "Grün", "Oliv", "Rosa", "Pink"
+)
+
 private fun AddNewClothesForm(
     imageUri: Uri?,
     onEditImage: () -> Unit,
@@ -220,6 +230,8 @@ private fun AddNewClothesForm(
     onMaterialChange: (Material) -> Unit,
     washingNotes: WashingNotes?,
     onWashingNotesChange: (WashingNotes) -> Unit,
+    color: String?,
+    onColorChange: (String?) -> Unit,
     clean: Boolean,
     onCleanChange: (Boolean) -> Unit,
     edit: Boolean,
@@ -313,6 +325,39 @@ private fun AddNewClothesForm(
                 onWashingNotesChange
             )
 
+        }
+        item {
+            var expanded by remember { mutableStateOf(false) }
+            val selectedText = color ?: "Keine"
+
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = { expanded = !expanded }
+            ) {
+                TextField(
+                    modifier = Modifier.menuAnchor(),
+                    readOnly = true,
+                    value = selectedText,
+                    onValueChange = {},
+                    label = { Text("Farbe (optional)") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                    colors = ExposedDropdownMenuDefaults.textFieldColors(),
+                )
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false },
+                ) {
+                    COLOR_OPTIONS.forEach { option ->
+                        DropdownMenuItem(
+                            text = { Text(option ?: "Keine") },
+                            onClick = {
+                                onColorChange(option)
+                                expanded = false
+                            }
+                        )
+                    }
+                }
+            }
         }
         if (edit){
             item {

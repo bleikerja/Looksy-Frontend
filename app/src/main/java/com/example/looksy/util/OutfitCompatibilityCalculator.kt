@@ -41,6 +41,7 @@ object OutfitCompatibilityCalculator {
      * Validates required outfit rules
      * - Dress cannot be worn with pants or skirt
      * - At least a top or dress must be present
+     * - All items must be color-matching (farblich zusammenpassend)
      */
     private fun validateOutfitRules(outfit: OutfitResult): Boolean {
         // Dress cannot be combined with pants or skirt
@@ -51,6 +52,15 @@ object OutfitCompatibilityCalculator {
         // At least a top or dress must be present
         if (outfit.top == null && outfit.dress == null) {
             return false
+        }
+
+        val items = listOfNotNull(outfit.top, outfit.pants, outfit.skirt, outfit.jacket, outfit.dress)
+        for (i in items.indices) {
+            for (j in i + 1 until items.size) {
+                if (!ColorCompatibility.areCompatible(items[i].color, items[j].color)) {
+                    return false
+                }
+            }
         }
         
         return true

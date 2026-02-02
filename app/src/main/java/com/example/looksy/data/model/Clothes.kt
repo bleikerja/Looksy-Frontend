@@ -22,5 +22,8 @@ data class Clothes(
     val imagePath: String = "",
     val isSynced: Boolean = false,
 
-    val wornClothes: Int = 0
+    val wornClothes: Int = 0,
+
+    /** Farbe (optional) – kann leer bleiben, wenn keine Farbe eingegeben wird. */
+    val color: String? = null
 )
