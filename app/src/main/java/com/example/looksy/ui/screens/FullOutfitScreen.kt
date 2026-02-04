@@ -97,20 +97,17 @@ fun FullOutfitScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceAround,
-                    verticalAlignment = Alignment.CenterVertically
-                ){
-                    // Weather Icon Row
+                Box(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    // Weather Icon Row on the left
                     WeatherIconRow(
                         weatherState = weatherState,
                         onClick = onWeatherClick,
-                        // modifier = Modifier.fillMaxWidth(0.2f)
+                        modifier = Modifier.align(Alignment.CenterStart)
                     )
 
-                    // Spacer(modifier = Modifier.width(8.dp))
-
+                    // Header stays centered
                     Header(
                         onNavigateBack = {},
                         onNavigateToRightIcon = { onWashingMachine() },
@@ -119,6 +116,7 @@ fun FullOutfitScreen(
                         rightIconContentDescription = "Zur Waschmaschine",
                         rightIcon = Icons.Default.LocalLaundryService,
                         isFirstHeader = true,
+                        modifier = Modifier.align(Alignment.Center)
                     )
                 }
                    
@@ -379,15 +377,12 @@ private fun WeatherIconRow(
     ) {
         when (weatherState) {
             is WeatherUiState.Loading -> {
+                // More compact loading state to fit in left space
+                Spacer(modifier = Modifier.width(20.dp))
                 CircularProgressIndicator(
-                    modifier = Modifier.size(20.dp),
-                    strokeWidth = 2.dp
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Wetter laden...",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    modifier = Modifier.size(24.dp),
+                    strokeWidth = 2.dp,
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
 
@@ -407,14 +402,6 @@ private fun WeatherIconRow(
                     color = MaterialTheme.colorScheme.primary
                 )
                 Spacer(modifier = Modifier.width(4.dp))
-
-//                // Location hint
-//                Icon(
-//                    imageVector = Icons.Default.LocationOn,
-//                    contentDescription = null,
-//                    modifier = Modifier.size(16.dp),
-//                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-//                )
             }
 
             is WeatherUiState.Error -> {
