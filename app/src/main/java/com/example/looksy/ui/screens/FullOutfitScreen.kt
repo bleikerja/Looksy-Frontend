@@ -15,6 +15,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Check
@@ -24,8 +27,11 @@ import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.LocalLaundryService
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -35,13 +41,17 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -65,6 +75,7 @@ fun FullOutfitScreen(
     skirt: Clothes? = null,
     onClick: (Int) -> Unit = {},
     onConfirm: (List<Clothes>) -> Unit = {},
+    onMoveToWashingMachine: (List<Clothes>, List<Clothes>) -> Unit = { _, _ -> },
     onWashingMachine: () -> Unit = {},
     onGenerateRandom: () -> Unit = {},
     onCamera: () -> Unit = {},
@@ -76,6 +87,8 @@ fun FullOutfitScreen(
         val snackbarHostState = remember { SnackbarHostState() }
         val scope = rememberCoroutineScope()
         Box(modifier = Modifier.fillMaxSize()) {
+            val confirmedOutfit =
+                listOfNotNull(top, pants, dress, jacket, skirt).any { !it.selected }
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -89,16 +102,18 @@ fun FullOutfitScreen(
                     onClick = onWeatherClick,
                     modifier = Modifier.fillMaxWidth()
                 )
-                
+
                 Spacer(modifier = Modifier.height(8.dp))
-                
-                Header(onNavigateBack = {},
+
+                Header(
+                    onNavigateBack = {},
                     onNavigateToRightIcon = { onWashingMachine() },
                     clothesData = null,
                     headerText = "Heutiges Outfit",
                     rightIconContentDescription = "Zur Waschmaschine",
                     rightIcon = Icons.Default.LocalLaundryService,
-                    isFirstHeader = true)
+                    isFirstHeader = true
+                )
                 Spacer(modifier = Modifier.height(16.dp))
 
                 jacket?.let {
@@ -137,19 +152,22 @@ fun FullOutfitScreen(
                     )
                 }
             }
-            IconButton(
-                onClick = onGenerateRandom,
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(bottom = 16.dp)
-                    .size(50.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Shuffle,
-                    contentDescription = "Zufälliges Outfit generieren",
-                    modifier = Modifier.fillMaxSize()
-                )
+            if (confirmedOutfit) {
+                IconButton(
+                    onClick = onGenerateRandom,
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(bottom = 16.dp)
+                        .size(50.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Shuffle,
+                        contentDescription = "Zufälliges Outfit generieren",
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             }
+
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
@@ -158,12 +176,12 @@ fun FullOutfitScreen(
             ) {
                 IconButton(
                     onClick = {
+                        onSave()
                         scope.launch {
                             snackbarHostState.showSnackbar(
                                 "Outfit gespeichert",
                                 duration = SnackbarDuration.Short
                             )
-                            onSave()
                         }
                     },
                     modifier = Modifier.size(50.dp)
@@ -174,24 +192,102 @@ fun FullOutfitScreen(
                         modifier = Modifier.fillMaxSize()
                     )
                 }
-                IconButton(
-                    onClick = {
-                        val wornClothes = listOfNotNull(top, pants, dress, jacket, skirt)
-                        scope.launch {
-                            snackbarHostState.showSnackbar(
-                                "Schön, dass dir das Outfit gefällt und du es anziehst",
-                                duration = SnackbarDuration.Short
-                            )
+                if (confirmedOutfit) {
+                    IconButton(
+                        onClick = {
+                            val wornClothes = listOfNotNull(top, pants, dress, jacket, skirt)
                             onConfirm(wornClothes)
+                            scope.launch {
+                                snackbarHostState.showSnackbar(
+                                    "Schön, dass dir das Outfit gefällt und du es anziehst",
+                                    duration = SnackbarDuration.Short
+                                )
+                            }
+                        },
+                        modifier = Modifier.size(50.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = "Outfit anziehen",
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                } else {
+                    var showConfirmDialog by remember { mutableStateOf(false) }
+                    IconButton(
+                        onClick = {
+                            showConfirmDialog = true
+                        },
+                        modifier = Modifier.size(50.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Neues Outfit",
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                    if (showConfirmDialog) {
+                        val wornClothes = listOfNotNull(top, pants, dress, jacket, skirt)
+                        var selectedIds by remember {
+                            mutableStateOf(wornClothes.map { it.id }.toSet())
                         }
-                    },
-                    modifier = Modifier.size(50.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = "Outfit anziehen",
-                        modifier = Modifier.fillMaxSize()
-                    )
+                        AlertDialog(
+                            onDismissRequest = { showConfirmDialog = false },
+                            title = {
+                                Text(text = "Neues Outfit")
+                            },
+                            text = {
+                                Column {
+                                    Text(
+                                        text = "Welche Kleider sollen als schmutzig markiert werden?",
+                                        modifier = Modifier.padding(bottom = 12.dp)
+                                    )
+
+                                    LazyVerticalGrid(
+                                        columns = GridCells.Fixed(2),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        items(wornClothes) { clothItem ->
+                                            val isSelected = clothItem.id in selectedIds
+
+                                            WashingItemContainer(
+                                                item = clothItem,
+                                                isSelected = isSelected,
+                                                onClick = {
+                                                    selectedIds =
+                                                        if (isSelected) selectedIds - clothItem.id
+                                                        else selectedIds + clothItem.id
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+                            },
+                            confirmButton = {
+                                Button(
+                                    onClick = {
+                                        onMoveToWashingMachine(
+                                            wornClothes.filter { it.id in selectedIds },
+                                            wornClothes.filter { it.id !in selectedIds }
+                                        )
+
+                                        showConfirmDialog = false
+                                    }
+                                ) {
+                                    Text("Weiter")
+                                }
+                            },
+                            dismissButton = {
+                                Button(
+                                    onClick = { showConfirmDialog = false }
+                                ) {
+                                    Text("Abbrechen")
+                                }
+                            },
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                    }
                 }
             }
             SnackbarHost(
@@ -286,7 +382,7 @@ private fun WeatherIconRow(
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
             }
-            
+
             is WeatherUiState.Success -> {
                 // Weather icon based on conditions
                 Text(
@@ -294,7 +390,7 @@ private fun WeatherIconRow(
                     fontSize = 28.sp
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                
+
                 // Temperature
                 Text(
                     text = "${weatherState.weather.temperature.roundToInt()}°C",
@@ -303,7 +399,7 @@ private fun WeatherIconRow(
                     color = MaterialTheme.colorScheme.primary
                 )
                 Spacer(modifier = Modifier.width(4.dp))
-                
+
                 // Location hint
                 Icon(
                     imageVector = Icons.Default.LocationOn,
@@ -312,7 +408,7 @@ private fun WeatherIconRow(
                     tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
             }
-            
+
             is WeatherUiState.Error -> {
                 Icon(
                     imageVector = Icons.Default.CloudOff,
@@ -328,7 +424,7 @@ private fun WeatherIconRow(
                 )
             }
         }
-        
+
         // Subtle indicator to click
         Spacer(modifier = Modifier.width(8.dp))
         Icon(
@@ -349,7 +445,7 @@ private fun getWeatherEmoji(description: String): String {
         description.contains("drizzle", ignoreCase = true) -> "🌦️"
         description.contains("thunder", ignoreCase = true) -> "⛈️"
         description.contains("snow", ignoreCase = true) -> "❄️"
-        description.contains("mist", ignoreCase = true) || 
+        description.contains("mist", ignoreCase = true) ||
         description.contains("fog", ignoreCase = true) -> "🌫️"
         else -> "🌤️"
     }
@@ -360,9 +456,9 @@ private fun getWeatherEmoji(description: String): String {
 fun FullOutfitPreview() {
     LooksyTheme {
         FullOutfitScreen(
-            top = allClothes[2],
-            pants = allClothes[1],
-            skirt = allClothes[0],
+            top = null,
+            pants = null,
+            skirt = null,
             onClick = { }
         )
     }
