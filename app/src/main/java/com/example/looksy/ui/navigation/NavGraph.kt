@@ -112,6 +112,8 @@ fun NavGraph(
                 jacket = getClothById(allClothesFromDb, jacketId ?: -1),
                 skirt = getClothById(allClothesFromDb, skirtId ?: -1),
                 dress = getClothById(allClothesFromDb, dressId ?: -1),
+                weatherState = weatherState,
+                onWeatherClick = { navController.navigate(Routes.Weather.route) },
                 onClick = { clothesId ->
                     navController.navigate(Routes.Details.createRoute(clothesId))
                 },
