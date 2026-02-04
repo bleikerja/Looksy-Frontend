@@ -30,8 +30,8 @@ fun Header(
 ) {
     Box(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp),
+            .fillMaxWidth(),
+            // .padding(8.dp),
         contentAlignment = Alignment.Center
     ) {
         if (!isFirstHeader) {

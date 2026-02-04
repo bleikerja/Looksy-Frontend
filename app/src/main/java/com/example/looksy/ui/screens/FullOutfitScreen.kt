@@ -96,24 +96,32 @@ fun FullOutfitScreen(
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Weather Icon Row
-                WeatherIconRow(
-                    weatherState = weatherState,
-                    onClick = onWeatherClick,
-                    modifier = Modifier.fillMaxWidth()
-                )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceAround,
+                    verticalAlignment = Alignment.CenterVertically
+                ){
+                    // Weather Icon Row
+                    WeatherIconRow(
+                        weatherState = weatherState,
+                        onClick = onWeatherClick,
+                        // modifier = Modifier.fillMaxWidth(0.2f)
+                    )
 
-                Header(
-                    onNavigateBack = {},
-                    onNavigateToRightIcon = { onWashingMachine() },
-                    clothesData = null,
-                    headerText = "Heutiges Outfit",
-                    rightIconContentDescription = "Zur Waschmaschine",
-                    rightIcon = Icons.Default.LocalLaundryService,
-                    isFirstHeader = true
-                )
+                    // Spacer(modifier = Modifier.width(8.dp))
+
+                    Header(
+                        onNavigateBack = {},
+                        onNavigateToRightIcon = { onWashingMachine() },
+                        clothesData = null,
+                        headerText = "Heutiges Outfit",
+                        rightIconContentDescription = "Zur Waschmaschine",
+                        rightIcon = Icons.Default.LocalLaundryService,
+                        isFirstHeader = true,
+                    )
+                }
+                   
                 Spacer(modifier = Modifier.height(16.dp))
 
                 jacket?.let {
@@ -400,13 +408,13 @@ private fun WeatherIconRow(
                 )
                 Spacer(modifier = Modifier.width(4.dp))
 
-                // Location hint
-                Icon(
-                    imageVector = Icons.Default.LocationOn,
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp),
-                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                )
+//                // Location hint
+//                Icon(
+//                    imageVector = Icons.Default.LocationOn,
+//                    contentDescription = null,
+//                    modifier = Modifier.size(16.dp),
+//                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+//                )
             }
 
             is WeatherUiState.Error -> {
