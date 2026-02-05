@@ -100,13 +100,12 @@ class WeatherNavigationTest {
     fun navGraph_homeScreen_displaysWeatherIcon_andNavigatesToWeather() {
         // Given: Home screen is displayed with weather success state
         val testWeather = Weather(
+            locationName = "Zürich",
             temperature = 20.0,
             feelsLike = 19.0,
             description = "Clear sky",
             humidity = 60,
-            windSpeed = 2.5,
-            pressure = 1012,
-            cityName = "Zürich"
+            iconUrl = "https://openweathermap.org/img/w/01d.png"
         )
         weatherStateFlow.value = com.example.looksy.ui.viewmodel.WeatherUiState.Success(testWeather)
 
@@ -163,13 +162,12 @@ class WeatherNavigationTest {
     fun navGraph_weatherScreen_receivesWeatherViewModel() {
         // Given: Weather state with data
         val testWeather = Weather(
+            locationName = "Zürich",
             temperature = 15.0,
             feelsLike = 14.0,
             description = "Cloudy",
             humidity = 70,
-            windSpeed = 3.0,
-            pressure = 1010,
-            cityName = "Zürich"
+            iconUrl = "https://openweathermap.org/img/w/03d.png"
         )
         weatherStateFlow.value = com.example.looksy.ui.viewmodel.WeatherUiState.Success(testWeather)
 
@@ -192,13 +190,12 @@ class WeatherNavigationTest {
     fun navGraph_weatherScreen_usesSharedWeatherViewModel() {
         // Given: Weather state on home screen
         val testWeather = Weather(
+            locationName = "Zürich",
             temperature = 22.0,
             feelsLike = 21.0,
             description = "Sunny",
             humidity = 55,
-            windSpeed = 2.0,
-            pressure = 1015,
-            cityName = "Zürich"
+            iconUrl = "https://openweathermap.org/img/w/01d.png"
         )
         weatherStateFlow.value = com.example.looksy.ui.viewmodel.WeatherUiState.Success(testWeather)
 

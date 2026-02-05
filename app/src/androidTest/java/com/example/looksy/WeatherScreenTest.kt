@@ -54,13 +54,12 @@ class WeatherScreenTest {
     fun weatherScreen_displaysSuccessState_withWeatherData() {
         // Given: Weather state is Success with test data
         val testWeather = Weather(
+            locationName = "Zürich",
             temperature = 18.5,
             feelsLike = 17.0,
             description = "Clear sky",
             humidity = 65,
-            windSpeed = 3.5,
-            pressure = 1013,
-            cityName = "Zürich"
+            iconUrl = "https://openweathermap.org/img/w/01d.png"
         )
         every { mockWeatherViewModel.weatherState } returns weatherStateFlow
         every { mockLocationProvider.hasLocationPermission() } returns true
@@ -136,13 +135,12 @@ class WeatherScreenTest {
     fun weatherScreen_displaysOutfitRecommendations_forColdWeather() {
         // Given: Cold weather (5°C)
         val coldWeather = Weather(
+            locationName = "Zürich",
             temperature = 5.0,
             feelsLike = 3.0,
             description = "Cloudy",
             humidity = 70,
-            windSpeed = 5.0,
-            pressure = 1015,
-            cityName = "Zürich"
+            iconUrl = "https://openweathermap.org/img/w/03d.png"
         )
         every { mockWeatherViewModel.weatherState } returns weatherStateFlow
         every { mockLocationProvider.hasLocationPermission() } returns true
@@ -168,13 +166,12 @@ class WeatherScreenTest {
     fun weatherScreen_displaysOutfitRecommendations_forWarmWeather() {
         // Given: Warm weather (25°C)
         val warmWeather = Weather(
+            locationName = "Zürich",
             temperature = 25.0,
             feelsLike = 26.0,
             description = "Sunny",
             humidity = 50,
-            windSpeed = 2.0,
-            pressure = 1010,
-            cityName = "Zürich"
+            iconUrl = "https://openweathermap.org/img/w/01d.png"
         )
         every { mockWeatherViewModel.weatherState } returns weatherStateFlow
         every { mockLocationProvider.hasLocationPermission() } returns true

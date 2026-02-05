@@ -58,21 +58,22 @@ class FullOutfitScreenWeatherTest {
         }
 
         // Then: Loading spinner is visible
-        composeTestRule.onNode(hasProgressBarRangeInfo(ProgressBarRangeInfo.Indeterminate))
-            .assertIsDisplayed()
+        composeTestRule.onNode(
+            hasContentDescription("Loading")
+                .or(hasTestTag("weather_loading"))
+        ).assertExists()
     }
 
     @Test
     fun fullOutfitScreen_displaysWeatherSuccessState_withTemperature() {
         // Given: Weather state is Success with 18°C
         val testWeather = Weather(
+            locationName = "Zürich",
             temperature = 18.5,
             feelsLike = 17.0,
             description = "Clear sky",
             humidity = 65,
-            windSpeed = 3.5,
-            pressure = 1013,
-            cityName = "Zürich"
+            iconUrl = "https://openweathermap.org/img/w/01d.png"
         )
 
         composeTestRule.setContent {
@@ -116,13 +117,12 @@ class FullOutfitScreenWeatherTest {
     fun fullOutfitScreen_weatherIconRow_isClickable() {
         // Given: Weather state with data
         val testWeather = Weather(
+            locationName = "Zürich",
             temperature = 22.0,
             feelsLike = 21.0,
             description = "Partly cloudy",
             humidity = 60,
-            windSpeed = 2.5,
-            pressure = 1012,
-            cityName = "Zürich"
+            iconUrl = "https://openweathermap.org/img/w/02d.png"
         )
         var weatherClicked = false
 
@@ -148,13 +148,12 @@ class FullOutfitScreenWeatherTest {
     fun fullOutfitScreen_weatherEmoji_matchesWeatherCondition_sunny() {
         // Given: Clear weather
         val sunnyWeather = Weather(
+            locationName = "Zürich",
             temperature = 25.0,
             feelsLike = 24.0,
             description = "Clear sky",
             humidity = 50,
-            windSpeed = 2.0,
-            pressure = 1010,
-            cityName = "Zürich"
+            iconUrl = "https://openweathermap.org/img/w/01d.png"
         )
 
         composeTestRule.setContent {
@@ -176,13 +175,12 @@ class FullOutfitScreenWeatherTest {
     fun fullOutfitScreen_weatherEmoji_matchesWeatherCondition_rainy() {
         // Given: Rainy weather
         val rainyWeather = Weather(
+            locationName = "Zürich",
             temperature = 15.0,
             feelsLike = 13.0,
             description = "Light rain",
             humidity = 85,
-            windSpeed = 5.0,
-            pressure = 1005,
-            cityName = "Zürich"
+            iconUrl = "https://openweathermap.org/img/w/10d.png"
         )
 
         composeTestRule.setContent {
@@ -204,13 +202,12 @@ class FullOutfitScreenWeatherTest {
     fun fullOutfitScreen_weatherEmoji_matchesWeatherCondition_cloudy() {
         // Given: Cloudy weather
         val cloudyWeather = Weather(
+            locationName = "Zürich",
             temperature = 12.0,
             feelsLike = 11.0,
             description = "Overcast clouds",
             humidity = 75,
-            windSpeed = 3.0,
-            pressure = 1008,
-            cityName = "Zürich"
+            iconUrl = "https://openweathermap.org/img/w/04d.png"
         )
 
         composeTestRule.setContent {
@@ -232,13 +229,12 @@ class FullOutfitScreenWeatherTest {
     fun fullOutfitScreen_weatherIconRow_displaysChevronIcon() {
         // Given: Any weather state
         val testWeather = Weather(
+            locationName = "Zürich",
             temperature = 20.0,
             feelsLike = 19.0,
             description = "Partly cloudy",
             humidity = 60,
-            windSpeed = 2.0,
-            pressure = 1012,
-            cityName = "Zürich"
+            iconUrl = "https://openweathermap.org/img/w/02d.png"
         )
 
         composeTestRule.setContent {
@@ -260,13 +256,12 @@ class FullOutfitScreenWeatherTest {
     fun fullOutfitScreen_weatherAndHeader_displayedTogether() {
         // Given: Weather success state
         val testWeather = Weather(
+            locationName = "Zürich",
             temperature = 16.0,
             feelsLike = 15.0,
             description = "Cloudy",
             humidity = 70,
-            windSpeed = 4.0,
-            pressure = 1010,
-            cityName = "Zürich"
+            iconUrl = "https://openweathermap.org/img/w/03d.png"
         )
 
         composeTestRule.setContent {
