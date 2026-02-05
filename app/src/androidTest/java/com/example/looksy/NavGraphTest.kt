@@ -79,7 +79,7 @@ class NavGraphTest {
     @Before
     fun setup() {
         mockkStatic("com.example.looksy.util.OutfitGeneratorKt")
-        every { generateRandomOutfit(any()) } returns OutfitResult(
+        every { generateRandomOutfit(any(), any()) } returns OutfitResult(
             top = testTop,
             pants = testPants,
             skirt = testSkirt,

@@ -50,6 +50,7 @@ fun NavGraph(
     outfitViewModel: OutfitViewModel
 ) {
     val allClothesFromDb by clothesViewModel.allClothes.collectAsState(initial = emptyList())
+    val allOutfitsFromDb by outfitViewModel.allOutfits.collectAsState(initial = emptyList())
     val categoryItems =
         allClothesFromDb.filter { it.clean }.groupBy { it.type }.map { (type, items) ->
             CategoryItems(category = type, items = items)
@@ -72,7 +73,7 @@ fun NavGraph(
 
         // Falls das Outfit unvollständig wird (kein Oberteil/Kleid), generiere ein neues.
         if (allClothesFromDb.any { it.clean } && top == null && dress == null) {
-            val outfit = generateRandomOutfit(allClothesFromDb)
+            val outfit = generateRandomOutfit(allClothesFromDb, allOutfitsFromDb)
             top = outfit.top
             pants = outfit.pants
             skirt = outfit.skirt
@@ -115,7 +116,7 @@ fun NavGraph(
                     val remainingClean = allClothesFromDb.filter { cloth ->
                         updatedClothesList.none { it.id == cloth.id } && cloth.clean 
                     }
-                    val outfit = generateRandomOutfit(remainingClean)
+                    val outfit = generateRandomOutfit(remainingClean, allOutfitsFromDb)
                     top = outfit.top
                     pants = outfit.pants
                     skirt = outfit.skirt
@@ -124,7 +125,7 @@ fun NavGraph(
                 },
                 onWashingMachine = { navController.navigate(Routes.WashingMachine.route) },
                 onGenerateRandom = {
-                    val outfit = generateRandomOutfit(allClothesFromDb)
+                    val outfit = generateRandomOutfit(allClothesFromDb, allOutfitsFromDb)
                     top = outfit.top
                     pants = outfit.pants
                     skirt = outfit.skirt
@@ -199,6 +200,7 @@ fun NavGraph(
                 val snackbarHostState = remember { SnackbarHostState() }
                 val scope = rememberCoroutineScope()
                 val context = LocalContext.current
+                val message = context.getString(R.string.error_cannot_deselect_last_item)
 
                 clothesData?.let { cloth ->
                     Scaffold(
@@ -237,7 +239,6 @@ fun NavGraph(
                             },
                             onDeselectOutfit = {
                                 var canNavigateBack = false
-                                val message = context.getString(R.string.error_cannot_deselect_last_item)
                                 
                                 when (cloth.type) {
                                     Type.Tops -> {
