@@ -19,7 +19,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenu
+//import androidx.compose.material3.ExposedDropdownMenu
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
@@ -209,14 +209,17 @@ fun AddNewClothesScreen(
 }
 
 
-@OptIn(ExperimentalMaterial3Api::class)
-@SuppressLint("UnusedBoxWithConstraintsScope")
-@Composable
+
+
+
 private val COLOR_OPTIONS = listOf(
     null, "Schwarz", "Weiß", "Braun", "Beige", "Grau",
     "Blau", "Navy", "Rot", "Burgunder", "Grün", "Oliv", "Rosa", "Pink"
 )
+@OptIn(ExperimentalMaterial3Api::class)
+@SuppressLint("UnusedBoxWithConstraintsScope")
 
+@Composable
 private fun AddNewClothesForm(
     imageUri: Uri?,
     onEditImage: () -> Unit,
