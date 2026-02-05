@@ -11,6 +11,11 @@ data class OutfitResult(
     val dress: Clothes?
 )
 
+/**
+ * Stellt nur farblich zusammenpassende Outfits zusammen.
+ * Berücksichtigt die Farbe der Kleidungsstücke; kompatible Farbgruppen (z.B. Schwarz, Weiß, Braun)
+ * werden über [ColorCompatibility] definiert.
+ */
 fun generateRandomOutfit(allClothes: List<Clothes>): OutfitResult {
     val cleanClothes = allClothes.filter { it.clean }
 
@@ -32,20 +37,27 @@ fun generateRandomOutfit(allClothes: List<Clothes>): OutfitResult {
         }
     }
 
-    val randomPants = cleanClothes.filter { it.type == Type.Pants }.randomOrNull()
-    val randomSkirt = cleanClothes.filter { it.type == Type.Skirt }.randomOrNull()
-    val randomJacket = cleanClothes.filter { it.type == Type.Jacket }.randomOrNull()
+    val anchorItem = randomTop ?: randomDress
+    val allowedColors = anchorItem?.color?.let { ColorCompatibility.getAllowedColors(it) }
+
+    fun colorOk(cloth: Clothes): Boolean =
+        ColorCompatibility.isColorAllowed(cloth.color, allowedColors)
+
+    val randomPants = cleanClothes.filter { it.type == Type.Pants }.filter(::colorOk).randomOrNull()
+    val randomSkirt = cleanClothes.filter { it.type == Type.Skirt }.filter(::colorOk).randomOrNull()
+    val randomJacket = cleanClothes.filter { it.type == Type.Jacket }.filter(::colorOk).randomOrNull()
 
     var finalSkirt = randomSkirt
     if (randomDress != null) {
         finalSkirt = null
     }
 
-    return OutfitResult(
+    val result = OutfitResult(
         top = randomTop,
         pants = randomPants,
         skirt = finalSkirt,
         jacket = randomJacket,
         dress = randomDress
     )
+    return result
 }
