@@ -42,6 +42,7 @@ import com.example.looksy.util.generateRandomOutfit
 import com.example.looksy.util.saveImagePermanently
 import kotlinx.coroutines.launch
 import kotlin.math.floor
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun NavGraph(
@@ -212,7 +213,7 @@ fun NavGraph(
                 val snackbarHostState = remember { SnackbarHostState() }
                 val scope = rememberCoroutineScope()
                 val context = LocalContext.current
-                val message = context.getString(R.string.error_cannot_deselect_last_item)
+                val message = stringResource(R.string.error_cannot_deselect_last_item)
 
                 clothesData?.let { cloth ->
                     Scaffold(
@@ -471,39 +472,38 @@ fun NavGraph(
             route = Routes.OutfitDetails.route,
             arguments = listOf(navArgument(RouteArgs.ID) { type = NavType.IntType })
         ) { backStackEntry ->
-            // TODO: Outfitdetailansicht
-//            val outfitId = backStackEntry.arguments?.getInt(RouteArgs.ID)
-//            if (outfitId != null) {
-//                val outfitData by outfitViewModel.getOutfitById(outfitId)
-//                    .collectAsState(initial = null)
-//
-//                outfitData?.let { outfit ->
-//                    val outfitTop = outfit.topsId?.let { id -> allClothesFromDb.find { it.id == id } }
-//                    val outfitPants = outfit.pantsId?.let { id -> allClothesFromDb.find { it.id == id } }
-//                    val outfitDress = outfit.dressId?.let { id -> allClothesFromDb.find { it.id == id } }
-//                    val outfitJacket = outfit.jacketId?.let { id -> allClothesFromDb.find { it.id == id } }
-//                    val outfitSkirt = outfit.skirtId?.let { id -> allClothesFromDb.find { it.id == id } }
-//
-//                    FullOutfitScreen(
-//                        top = outfitTop,
-//                        pants = outfitPants,
-//                        jacket = outfitJacket,
-//                        skirt = outfitSkirt,
-//                        dress = outfitDress,
-//                        onClick = { clothesId ->
-//                            navController.navigate(Routes.Details.createRoute(clothesId))
-//                        },
-//                        onConfirm = { wornClothesList ->
-//                            val updatedClothesList = wornClothesList.map { it.copy(clean = false) }
-//                            clothesViewModel.updateAll(updatedClothesList)
-//                            navController.popBackStack()
-//                        },
-//                        onWashingMachine = { navController.navigate(Routes.WashingMachine.route) },
-//                        onGenerateRandom = { },
-//                        onCamera = { navController.navigate(Routes.Scan.createRoute(-1)) }
-//                    )
-//                }
-//            }
+            val outfitId = backStackEntry.arguments?.getInt(RouteArgs.ID)
+            if (outfitId != null) {
+                val outfitData by outfitViewModel.getOutfitById(outfitId)
+                    .collectAsState(initial = null)
+
+                outfitData?.let { outfit ->
+                    val outfitTop = outfit.topsId?.let { id -> allClothesFromDb.find { it.id == id } }
+                    val outfitPants = outfit.pantsId?.let { id -> allClothesFromDb.find { it.id == id } }
+                    val outfitDress = outfit.dressId?.let { id -> allClothesFromDb.find { it.id == id } }
+                    val outfitJacket = outfit.jacketId?.let { id -> allClothesFromDb.find { it.id == id } }
+                    val outfitSkirt = outfit.skirtId?.let { id -> allClothesFromDb.find { it.id == id } }
+
+                    FullOutfitScreen(
+                        top = outfitTop,
+                        pants = outfitPants,
+                        jacket = outfitJacket,
+                        skirt = outfitSkirt,
+                        dress = outfitDress,
+                        onClick = { clothesId ->
+                            navController.navigate(Routes.Details.createRoute(clothesId))
+                        },
+                        onConfirm = { wornClothesList ->
+                            val updatedClothesList = wornClothesList.map { it.copy(clean = false) }
+                            clothesViewModel.updateAll(updatedClothesList)
+                            navController.popBackStack()
+                        },
+                        onWashingMachine = { navController.navigate(Routes.WashingMachine.route) },
+                        onGenerateRandom = { },
+                        onCamera = { navController.navigate(Routes.Scan.createRoute(-1)) }
+                    )
+                }
+            }
         }
     }
 }

@@ -1,6 +1,5 @@
 package com.example.looksy
 
-import android.icu.util.TimeUnit
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.*
@@ -125,8 +124,8 @@ class NavGraphTest {
             mockk(relaxed = true)
         }
 
-        every { clothesViewModel.incrementClothesPreference(any()) } answers {
-            val itemsToIncrement = it.invocation.args[0] as List<Clothes>
+        every { clothesViewModel.incrementClothesPreference(any()) } answers { c ->
+            val itemsToIncrement = c.invocation.args[0] as List<Clothes>
             val currentItems = clothesFlow.value.toMutableList()
             itemsToIncrement.forEach { item ->
                 val index = currentItems.indexOfFirst { it.id == item.id }

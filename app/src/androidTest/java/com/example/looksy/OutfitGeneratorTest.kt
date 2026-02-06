@@ -137,7 +137,7 @@ class OutfitGeneratorTest {
         val counts = mutableMapOf<Int, Int>()
 
         repeat(10000) {
-            val outfit = generateRandomOutfit(clothes)
+            val outfit = generateRandomOutfit(clothes, emptyList())
             val top = outfit.top ?: return@repeat
             counts[top.id] = counts.getOrDefault(top.id, 0) + 1
         }
