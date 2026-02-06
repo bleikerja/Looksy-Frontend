@@ -1,5 +1,6 @@
 package com.example.looksy
 
+import android.icu.util.TimeUnit
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.*
@@ -108,6 +109,22 @@ class NavGraphTest {
             mockk(relaxed = true)
         }
 
+        coEvery { clothesViewModel.updateAll(any()) } answers {
+            val updatedList = it.invocation.args[0] as List<Clothes>
+            val currentList = clothesFlow.value.toMutableList()
+
+            // Ersetze die alten Kleidungsstücke durch die neuen aus der `updatedList`
+            updatedList.forEach { updatedItem ->
+                val index = currentList.indexOfFirst { it.id == updatedItem.id }
+                if (index != -1) {
+                    currentList[index] = updatedItem
+                }
+            }
+            // Aktualisiere den Flow, damit die UI und andere Testteile die Änderung sehen
+            clothesFlow.value = currentList
+            mockk(relaxed = true)
+        }
+
         every { clothesViewModel.incrementClothesPreference(any()) } answers {
             val itemsToIncrement = it.invocation.args[0] as List<Clothes>
             val currentItems = clothesFlow.value.toMutableList()
@@ -139,7 +156,7 @@ class NavGraphTest {
     }
 
     @Test
-    fun confirmOutfit_triggersPreferenceIncrementAndCleanStatusUpdate() {
+    fun confirmOutfit_triggersPreferenceIncrementAndSelectedUpdate() {
         // UI-Aktion: Nutze die ContentDescription aus deinem FullOutfitScreen
         composeTestRule.onNodeWithContentDescription("Outfit anziehen").performClick()
 
@@ -149,8 +166,54 @@ class NavGraphTest {
                 1, null, 3, 2,
                 selectedJacketId = null
             )
-            clothesViewModel.updateAll(any())
+            clothesViewModel.updateAll(
+                match { updatedList ->
+                    updatedList.size == 3 &&
+                    updatedList.containsAll(listOf(testTop, testPants, testSkirt))
+                    updatedList.all { it.selected }
+                }
+            )
         }
+    }
+
+    @Test
+    fun selectedClothesDisplayCorrectDaysWorn() {
+        composeTestRule.onNodeWithContentDescription("Outfit anziehen").performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.runOnUiThread {
+            navController.navigate(Routes.Details.createRoute(testTop.id))
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("1 Tag", substring = true).assertIsDisplayed()
+
+        mockkStatic(System::class)
+        every { System.currentTimeMillis() } returns System.currentTimeMillis() + 86400000
+
+        composeTestRule.runOnUiThread {
+            navController.navigate(Routes.Home.route)
+            navController.navigate(Routes.Details.createRoute(testTop.id))
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("3 Tage", substring = true).assertIsDisplayed()
+    }
+
+    @OptIn(ExperimentalTestApi::class)
+    @Test
+    fun selectedClothesGetSetDirtyAfterChanging (){
+        composeTestRule.onNodeWithContentDescription("Outfit anziehen").performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithContentDescription("Neues Outfit").performClick()
+
+        composeTestRule.waitUntilAtLeastOneExists(hasText("Welche Kleider sollen als schmutzig markiert werden?"))
+        composeTestRule.onNodeWithText("Weiter").performClick()
+
+        composeTestRule.waitForIdle()
+
+        assert(clothesFlow.value.all { !it.clean })
     }
 
     @OptIn(ExperimentalTestApi::class)
