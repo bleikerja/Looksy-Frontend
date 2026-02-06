@@ -1,5 +1,6 @@
 package com.example.looksy
 
+import androidx.compose.ui.test.junit4.createComposeRule
 import com.example.looksy.data.model.Clothes
 import com.example.looksy.data.model.Material
 import com.example.looksy.data.model.Outfit
@@ -9,12 +10,12 @@ import com.example.looksy.data.model.Type
 import com.example.looksy.data.model.WashingNotes
 import com.example.looksy.util.generateRandomOutfit
 import org.junit.Assert
+import org.junit.Rule
 import org.junit.Test
 
 class OutfitGeneratorTest {
-
-    // Die composeTestRule wurde entfernt, da sie für Logik-Tests in src/test nicht funktioniert
-
+    @get:Rule
+    val composeTestRule = createComposeRule()
     private val testTopOftenWorn = Clothes(
         id = 1,
         type = Type.Tops,
@@ -23,7 +24,7 @@ class OutfitGeneratorTest {
         seasonUsage = Season.inBetween,
         material = Material.Cotton,
         washingNotes = WashingNotes.Temperature30,
-        imagePath = "path/to/shirt",
+        imagePath = "android.resource://com.example.looksy/${R.drawable.shirt_category}",
         isSynced = false,
         wornClothes = 5
     )
@@ -36,7 +37,7 @@ class OutfitGeneratorTest {
         seasonUsage = Season.inBetween,
         material = Material.Cotton,
         washingNotes = WashingNotes.Temperature30,
-        imagePath = "path/to/shirt",
+        imagePath = "android.resource://com.example.looksy/${R.drawable.shirt_category}",
         isSynced = false,
         wornClothes = 1
     )
@@ -64,7 +65,6 @@ class OutfitGeneratorTest {
         isSynced = false,
         wornClothes = 1
     )
-
     private val testPants = Clothes(
         id = 3,
         type = Type.Pants,
@@ -73,7 +73,7 @@ class OutfitGeneratorTest {
         seasonUsage = Season.inBetween,
         material = Material.Cotton,
         washingNotes = WashingNotes.Temperature30,
-        imagePath = "path/to/jeans",
+        imagePath = "android.resource://com.example.looksy/${R.drawable.jeans}",
         isSynced = false,
         wornClothes = 2
     )
@@ -132,6 +132,21 @@ class OutfitGeneratorTest {
     private val clothes = listOf(testTopOftenWorn, testTopRarelyWorn, testPants, testSkirt, testTop1, testTop2, testPants1, testPants2)
     private val outfits = listOf(testFavOutfit, testOutfitMehh)
 
+    @Test
+    fun oftenWornClothesGetGeneratedMoreOften() {
+        val counts = mutableMapOf<Int, Int>()
+
+        repeat(10000) {
+            val outfit = generateRandomOutfit(clothes)
+            val top = outfit.top ?: return@repeat
+            counts[top.id] = counts.getOrDefault(top.id, 0) + 1
+        }
+
+        val oftenCount = counts[1] ?: 0
+        val rareCount = counts[2] ?: 0
+
+        assert(oftenCount > rareCount)
+    }
     @Test
     fun outfitsAreChosenImGenerator(){
         var foundSavedOutfit = false
@@ -212,4 +227,5 @@ class OutfitGeneratorTest {
             )
         }
     }
+
 }

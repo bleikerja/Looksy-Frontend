@@ -15,6 +15,8 @@ data class OutfitResult(
 
 fun generateRandomOutfit(allClothes: List<Clothes>, allOutfits: List<Outfit>): OutfitResult {
     val cleanClothes = allClothes.filter { it.clean }
+    val clothesWeightedByWorn = cleanClothes.flatMap { c -> List(c.wornClothes+1) {c} }
+    val finalClothes = if (Random.nextDouble() < 0.7) clothesWeightedByWorn else cleanClothes
     val cleanClothesIds = cleanClothes.map { it.id }.toSet()
 
     // With a 40% probability, try to use a saved outfit
@@ -50,22 +52,22 @@ fun generateRandomOutfit(allClothes: List<Clothes>, allOutfits: List<Outfit>): O
     var randomDress: Clothes? = null
 
     if (searchForTops) {
-        randomTop = cleanClothes.filter { it.type == Type.Tops }.randomOrNull()
+        randomTop = finalClothes.filter { it.type == Type.Tops }.randomOrNull()
     } else {
-        randomDress = cleanClothes.filter { it.type == Type.Dress }.randomOrNull()
+        randomDress = finalClothes.filter { it.type == Type.Dress }.randomOrNull()
     }
 
     if (randomTop == null && randomDress == null) {
         if (searchForTops) {
-            randomDress = cleanClothes.filter { it.type == Type.Dress }.randomOrNull()
+            randomDress = finalClothes.filter { it.type == Type.Dress }.randomOrNull()
         } else {
-            randomTop = cleanClothes.filter { it.type == Type.Tops }.randomOrNull()
+            randomTop = finalClothes.filter { it.type == Type.Tops }.randomOrNull()
         }
     }
 
-    val randomPants = cleanClothes.filter { it.type == Type.Pants }.randomOrNull()
-    val randomSkirt = cleanClothes.filter { it.type == Type.Skirt }.randomOrNull()
-    val randomJacket = cleanClothes.filter { it.type == Type.Jacket }.randomOrNull()
+    val randomPants = finalClothes.filter { it.type == Type.Pants }.randomOrNull()
+    val randomSkirt = finalClothes.filter { it.type == Type.Skirt }.randomOrNull()
+    val randomJacket = finalClothes.filter { it.type == Type.Jacket }.randomOrNull()
 
     var finalSkirt = randomSkirt
     if (randomDress != null) {
