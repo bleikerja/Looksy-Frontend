@@ -40,6 +40,30 @@ class OutfitGeneratorTest {
         isSynced = false,
         wornClothes = 1
     )
+    private val testTop1 = Clothes(
+        id = 5,
+        type = Type.Tops,
+        clean = true,
+        size = Size._M,
+        seasonUsage = Season.inBetween,
+        material = Material.Cotton,
+        washingNotes = WashingNotes.Temperature30,
+        imagePath = "path/to/shirt",
+        isSynced = false,
+        wornClothes = 1
+    )
+    private val testTop2 = Clothes(
+        id = 6,
+        type = Type.Tops,
+        clean = true,
+        size = Size._M,
+        seasonUsage = Season.inBetween,
+        material = Material.Cotton,
+        washingNotes = WashingNotes.Temperature30,
+        imagePath = "path/to/shirt",
+        isSynced = false,
+        wornClothes = 1
+    )
 
     private val testPants = Clothes(
         id = 3,
@@ -53,9 +77,33 @@ class OutfitGeneratorTest {
         isSynced = false,
         wornClothes = 2
     )
+    private val testPants1 = Clothes(
+        id = 7,
+        type = Type.Pants,
+        clean = true,
+        size = Size._M,
+        seasonUsage = Season.inBetween,
+        material = Material.Cotton,
+        washingNotes = WashingNotes.Temperature30,
+        imagePath = "path/to/jeans",
+        isSynced = false,
+        wornClothes = 2
+    )
+    private val testPants2 = Clothes(
+        id = 8,
+        type = Type.Pants,
+        clean = true,
+        size = Size._M,
+        seasonUsage = Season.inBetween,
+        material = Material.Cotton,
+        washingNotes = WashingNotes.Temperature30,
+        imagePath = "path/to/jeans",
+        isSynced = false,
+        wornClothes = 2
+    )
 
     private val testSkirt = Clothes(
-        id = 4, // ID korrigiert (war vorher doppelt vergeben)
+        id = 4,
         type = Type.Skirt,
         clean = true,
         size = Size._M,
@@ -81,7 +129,7 @@ class OutfitGeneratorTest {
         preference = 1
     )
 
-    private val clothes = listOf(testTopOftenWorn, testTopRarelyWorn, testPants, testSkirt)
+    private val clothes = listOf(testTopOftenWorn, testTopRarelyWorn, testPants, testSkirt, testTop1, testTop2, testPants1, testPants2)
     private val outfits = listOf(testFavOutfit, testOutfitMehh)
 
     @Test
@@ -123,8 +171,8 @@ class OutfitGeneratorTest {
             favOutfitCount > mehOutfitCount
         )
         Assert.assertTrue(
-            "Zufällige Outfits ($noSavedOutfitCount) sollten insgesamt häufiger als gespeicherte vorkommen",
-            (favOutfitCount + mehOutfitCount) < noSavedOutfitCount
+            "Zufällige Outfits ($noSavedOutfitCount) sollten insgesamt häufiger als gespeicherte(${favOutfitCount + mehOutfitCount}) vorkommen",
+            (favOutfitCount + mehOutfitCount) < (noSavedOutfitCount)
         )
     }
 
@@ -152,7 +200,7 @@ class OutfitGeneratorTest {
         val outfitWithDirtyPart =
             Outfit(id = 10, topsId = cleanTop.id, pantsId = dirtyPants.id, preference = 100)
 
-        val currentClothes = clothes + cleanTop + dirtyPants
+        val currentClothes = clothes + cleanTop
         val currentOutfits = outfits + outfitWithDirtyPart
 
         repeat(1000) {

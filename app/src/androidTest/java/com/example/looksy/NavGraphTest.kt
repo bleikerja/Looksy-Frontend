@@ -19,14 +19,15 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
 import io.mockk.verify
 import kotlinx.coroutines.flow.MutableStateFlow
+import org.junit.After
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-//import com.example.looksy.util.OutfitResultimport com.example.looksy.util.generateRandomOutfit
 
 @RunWith(AndroidJUnit4::class)
 class NavGraphTest {
@@ -76,6 +77,7 @@ class NavGraphTest {
     )
 
     private val clothesFlow = MutableStateFlow(listOf(testTop, testPants, testSkirt))
+    
     @Before
     fun setup() {
         mockkStatic("com.example.looksy.util.OutfitGeneratorKt")
@@ -129,6 +131,11 @@ class NavGraphTest {
                 outfitViewModel = outfitViewModel
             )
         }
+    }
+
+    @After
+    fun teardown() {
+        unmockkStatic("com.example.looksy.util.OutfitGeneratorKt")
     }
 
     @Test
