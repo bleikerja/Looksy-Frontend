@@ -1,6 +1,5 @@
 package com.example.looksy
 
-import android.icu.util.TimeUnit
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.*
@@ -20,14 +19,15 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
 import io.mockk.verify
 import kotlinx.coroutines.flow.MutableStateFlow
+import org.junit.After
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-//import com.example.looksy.util.OutfitResultimport com.example.looksy.util.generateRandomOutfit
 
 @RunWith(AndroidJUnit4::class)
 class NavGraphTest {
@@ -77,10 +77,11 @@ class NavGraphTest {
     )
 
     private val clothesFlow = MutableStateFlow(listOf(testTop, testPants, testSkirt))
+    
     @Before
     fun setup() {
         mockkStatic("com.example.looksy.util.OutfitGeneratorKt")
-        every { generateRandomOutfit(any()) } returns OutfitResult(
+        every { generateRandomOutfit(any(), any()) } returns OutfitResult(
             top = testTop,
             pants = testPants,
             skirt = testSkirt,
@@ -123,8 +124,8 @@ class NavGraphTest {
             mockk(relaxed = true)
         }
 
-        every { clothesViewModel.incrementClothesPreference(any()) } answers {
-            val itemsToIncrement = it.invocation.args[0] as List<Clothes>
+        every { clothesViewModel.incrementClothesPreference(any()) } answers { c ->
+            val itemsToIncrement = c.invocation.args[0] as List<Clothes>
             val currentItems = clothesFlow.value.toMutableList()
             itemsToIncrement.forEach { item ->
                 val index = currentItems.indexOfFirst { it.id == item.id }
@@ -146,6 +147,11 @@ class NavGraphTest {
                 outfitViewModel = outfitViewModel
             )
         }
+    }
+
+    @After
+    fun teardown() {
+        unmockkStatic("com.example.looksy.util.OutfitGeneratorKt")
     }
 
     @Test
@@ -181,8 +187,7 @@ class NavGraphTest {
 
         composeTestRule.onNodeWithText("1 Tag", substring = true).assertIsDisplayed()
 
-        mockkStatic(System::class)
-        every { System.currentTimeMillis() } returns System.currentTimeMillis() + 86400000
+        clothesViewModel.updateAll(listOf(testTop.copy(wornSince = System.currentTimeMillis() - 2 * 24 * 60 * 60 * 1000)))
 
         composeTestRule.runOnUiThread {
             navController.navigate(Routes.Home.route)
@@ -198,10 +203,16 @@ class NavGraphTest {
     fun selectedClothesGetSetDirtyAfterChanging (){
         composeTestRule.onNodeWithContentDescription("Outfit anziehen").performClick()
         composeTestRule.waitForIdle()
+        composeTestRule.waitUntilAtLeastOneExists(hasContentDescription("Neues Outfit"), timeoutMillis = 10000)
 
+        composeTestRule.waitUntil(timeoutMillis = 10000) {
+            composeTestRule.onAllNodesWithText("Schön, dass dir das Outfit gefällt und du es anziehst")
+                .fetchSemanticsNodes().isEmpty()
+        }
         composeTestRule.onNodeWithContentDescription("Neues Outfit").performClick()
 
-        composeTestRule.waitUntilAtLeastOneExists(hasText("Welche Kleider sollen als schmutzig markiert werden?"))
+        composeTestRule.waitForIdle()
+        composeTestRule.waitUntilAtLeastOneExists(hasText("Weiter"), timeoutMillis = 10000)
         composeTestRule.onNodeWithText("Weiter").performClick()
 
         composeTestRule.waitForIdle()
