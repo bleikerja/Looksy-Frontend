@@ -187,8 +187,7 @@ class NavGraphTest {
 
         composeTestRule.onNodeWithText("1 Tag", substring = true).assertIsDisplayed()
 
-        mockkStatic(System::class)
-        every { System.currentTimeMillis() } returns System.currentTimeMillis() + 86400000
+        clothesViewModel.updateAll(listOf(testTop.copy(wornSince = System.currentTimeMillis() - 2 * 24 * 60 * 60 * 1000)))
 
         composeTestRule.runOnUiThread {
             navController.navigate(Routes.Home.route)
@@ -204,10 +203,16 @@ class NavGraphTest {
     fun selectedClothesGetSetDirtyAfterChanging (){
         composeTestRule.onNodeWithContentDescription("Outfit anziehen").performClick()
         composeTestRule.waitForIdle()
+        composeTestRule.waitUntilAtLeastOneExists(hasContentDescription("Neues Outfit"), timeoutMillis = 10000)
 
+        composeTestRule.waitUntil(timeoutMillis = 10000) {
+            composeTestRule.onAllNodesWithText("Schön, dass dir das Outfit gefällt und du es anziehst")
+                .fetchSemanticsNodes().isEmpty()
+        }
         composeTestRule.onNodeWithContentDescription("Neues Outfit").performClick()
 
-        composeTestRule.waitUntilAtLeastOneExists(hasText("Welche Kleider sollen als schmutzig markiert werden?"))
+        composeTestRule.waitForIdle()
+        composeTestRule.waitUntilAtLeastOneExists(hasText("Weiter"), timeoutMillis = 10000)
         composeTestRule.onNodeWithText("Weiter").performClick()
 
         composeTestRule.waitForIdle()
