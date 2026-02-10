@@ -4,6 +4,9 @@ import android.Manifest
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
@@ -12,26 +15,36 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Camera
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Photo
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -47,43 +60,76 @@ import kotlin.coroutines.suspendCoroutine
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun CameraScreenPermission(onImageCaptured: (Uri) -> Unit) {
-    val cameraPermissionState = rememberPermissionState(
-        Manifest.permission.CAMERA
-    )
-    if (cameraPermissionState.status.isGranted) {
-        CameraScreen(onImageCaptured = onImageCaptured)
-    } else {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Button(onClick = { cameraPermissionState.launchPermissionRequest() }) {
-                Text("Kamera-Zugriff erlauben")
-            }
-        }
-    }
-
-}
-
-@OptIn(ExperimentalPermissionsApi::class)
-@Composable
 fun CameraScreen(
     onImageCaptured: (Uri) -> Unit // Callback, um die URI des Bildes zurückzugeben
 ) {
-    // Berechtigungen prüfen
+    var takePicture by remember { mutableStateOf(false) }
+
     val cameraPermissionState = rememberPermissionState(
         Manifest.permission.CAMERA
     )
 
-    // UI basierend auf dem Berechtigungsstatus
-    if (cameraPermissionState.status.isGranted) {
-        // Wenn die Berechtigung erteilt ist, zeige die Kamera-Vorschau
+    if(takePicture && cameraPermissionState.status.isGranted) {
         CameraView(
             onImageCaptured = onImageCaptured
         )
     } else {
-        // Ansonsten, zeige einen Button, um die Berechtigung anzufordern
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Button(onClick = { cameraPermissionState.launchPermissionRequest() }) {
-                Text("Kamera-Zugriff erlauben")
+        val pickMedia = rememberLauncherForActivityResult(PickVisualMedia()) { uri ->
+            if (uri != null) {
+                onImageCaptured(uri)
+            }
+        }
+
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "Foto hizufügen",
+                    textAlign = TextAlign.Center,
+                    fontSize = 25.sp
+                )
+                Text(
+                    text = "aus Galerie wählen oder neu aufnehmen",
+                    textAlign = TextAlign.Center,
+                    fontSize = 15.sp,
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row {
+                    IconButton(
+                        onClick = {
+                            takePicture = true
+                            if (!cameraPermissionState.status.isGranted) {
+                                cameraPermissionState.launchPermissionRequest()
+                            }
+                        },
+                        modifier = Modifier.size(100.dp)
+                    )
+                    {
+                        Icon(
+                            modifier = Modifier.fillMaxSize().padding(5.dp),
+                            imageVector = Icons.Default.CameraAlt,
+                            contentDescription = "mit Kamera aufnehmen"
+                        )
+                    }
+
+                    IconButton(
+                        onClick = {
+                            pickMedia.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly))
+                        },
+                        modifier = Modifier.size(100.dp)
+                    )
+                    {
+                        Icon(
+                            modifier = Modifier.fillMaxSize().padding(5.dp),
+                            imageVector = Icons.Default.Photo,
+                            contentDescription = "aus Galerie auswählen"
+                        )
+                    }
+                }
             }
         }
     }
@@ -199,6 +245,6 @@ private suspend fun <T> ListenableFuture<T>.await(): T = suspendCoroutine { cont
 
 @Preview
 @Composable
-fun PreviewCameraScreenPermission() {
-    CameraScreenPermission(onImageCaptured = {})
+fun PreviewCameraScreen() {
+    CameraScreen (onImageCaptured = {})
 }
