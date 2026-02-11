@@ -1,5 +1,7 @@
 package com.example.looksy.ui.viewmodel
 
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.looksy.data.repository.ClothesRepository
@@ -19,6 +21,9 @@ class ClothesViewModel(private val repository: ClothesRepository) : ViewModel() 
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
         )
+
+    private val _lastDiscardedClothes = mutableStateOf<List<Clothes>?>(null)
+    val lastDiscardedClothes: State<List<Clothes>?> = _lastDiscardedClothes
 
     fun insert(clothes: Clothes) = viewModelScope.launch {
         repository.insert(clothes)
@@ -42,6 +47,18 @@ class ClothesViewModel(private val repository: ClothesRepository) : ViewModel() 
 
     fun delete(clothes: Clothes) = viewModelScope.launch {
         repository.delete(clothes)
+    }
+
+    fun discardClothes(clothes: List<Clothes>) = viewModelScope.launch {
+        _lastDiscardedClothes.value = clothes
+        repository.deleteAll(clothes)
+    }
+
+    fun undoLastDiscard() = viewModelScope.launch {
+        _lastDiscardedClothes.value?.let {
+            repository.insertAll(it)
+            _lastDiscardedClothes.value = null
+        }
     }
 
     fun incrementClothesPreference(clothes: List<Clothes>) {

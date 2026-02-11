@@ -34,6 +34,7 @@ import com.example.looksy.ui.screens.AddNewClothesScreen
 import com.example.looksy.ui.screens.CameraScreenPermission
 import com.example.looksy.ui.screens.Category
 import com.example.looksy.ui.screens.CategoryItems
+import com.example.looksy.ui.screens.DiscardScreen
 import com.example.looksy.ui.screens.SavedOutfitsScreen
 import com.example.looksy.ui.screens.SpecificCategoryScreen
 import com.example.looksy.ui.screens.WashingMachineScreen
@@ -164,6 +165,9 @@ fun NavGraph(
                 },
                 onButtonClicked = { itemId ->
                     navController.navigate(Routes.Details.createRoute(itemId))
+                },
+                onNavigateToDiscard = {
+                    navController.navigate(Routes.Discard.route)
                 }
             )
         }
@@ -435,10 +439,35 @@ fun NavGraph(
                 onNavigateBack = { navController.popBackStack() },
                 onConfirmWashed = { washedClothes ->
                     washedClothes.forEach { cloth ->
-                        val updatedCloth = cloth.copy(clean = true, wornSince = null, daysWorn = 0)
+                        val updatedCloth = cloth.copy(
+                            clean = true, 
+                            wornSince = null, 
+                            daysWorn = 0,
+                            lastWorn = System.currentTimeMillis()
+                        )
                         clothesViewModel.update(updatedCloth)
                     }
                 }
+            )
+        }
+
+        composable(route = Routes.Discard.route) {
+            val oneYearAgo = System.currentTimeMillis() - 31536000000L // ca. 1 Jahr (365 Tage)
+            val clothesToDiscard = allClothesFromDb.filter { 
+                it.lastWorn != null && it.lastWorn!! < oneYearAgo 
+            }
+            val canUndo = clothesViewModel.lastDiscardedClothes.value != null
+
+            DiscardScreen(
+                clothesToDiscard = clothesToDiscard,
+                onNavigateBack = { navController.popBackStack() },
+                onConfirmDiscard = { clothes ->
+                    clothesViewModel.discardClothes(clothes)
+                },
+                onUndoDiscard = {
+                    clothesViewModel.undoLastDiscard()
+                },
+                canUndo = canUndo
             )
         }
 
@@ -458,39 +487,38 @@ fun NavGraph(
             route = Routes.OutfitDetails.route,
             arguments = listOf(navArgument(RouteArgs.ID) { type = NavType.IntType })
         ) { backStackEntry ->
-            // TODO: Outfitdetailansicht
-//            val outfitId = backStackEntry.arguments?.getInt(RouteArgs.ID)
-//            if (outfitId != null) {
-//                val outfitData by outfitViewModel.getOutfitById(outfitId)
-//                    .collectAsState(initial = null)
-//
-//                outfitData?.let { outfit ->
-//                    val outfitTop = outfit.topsId?.let { id -> allClothesFromDb.find { it.id == id } }
-//                    val outfitPants = outfit.pantsId?.let { id -> allClothesFromDb.find { it.id == id } }
-//                    val outfitDress = outfit.dressId?.let { id -> allClothesFromDb.find { it.id == id } }
-//                    val outfitJacket = outfit.jacketId?.let { id -> allClothesFromDb.find { it.id == id } }
-//                    val outfitSkirt = outfit.skirtId?.let { id -> allClothesFromDb.find { it.id == id } }
-//
-//                    FullOutfitScreen(
-//                        top = outfitTop,
-//                        pants = outfitPants,
-//                        jacket = outfitJacket,
-//                        skirt = outfitSkirt,
-//                        dress = outfitDress,
-//                        onClick = { clothesId ->
-//                            navController.navigate(Routes.Details.createRoute(clothesId))
-//                        },
-//                        onConfirm = { wornClothesList ->
-//                            val updatedClothesList = wornClothesList.map { it.copy(clean = false) }
-//                            clothesViewModel.updateAll(updatedClothesList)
-//                            navController.popBackStack()
-//                        },
-//                        onWashingMachine = { navController.navigate(Routes.WashingMachine.route) },
-//                        onGenerateRandom = { },
-//                        onCamera = { navController.navigate(Routes.Scan.createRoute(-1)) }
-//                    )
-//                }
-//            }
+            val outfitId = backStackEntry.arguments?.getInt(RouteArgs.ID)
+            if (outfitId != null) {
+                val outfitData by outfitViewModel.getOutfitById(outfitId)
+                    .collectAsState(initial = null)
+
+                outfitData?.let { outfit ->
+                    val outfitTop = outfit.topsId?.let { id -> allClothesFromDb.find { it.id == id } }
+                    val outfitPants = outfit.pantsId?.let { id -> allClothesFromDb.find { it.id == id } }
+                    val outfitDress = outfit.dressId?.let { id -> allClothesFromDb.find { it.id == id } }
+                    val outfitJacket = outfit.jacketId?.let { id -> allClothesFromDb.find { it.id == id } }
+                    val outfitSkirt = outfit.skirtId?.let { id -> allClothesFromDb.find { it.id == id } }
+
+                    FullOutfitScreen(
+                        top = outfitTop,
+                        pants = outfitPants,
+                        jacket = outfitJacket,
+                        skirt = outfitSkirt,
+                        dress = outfitDress,
+                        onClick = { clothesId ->
+                            navController.navigate(Routes.Details.createRoute(clothesId))
+                        },
+                        onConfirm = { wornClothesList ->
+                            val updatedClothesList = wornClothesList.map { it.copy(clean = false) }
+                            clothesViewModel.updateAll(updatedClothesList)
+                            navController.popBackStack()
+                        },
+                        onWashingMachine = { navController.navigate(Routes.WashingMachine.route) },
+                        onGenerateRandom = { },
+                        onCamera = { navController.navigate(Routes.Scan.createRoute(-1)) }
+                    )
+                }
+            }
         }
     }
 }

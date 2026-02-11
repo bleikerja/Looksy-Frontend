@@ -135,4 +135,39 @@ class NavGraphIntegrationTest {
         composeTestRule.waitForIdle()
         assertEquals(Routes.Scan.route, navController.currentDestination?.route)
     }
+    @Test
+    fun navGraph_washingMachine_confirmsAndSetsLastWorn() {
+        // Falls testTop in der Setup-Methode clean=true ist, hier für diesen Test überschreiben:
+        // clothesFlow.value = listOf(testTop.copy(clean = false))
+
+        // Navigiere zur Waschmaschine
+        composeTestRule.runOnUiThread {
+            navController.navigate(Routes.WashingMachine.route)
+        }
+
+        // Wähle das Kleidungsstück in der Liste aus
+        composeTestRule.onAllNodes(hasClickAction()).onFirst().performClick()
+
+        // Klicke auf den Bestätigungs-Button ("Gewaschen")
+        composeTestRule.onNodeWithText("Gewaschen", substring = true).performClick()
+
+        // Verifiziere, dass das ViewModel mit clean = true UND einem Zeitstempel in lastWorn aktualisiert wurde
+        coVerify {
+            clothesViewModel.update(match { it.clean && it.lastWorn != null })
+        }
+    }
+
+    @Test
+    fun navGraph_navigateToDiscard_works() {
+        // Navigiere zum Kleiderschrank (ChoseClothes)
+        composeTestRule.runOnUiThread {
+            navController.navigate(Routes.ChoseClothes.route)
+        }
+
+        // Klicke auf den Button für die Aussortier-Vorschläge
+        composeTestRule.onNodeWithText("Vorschläge zum Aussortieren").performClick()
+
+        // Überprüfe, ob die Route jetzt auf dem Discard-Screen ist
+        assertEquals(Routes.Discard.route, navController.currentDestination?.route)
+    }
 }

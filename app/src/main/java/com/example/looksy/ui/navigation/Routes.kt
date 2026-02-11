@@ -19,6 +19,7 @@ sealed class Routes(override val route: String) : NavigationDestination {
     data object ExistingClothes : Routes("existing clothes")
 
     data object WashingMachine : Routes("washing_machine")
+    data object Discard : Routes("discard")
     
     data object OutfitDetails : Routes("outfit_details/{${RouteArgs.ID}}") {
         fun createRoute(id: Int): String {

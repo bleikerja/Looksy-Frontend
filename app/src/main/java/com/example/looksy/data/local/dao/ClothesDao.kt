@@ -15,6 +15,9 @@ interface ClothesDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(clothes: Clothes)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(clothes: List<Clothes>)
+
     @Query("SELECT * FROM clothes_table ORDER BY id DESC")
     fun getAllClothes(): Flow<List<Clothes>>
 
@@ -35,4 +38,7 @@ interface ClothesDao {
 
     @Delete
     suspend fun delete(clothes: Clothes)
+
+    @Delete
+    suspend fun deleteAll(clothes: List<Clothes>)
 }

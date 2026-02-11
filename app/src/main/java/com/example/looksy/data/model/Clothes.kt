@@ -13,6 +13,7 @@ data class Clothes(
     val type: Type,
     val material: Material,
     val wornSince: Long? = null,
+    val lastWorn: Long? = null,
     val daysWorn: Int = 0,
     val clean: Boolean,
     val washingNotes: WashingNotes,
