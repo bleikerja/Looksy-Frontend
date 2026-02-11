@@ -36,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -78,7 +79,7 @@ fun DiscardScreen(
                 if (canUndo) {
                     Button(
                         onClick = onUndoDiscard,
-                        modifier = Modifier.padding(horizontal = 16.dp)
+                        modifier = Modifier.padding(horizontal = 16.dp).testTag("UndoButton")
                     ) {
                         Icon(Icons.Default.Undo, contentDescription = null)
                         Text("Rückgängig", modifier = Modifier.padding(start = 8.dp))
@@ -94,6 +95,7 @@ fun DiscardScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp)
+                            .testTag("ConfirmDiscardButton")
                     ) {
                         Text("Aussortieren (${selectedIds.size})")
                     }
@@ -144,6 +146,7 @@ fun DiscardScreen(
                         DiscardItemContainer(
                             item = clothItem,
                             isSelected = isSelected,
+                            modifier = Modifier.testTag("DiscardItem"),
                             onClick = {
                                 selectedIds = if (isSelected) {
                                     selectedIds - clothItem.id
@@ -163,10 +166,11 @@ fun DiscardScreen(
 fun DiscardItemContainer(
     item: Clothes,
     isSelected: Boolean,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     val borderColor = if (isSelected) {
-        Color.Red // Rot für Aussortieren
+        Color.Red
     } else {
         Color.Transparent
     }
@@ -174,7 +178,7 @@ fun DiscardItemContainer(
     AsyncImage(
         model = File(item.imagePath).toUri(),
         contentDescription = null,
-        modifier = Modifier
+        modifier = modifier
             .size(165.dp)
             .clip(RoundedCornerShape(20.dp))
             .background(Color.White)

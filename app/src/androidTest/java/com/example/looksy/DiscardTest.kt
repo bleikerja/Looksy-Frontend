@@ -1,6 +1,7 @@
 package com.example.looksy
 
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -12,7 +13,6 @@ import com.example.looksy.ui.navigation.NavGraph
 import com.example.looksy.ui.navigation.Routes
 import com.example.looksy.ui.viewmodel.ClothesViewModel
 import com.example.looksy.ui.viewmodel.OutfitViewModel
-import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
@@ -66,7 +66,7 @@ class DiscardTest {
     @Before
     fun setup() {
         every { clothesViewModel.allClothes } returns clothesFlow
-        every { clothesViewModel.lastDiscardedClothes } returns MutableStateFlow(null)
+        every { clothesViewModel.lastDiscardedClothes } returns mutableStateOf(null)
 
         composeTestRule.setContent {
             navController = TestNavHostController(LocalContext.current)
@@ -114,7 +114,7 @@ class DiscardTest {
         }
 
         // Klicke auf das erste Item (oldCloth)
-        composeTestRule.onAllNodes(hasClickAction()).onFirst().performClick()
+        composeTestRule.onAllNodesWithTag("DiscardItem").onFirst().performClick()
         
         // Klicke auf Bestätigen
         composeTestRule.onNodeWithText("Aussortieren (1)", substring = true).performClick()
@@ -125,8 +125,8 @@ class DiscardTest {
     @Test
     fun undoButton_appearsWhenCanUndoIsTrue() {
         // Mocke canUndo = true
-        every { clothesViewModel.lastDiscardedClothes } returns MutableStateFlow(listOf(oldCloth))
-        
+        every { clothesViewModel.lastDiscardedClothes } returns mutableStateOf(listOf(oldCloth))
+
         composeTestRule.runOnUiThread {
             navController.navigate(Routes.Discard.route)
         }
