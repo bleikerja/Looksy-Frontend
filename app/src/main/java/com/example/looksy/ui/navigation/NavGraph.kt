@@ -31,7 +31,7 @@ import com.example.looksy.data.model.Outfit
 import com.example.looksy.data.model.Type
 import com.example.looksy.ui.viewmodel.ClothesViewModel
 import com.example.looksy.ui.screens.AddNewClothesScreen
-import com.example.looksy.ui.screens.CameraScreenPermission
+import com.example.looksy.ui.screens.CameraScreen
 import com.example.looksy.ui.screens.Category
 import com.example.looksy.ui.screens.CategoryItems
 import com.example.looksy.ui.screens.SavedOutfitsScreen
@@ -344,7 +344,7 @@ fun NavGraph(
             arguments = listOf(navArgument(RouteArgs.ID) { type = NavType.IntType })
         ) { backStackEntry ->
             val clothesId = backStackEntry.arguments?.getInt(RouteArgs.ID)
-            CameraScreenPermission(
+            CameraScreen (
                 onImageCaptured = { tempUri ->
                     val encodedUri = Uri.encode(tempUri.toString())
                     if(clothesId == -1 || clothesId == null){
