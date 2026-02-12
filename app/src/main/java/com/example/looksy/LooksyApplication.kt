@@ -3,8 +3,10 @@ package com.example.looksy
 import android.app.Application
 import com.example.looksy.data.local.database.ClothesDatabase
 import com.example.looksy.data.repository.ClothesRepository
+import com.example.looksy.data.repository.GeocodingRepository
 import com.example.looksy.data.repository.OutfitRepository
 import com.example.looksy.data.repository.WeatherRepository
+import com.example.looksy.data.remote.api.GeocodingApiService
 import com.example.looksy.data.remote.api.WeatherApiService
 import com.example.looksy.data.location.LocationProvider
 import okhttp3.OkHttpClient
@@ -41,9 +43,36 @@ class LooksyApplication : Application() {
             .create(WeatherApiService::class.java)
     }
     
+    // Geocoding API Service (uses same base URL for OpenWeatherMap)
+    val geocodingApiService by lazy {
+        val loggingInterceptor = HttpLoggingInterceptor().apply {
+            level = if (BuildConfig.DEBUG) {
+                HttpLoggingInterceptor.Level.BODY
+            } else {
+                HttpLoggingInterceptor.Level.NONE
+            }
+        }
+        
+        val okHttpClient = OkHttpClient.Builder()
+            .addInterceptor(loggingInterceptor)
+            .build()
+        
+        Retrofit.Builder()
+            .baseUrl("https://api.openweathermap.org/")
+            .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(GeocodingApiService::class.java)
+    }
+    
     // Weather Repository
     val weatherRepository by lazy { 
         WeatherRepository(weatherApiService, BuildConfig.WEATHER_API_KEY) 
+    }
+    
+    // Geocoding Repository
+    val geocodingRepository by lazy {
+        GeocodingRepository(geocodingApiService, BuildConfig.WEATHER_API_KEY)
     }
     
     // Location Provider

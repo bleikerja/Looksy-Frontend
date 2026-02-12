@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.LocalLaundryService
+import androidx.compose.material.icons.filled.LocationOff
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Refresh
@@ -57,6 +58,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.example.looksy.data.location.PermissionState
 import com.example.looksy.ui.components.LooksyButton
 import com.example.looksy.data.model.Clothes
 import com.example.looksy.ui.components.Header
@@ -81,6 +83,8 @@ fun FullOutfitScreen(
     onCamera: () -> Unit = {},
     onSave: () -> Unit = {},
     weatherState: WeatherUiState = WeatherUiState.Loading,
+    permissionState: PermissionState = PermissionState.NOT_ASKED,
+    isLocationEnabled: Boolean = true,
     onWeatherClick: () -> Unit = {}
 ) {
     if ((top != null || dress != null) && (pants != null || skirt != null)) {
@@ -103,6 +107,8 @@ fun FullOutfitScreen(
                     // Weather Icon Row on the left
                     WeatherIconRow(
                         weatherState = weatherState,
+                        permissionState = permissionState,
+                        isLocationEnabled = isLocationEnabled,
                         onClick = onWeatherClick,
                         modifier = Modifier.align(Alignment.CenterStart)
                     )
@@ -364,6 +370,8 @@ fun OutfitPart(imageResId: Any?, onClick: () -> Unit, modifier: Modifier = Modif
 @Composable
 private fun WeatherIconRow(
     weatherState: WeatherUiState,
+    permissionState: PermissionState,
+    isLocationEnabled: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -375,48 +383,90 @@ private fun WeatherIconRow(
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        when (weatherState) {
-            is WeatherUiState.Loading -> {
-                // More compact loading state to fit in left space
+        when {
+            // Permission not asked yet - show crossed city icon
+            permissionState == PermissionState.NOT_ASKED -> {
                 Spacer(modifier = Modifier.width(20.dp))
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    strokeWidth = 2.dp,
-                    color = MaterialTheme.colorScheme.primary
+                Text(
+                    text = "🏙️🚫",
+                    fontSize = 24.sp
                 )
             }
-
-            is WeatherUiState.Success -> {
-                // Weather icon based on conditions
-                Text(
-                    text = getWeatherEmoji(weatherState.weather.description),
-                    fontSize = 28.sp
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-
-                // Temperature
-                Text(
-                    text = "${weatherState.weather.temperature.roundToInt()}°C",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-            }
-
-            is WeatherUiState.Error -> {
+            
+            // Permission granted but location is off
+            (permissionState == PermissionState.GRANTED_WHILE_IN_USE || 
+             permissionState == PermissionState.GRANTED_ONCE) && 
+            !isLocationEnabled -> {
+                Spacer(modifier = Modifier.width(20.dp))
                 Icon(
-                    imageVector = Icons.Default.CloudOff,
-                    contentDescription = "Weather unavailable",
-                    modifier = Modifier.size(20.dp),
-                    tint = MaterialTheme.colorScheme.error
+                    imageVector = Icons.Default.LocationOff,
+                    contentDescription = "Standort aktivieren",
+                    modifier = Modifier.size(24.dp),
+                    tint = MaterialTheme.colorScheme.tertiary
+                )
+            }
+            
+            // Permission denied - show icon indicating no permission
+            permissionState == PermissionState.DENIED -> {
+                Spacer(modifier = Modifier.width(20.dp))
+                Text(
+                    text = "📍❌",
+                    fontSize = 24.sp
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Wetter nicht verfügbar",
+                    text = "Wetter",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.error
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
+            }
+            
+            // Normal weather states
+            else -> {
+                when (weatherState) {
+                    is WeatherUiState.Loading -> {
+                        // More compact loading state to fit in left space
+                        Spacer(modifier = Modifier.width(20.dp))
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+
+                    is WeatherUiState.Success -> {
+                        // Weather icon based on conditions
+                        Text(
+                            text = getWeatherEmoji(weatherState.weather.description),
+                            fontSize = 28.sp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        // Temperature
+                        Text(
+                            text = "${weatherState.weather.temperature.roundToInt()}°C",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                    }
+
+                    is WeatherUiState.Error -> {
+                        Icon(
+                            imageVector = Icons.Default.CloudOff,
+                            contentDescription = "Weather unavailable",
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Wetter nicht verfügbar",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
             }
         }
 

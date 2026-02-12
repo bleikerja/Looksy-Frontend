@@ -4,6 +4,7 @@ import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.example.looksy.data.location.LocationProvider
 import com.example.looksy.data.model.Weather
+import com.example.looksy.data.repository.GeocodingRepository
 import com.example.looksy.ui.screens.WeatherScreen
 import com.example.looksy.ui.theme.LooksyTheme
 import com.example.looksy.ui.viewmodel.WeatherUiState
@@ -26,6 +27,7 @@ class WeatherScreenTest {
 
     private val mockWeatherViewModel = mockk<WeatherViewModel>(relaxed = true)
     private val mockLocationProvider = mockk<LocationProvider>(relaxed = true)
+    private val mockGeocodingRepository = mockk<GeocodingRepository>(relaxed = true)
     private val weatherStateFlow = MutableStateFlow<WeatherUiState>(WeatherUiState.Loading)
 
     @Test
@@ -41,6 +43,7 @@ class WeatherScreenTest {
                 WeatherScreen(
                     weatherViewModel = mockWeatherViewModel,
                     locationProvider = mockLocationProvider,
+                    geocodingRepository = mockGeocodingRepository,
                     onNavigateBack = {}
                 )
             }
@@ -71,6 +74,7 @@ class WeatherScreenTest {
                 WeatherScreen(
                     weatherViewModel = mockWeatherViewModel,
                     locationProvider = mockLocationProvider,
+                    geocodingRepository = mockGeocodingRepository,
                     onNavigateBack = {}
                 )
             }
@@ -97,6 +101,7 @@ class WeatherScreenTest {
                 WeatherScreen(
                     weatherViewModel = mockWeatherViewModel,
                     locationProvider = mockLocationProvider,
+                    geocodingRepository = mockGeocodingRepository,
                     onNavigateBack = {}
                 )
             }
@@ -120,6 +125,7 @@ class WeatherScreenTest {
                 WeatherScreen(
                     weatherViewModel = mockWeatherViewModel,
                     locationProvider = mockLocationProvider,
+                    geocodingRepository = mockGeocodingRepository,
                     onNavigateBack = {}
                 )
             }
@@ -152,6 +158,7 @@ class WeatherScreenTest {
                 WeatherScreen(
                     weatherViewModel = mockWeatherViewModel,
                     locationProvider = mockLocationProvider,
+                    geocodingRepository = mockGeocodingRepository,
                     onNavigateBack = {}
                 )
             }
@@ -183,6 +190,7 @@ class WeatherScreenTest {
                 WeatherScreen(
                     weatherViewModel = mockWeatherViewModel,
                     locationProvider = mockLocationProvider,
+                    geocodingRepository = mockGeocodingRepository,
                     onNavigateBack = {}
                 )
             }
@@ -206,6 +214,7 @@ class WeatherScreenTest {
                 WeatherScreen(
                     weatherViewModel = mockWeatherViewModel,
                     locationProvider = mockLocationProvider,
+                    geocodingRepository = mockGeocodingRepository,
                     onNavigateBack = { backCalled = true }
                 )
             }
@@ -236,6 +245,7 @@ class WeatherScreenTest {
                 WeatherScreen(
                     weatherViewModel = mockWeatherViewModel,
                     locationProvider = mockLocationProvider,
+                    geocodingRepository = mockGeocodingRepository,
                     onNavigateBack = {}
                 )
             }
