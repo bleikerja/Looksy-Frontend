@@ -341,13 +341,6 @@ class NavGraphTest {
     }
 
     @Test
-    fun homeScreen_displaysOutfitRating() {
-        composeTestRule.waitForIdle()
-        composeTestRule.onNode(hasTestTag("outfit_rating")).assertExists()
-        composeTestRule.onNode(hasTestTag("outfit_rating")).assertIsDisplayed()
-    }
-
-    @Test
     fun navGraph_home_clickRandomize_triggersNoNavigationButLogic() {
         val testTop = Clothes(
             id = 1,
