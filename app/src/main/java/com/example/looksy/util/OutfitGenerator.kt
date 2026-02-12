@@ -12,8 +12,9 @@ data class OutfitResult(
     val jacket: Clothes?,
     val dress: Clothes?
 )
+private const val CANDIDATE_COUNT = 10
 
-fun generateRandomOutfit(allClothes: List<Clothes>, allOutfits: List<Outfit>): OutfitResult {
+fun generateSingleRandomOutfit(allClothes: List<Clothes>, allOutfits: List<Outfit>): OutfitResult {
     val cleanClothes = allClothes.filter { it.clean }
     val clothesWeightedByWorn = cleanClothes.flatMap { c -> List(c.wornClothes+1) {c} }
     val finalClothes = if (Random.nextDouble() < 0.7) clothesWeightedByWorn else cleanClothes
@@ -81,4 +82,19 @@ fun generateRandomOutfit(allClothes: List<Clothes>, allOutfits: List<Outfit>): O
         jacket = randomJacket,
         dress = randomDress
     )
+}
+
+/**
+ * Generates an outfit by creating multiple random candidates and returning
+ * the one with the highest compatibility score (OutfitCompatibilityCalculator).
+ */
+fun generateRandomOutfit(allClothes: List<Clothes>, allOutfits: List<Outfit>): OutfitResult {
+    val cleanClothes = allClothes.filter { it.clean }
+    if (cleanClothes.isEmpty()) {
+        return OutfitResult(null, null, null, null, null)
+    }
+
+    val candidates = (1..CANDIDATE_COUNT).map { generateSingleRandomOutfit(cleanClothes, allOutfits) }
+    return candidates.maxByOrNull { OutfitCompatibilityCalculator.calculateCompatibilityScore(it) }
+        ?: candidates.first()
 }
