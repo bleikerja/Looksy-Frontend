@@ -13,6 +13,15 @@
         </DropdownSelection>
         <DialogSelection />
       </SelectionState>
+      <SelectionState runConfigName="All Tests">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
+      <SelectionState runConfigName="OutfitGeneratorTest">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
+      <SelectionState runConfigName="outfitsAreChosenImGenerator()">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
       <SelectionState runConfigName="Tests in 'com.example.looksy'">
         <option name="selectionMode" value="DROPDOWN" />
         <DropdownSelection timestamp="2026-02-12T11:55:16.924757600Z">

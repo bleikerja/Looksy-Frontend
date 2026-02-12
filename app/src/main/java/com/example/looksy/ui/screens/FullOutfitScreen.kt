@@ -29,6 +29,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -51,6 +52,8 @@ import com.example.looksy.ui.components.LooksyButton
 import com.example.looksy.data.model.Clothes
 import com.example.looksy.ui.components.Header
 import com.example.looksy.ui.theme.LooksyTheme
+import com.example.looksy.util.OutfitCompatibilityCalculator
+import com.example.looksy.util.OutfitResult
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -91,6 +94,7 @@ fun FullOutfitScreen(
                     rightIcon = Icons.Default.LocalLaundryService,
                     isFirstHeader = true
                 )
+
                 Spacer(modifier = Modifier.height(16.dp))
 
                 jacket?.let {
