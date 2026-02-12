@@ -20,7 +20,7 @@ fun generateRandomOutfit(allClothes: List<Clothes>, allOutfits: List<Outfit>): O
     val cleanClothesIds = cleanClothes.map { it.id }.toSet()
 
     // With a 40% probability, try to use a saved outfit
-    if (allOutfits.isNotEmpty() && Random.nextDouble() < 0.4) {
+    if (allOutfits.isNotEmpty() && Random.nextDouble() < 0.3) {
         val cleanOutfits = allOutfits.filter { outfit ->
             (outfit.topsId == null || outfit.topsId in cleanClothesIds) &&
                     (outfit.pantsId == null || outfit.pantsId in cleanClothesIds) &&
