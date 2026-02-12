@@ -452,6 +452,7 @@ fun NavGraph(
         }
 
         composable(route = Routes.Discard.route) {
+            //ToDo: für den Beta-Test unter Umständen raus nehmen
             val oneYearAgo = System.currentTimeMillis() - 31536000000L // ca. 1 Jahr (365 Tage)
             val clothesToDiscard = allClothesFromDb.filter { 
                 it.lastWorn != null && it.lastWorn!! < oneYearAgo 

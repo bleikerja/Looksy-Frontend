@@ -76,15 +76,6 @@ fun DiscardScreen(
         },
         floatingActionButton = {
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (canUndo) {
-                    Button(
-                        onClick = onUndoDiscard,
-                        modifier = Modifier.padding(horizontal = 16.dp).testTag("UndoButton")
-                    ) {
-                        Icon(Icons.Default.Undo, contentDescription = null)
-                        Text("Rückgängig", modifier = Modifier.padding(start = 8.dp))
-                    }
-                }
                 if (selectedIds.isNotEmpty()) {
                     Button(
                         onClick = {

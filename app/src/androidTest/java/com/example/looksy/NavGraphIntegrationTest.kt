@@ -184,7 +184,7 @@ class NavGraphIntegrationTest {
         // Wähle das Kleidungsstück in der Liste aus
         composeTestRule.onAllNodes(hasClickAction()).onFirst().performClick()
 
-        // Klicke auf den Bestätigungs-Button ("Gewaschen (1)")
+        // Klicke auf den Bestätigungsbutton ("Gewaschen (1)")
         composeTestRule.onNodeWithText("Gewaschen (1)", substring = true).performClick()
 
         // Verifiziere, dass das ViewModel mit clean = true UND einem Zeitstempel in lastWorn aktualisiert wurde
