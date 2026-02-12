@@ -94,16 +94,7 @@ fun FullOutfitScreen(
                     rightIcon = Icons.Default.LocalLaundryService,
                     isFirstHeader = true
                 )
-                val currentOutfit = OutfitResult(top, pants, skirt, jacket, dress)
-                val outfitRating = OutfitCompatibilityCalculator.calculateCompatibilityScore(currentOutfit)
-                Text(
-                    text = "Bewertung: $outfitRating/100",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = Color.DarkGray,
-                    modifier = Modifier
-                        .padding(top = 8.dp)
-                        .testTag("outfit_rating")
-                )
+
                 Spacer(modifier = Modifier.height(16.dp))
 
                 jacket?.let {
