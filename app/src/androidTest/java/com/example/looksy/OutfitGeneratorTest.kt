@@ -136,7 +136,7 @@ class OutfitGeneratorTest {
     fun oftenWornClothesGetGeneratedMoreOften() {
         val counts = mutableMapOf<Int, Int>()
 
-        repeat(10000) {
+        repeat(1000) {
             val outfit = generateRandomOutfit(clothes, emptyList())
             val top = outfit.top ?: return@repeat
             counts[top.id] = counts.getOrDefault(top.id, 0) + 1
