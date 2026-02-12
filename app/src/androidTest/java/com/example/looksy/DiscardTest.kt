@@ -13,10 +13,13 @@ import com.example.looksy.ui.navigation.NavGraph
 import com.example.looksy.ui.navigation.Routes
 import com.example.looksy.ui.viewmodel.ClothesViewModel
 import com.example.looksy.ui.viewmodel.OutfitViewModel
+import io.mockk.clearMocks
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import org.junit.After
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Rule
@@ -62,11 +65,13 @@ class DiscardTest {
     )
 
     private val clothesFlow = MutableStateFlow(listOf(oldCloth, newCloth))
+    private val lastDiscardedState = mutableStateOf<List<Clothes>?>(null)
 
     @Before
     fun setup() {
+        every { clothesViewModel.lastDiscardedClothes } returns lastDiscardedState
         every { clothesViewModel.allClothes } returns clothesFlow
-        every { clothesViewModel.lastDiscardedClothes } returns mutableStateOf(null)
+        //every { clothesViewModel.lastDiscardedClothes } returns mutableStateOf(null)
 
         composeTestRule.setContent {
             navController = TestNavHostController(LocalContext.current)
@@ -79,6 +84,11 @@ class DiscardTest {
             )
         }
     }
+    @After
+    fun tearDown() {
+        clothesFlow.value = emptyList()
+        clearMocks(clothesViewModel, outfitViewModel) // Mocks für diesen Test löschen
+    }
 
     @Test
     fun discardScreen_showsOnlyOldClothes() {
@@ -88,7 +98,7 @@ class DiscardTest {
         }
         
         // Klicke auf den Aussortieren-Button
-        composeTestRule.onNodeWithText("Vorschläge zum Aussortieren").performClick()
+        composeTestRule.onNodeWithContentDescription("Vorschläge zum Aussortieren").performClick()
         
         // Prüfe, ob wir auf dem Discard-Screen sind
         Assert.assertEquals(Routes.Discard.route, navController.currentDestination?.route)
