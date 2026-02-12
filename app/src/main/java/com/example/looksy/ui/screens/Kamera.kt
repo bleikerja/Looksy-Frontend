@@ -86,7 +86,7 @@ fun CameraScreen(
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "Foto hizufügen",
+                    text = "Foto hinzufügen",
                     textAlign = TextAlign.Center,
                     fontSize = 25.sp
                 )
