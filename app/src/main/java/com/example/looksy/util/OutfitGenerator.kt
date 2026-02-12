@@ -1,7 +1,9 @@
 package com.example.looksy.util
 
 import com.example.looksy.data.model.Clothes
+import com.example.looksy.data.model.Outfit
 import com.example.looksy.data.model.Type
+import kotlin.random.Random
 
 data class OutfitResult(
     val top: Clothes?,
@@ -10,34 +12,63 @@ data class OutfitResult(
     val jacket: Clothes?,
     val dress: Clothes?
 )
-
 private const val CANDIDATE_COUNT = 10
 
-/**
- * Generates a single random outfit from clean clothes (used for candidates).
- */
-private fun generateSingleRandomOutfit(cleanClothes: List<Clothes>): OutfitResult {
+fun generateSingleRandomOutfit(allClothes: List<Clothes>, allOutfits: List<Outfit>): OutfitResult {
+    val cleanClothes = allClothes.filter { it.clean }
+    val clothesWeightedByWorn = cleanClothes.flatMap { c -> List(c.wornClothes+1) {c} }
+    val finalClothes = if (Random.nextDouble() < 0.7) clothesWeightedByWorn else cleanClothes
+    val cleanClothesIds = cleanClothes.map { it.id }.toSet()
+
+    // With a 40% probability, try to use a saved outfit
+    if (allOutfits.isNotEmpty() && Random.nextDouble() < 0.3) {
+        val cleanOutfits = allOutfits.filter { outfit ->
+            (outfit.topsId == null || outfit.topsId in cleanClothesIds) &&
+                    (outfit.pantsId == null || outfit.pantsId in cleanClothesIds) &&
+                    (outfit.skirtId == null || outfit.skirtId in cleanClothesIds) &&
+                    (outfit.jacketId == null || outfit.jacketId in cleanClothesIds) &&
+                    (outfit.dressId == null || outfit.dressId in cleanClothesIds)
+        }
+
+        if (cleanOutfits.isNotEmpty()) {
+            val outfitsWeightedByPreference =
+                cleanOutfits.flatMap { c -> List(c.preference + 1) { c } }
+            if (outfitsWeightedByPreference.isNotEmpty()) {
+                val savedOutfit = outfitsWeightedByPreference.random()
+                // Found a saved outfit to return
+                return OutfitResult(
+                    top = savedOutfit.topsId?.let { id -> cleanClothes.find { it.id == id } },
+                    pants = savedOutfit.pantsId?.let { id -> cleanClothes.find { it.id == id } },
+                    skirt = savedOutfit.skirtId?.let { id -> cleanClothes.find { it.id == id } },
+                    jacket = savedOutfit.jacketId?.let { id -> cleanClothes.find { it.id == id } },
+                    dress = savedOutfit.dressId?.let { id -> cleanClothes.find { it.id == id } }
+                )
+            }
+        }
+    }
+
+    // If no saved outfit was chosen, generate a random one
     val searchForTops = listOf(true, false).random()
     var randomTop: Clothes? = null
     var randomDress: Clothes? = null
 
     if (searchForTops) {
-        randomTop = cleanClothes.filter { it.type == Type.Tops }.randomOrNull()
+        randomTop = finalClothes.filter { it.type == Type.Tops }.randomOrNull()
     } else {
-        randomDress = cleanClothes.filter { it.type == Type.Dress }.randomOrNull()
+        randomDress = finalClothes.filter { it.type == Type.Dress }.randomOrNull()
     }
 
     if (randomTop == null && randomDress == null) {
         if (searchForTops) {
-            randomDress = cleanClothes.filter { it.type == Type.Dress }.randomOrNull()
+            randomDress = finalClothes.filter { it.type == Type.Dress }.randomOrNull()
         } else {
-            randomTop = cleanClothes.filter { it.type == Type.Tops }.randomOrNull()
+            randomTop = finalClothes.filter { it.type == Type.Tops }.randomOrNull()
         }
     }
 
-    val randomPants = cleanClothes.filter { it.type == Type.Pants }.randomOrNull()
-    val randomSkirt = cleanClothes.filter { it.type == Type.Skirt }.randomOrNull()
-    val randomJacket = cleanClothes.filter { it.type == Type.Jacket }.randomOrNull()
+    val randomPants = finalClothes.filter { it.type == Type.Pants }.randomOrNull()
+    val randomSkirt = finalClothes.filter { it.type == Type.Skirt }.randomOrNull()
+    val randomJacket = finalClothes.filter { it.type == Type.Jacket }.randomOrNull()
 
     var finalSkirt = randomSkirt
     if (randomDress != null) {
@@ -57,13 +88,13 @@ private fun generateSingleRandomOutfit(cleanClothes: List<Clothes>): OutfitResul
  * Generates an outfit by creating multiple random candidates and returning
  * the one with the highest compatibility score (OutfitCompatibilityCalculator).
  */
-fun generateRandomOutfit(allClothes: List<Clothes>): OutfitResult {
+fun generateRandomOutfit(allClothes: List<Clothes>, allOutfits: List<Outfit>): OutfitResult {
     val cleanClothes = allClothes.filter { it.clean }
     if (cleanClothes.isEmpty()) {
         return OutfitResult(null, null, null, null, null)
     }
 
-    val candidates = (1..CANDIDATE_COUNT).map { generateSingleRandomOutfit(cleanClothes) }
+    val candidates = (1..CANDIDATE_COUNT).map { generateSingleRandomOutfit(cleanClothes, allOutfits) }
     return candidates.maxByOrNull { OutfitCompatibilityCalculator.calculateCompatibilityScore(it) }
         ?: candidates.first()
 }
