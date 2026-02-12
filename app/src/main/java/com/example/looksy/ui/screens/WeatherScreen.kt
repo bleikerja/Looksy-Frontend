@@ -28,34 +28,38 @@ import androidx.compose.ui.unit.sp
 import com.example.looksy.data.location.LocationInputMode
 import com.example.looksy.data.location.LocationProvider
 import com.example.looksy.data.location.PermissionState
-import com.example.looksy.data.repository.GeocodingRepository
 import com.example.looksy.data.model.Weather
 import com.example.looksy.ui.components.Header
+import com.example.looksy.ui.viewmodel.GeocodingUiState
+import com.example.looksy.ui.viewmodel.GeocodingViewModel
 import com.example.looksy.ui.viewmodel.WeatherUiState
 import com.example.looksy.ui.viewmodel.WeatherViewModel
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WeatherScreen(
     weatherViewModel: WeatherViewModel,
+    geocodingViewModel: GeocodingViewModel,
     locationProvider: LocationProvider,
-    geocodingRepository: GeocodingRepository,
     onNavigateBack: () -> Unit
 ) {
     val weatherState by weatherViewModel.weatherState.collectAsState()
+    val geocodingState by geocodingViewModel.geocodingState.collectAsState()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
     // State management
     var permissionState by remember { mutableStateOf(PermissionState.NOT_ASKED) }
     var locationInputMode by remember { mutableStateOf(LocationInputMode.GPS) }
-    var showPermissionDialog by remember { mutableStateOf(false) }
+    var showPermissionBottomSheet by remember { mutableStateOf(false) }
     var showCityInput by remember { mutableStateOf(false) }
     var cityName by remember { mutableStateOf("") }
     var isLocationEnabled by remember { mutableStateOf(true) }
     var showLocationSettingsDialog by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
+    var isRefreshing by remember { mutableStateOf(false) }
 
     // Location permission launcher
     val locationPermissionLauncher = rememberLauncherForActivityResult(
@@ -86,6 +90,44 @@ fun WeatherScreen(
         }
     }
 
+    // Function to refresh weather data
+    val refreshWeatherData = {
+        if (!isRefreshing) {
+            isRefreshing = true
+            scope.launch {
+                if (locationProvider.hasLocationPermission() && locationProvider.isLocationEnabled()) {
+                    locationProvider.getCurrentLocation().onSuccess { location ->
+                        weatherViewModel.fetchWeather(location.latitude, location.longitude)
+                    }
+                }
+                kotlinx.coroutines.delay(500)
+                isRefreshing = false
+            }
+        }
+    }
+
+    // Observe geocoding state
+    LaunchedEffect(geocodingState) {
+        when (geocodingState) {
+            is GeocodingUiState.Success -> {
+                val success = geocodingState as GeocodingUiState.Success
+                weatherViewModel.fetchWeather(success.location.latitude, success.location.longitude)
+                showCityInput = false
+                cityName = ""
+                geocodingViewModel.resetState()
+            }
+            is GeocodingUiState.Error -> {
+                val error = geocodingState as GeocodingUiState.Error
+                snackbarHostState.showSnackbar(
+                    message = error.message,
+                    duration = SnackbarDuration.Short
+                )
+                geocodingViewModel.resetState()
+            }
+            else -> {}
+        }
+    }
+
     // Check permissions and location services on launch
     LaunchedEffect(Unit) {
         if (locationProvider.hasLocationPermission()) {
@@ -110,17 +152,17 @@ fun WeatherScreen(
         }
     }
 
-    // Permission Dialog with 3 options
-    if (showPermissionDialog) {
-        LocationPermissionDialog(
+    // Permission BottomSheet with 3 options
+    if (showPermissionBottomSheet) {
+        LocationPermissionBottomSheet(
             onDismiss = { 
-                showPermissionDialog = false
+                showPermissionBottomSheet = false
                 permissionState = PermissionState.DENIED
                 locationInputMode = LocationInputMode.MANUAL_CITY
                 showCityInput = true
             },
             onConfirmOnce = {
-                showPermissionDialog = false
+                showPermissionBottomSheet = false
                 permissionState = PermissionState.GRANTED_ONCE
                 locationPermissionLauncher.launch(
                     arrayOf(
@@ -130,7 +172,7 @@ fun WeatherScreen(
                 )
             },
             onConfirmAlways = {
-                showPermissionDialog = false
+                showPermissionBottomSheet = false
                 permissionState = PermissionState.GRANTED_WHILE_IN_USE
                 locationPermissionLauncher.launch(
                     arrayOf(
@@ -209,7 +251,7 @@ fun WeatherScreen(
                 // Permission not asked yet - show prompt to grant permission
                 permissionState == PermissionState.NOT_ASKED -> {
                     PermissionNotAskedCard(
-                        onRequestPermission = { showPermissionDialog = true }
+                        onRequestPermission = { showPermissionBottomSheet = true }
                     )
                 }
                 
@@ -233,26 +275,14 @@ fun WeatherScreen(
                     CityInputCard(
                         cityName = cityName,
                         onCityNameChange = { cityName = it },
+                        isLoading = geocodingState is GeocodingUiState.Loading,
                         onSubmit = {
                             if (cityName.isNotBlank()) {
-                                scope.launch {
-                                    geocodingRepository.getCityCoordinates(cityName)
-                                        .onSuccess { location ->
-                                            weatherViewModel.fetchWeather(location.latitude, location.longitude)
-                                            showCityInput = false
-                                        }
-                                        .onFailure { error ->
-                                            // Show error in Snackbar
-                                            snackbarHostState.showSnackbar(
-                                                message = error.message ?: "Stadt nicht gefunden",
-                                                duration = SnackbarDuration.Short
-                                            )
-                                        }
-                                }
+                                geocodingViewModel.getCityCoordinates(cityName)
                             }
                         },
                         onRequestPermission = if (permissionState == PermissionState.DENIED) {
-                            { showPermissionDialog = true }
+                            { showPermissionBottomSheet = true }
                         } else null
                     )
                 }
@@ -266,6 +296,28 @@ fun WeatherScreen(
 
                         is WeatherUiState.Success -> {
                             val weather = (weatherState as WeatherUiState.Success).weather
+
+                            // Refresh button
+                            if (locationProvider.hasLocationPermission() && locationProvider.isLocationEnabled()) {
+                                IconButton(
+                                    onClick = { refreshWeatherData() },
+                                    enabled = !isRefreshing
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Refresh,
+                                        contentDescription = "Aktualisieren",
+                                        modifier = if (isRefreshing) Modifier.size(24.dp) else Modifier.size(24.dp)
+                                    )
+                                }
+                                if (isRefreshing) {
+                                    Text(
+                                        text = "Wird aktualisiert...",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
 
                             // Main Weather Card
                             WeatherCard(weather = weather)
@@ -284,16 +336,12 @@ fun WeatherScreen(
                                         permissionState == PermissionState.GRANTED_ONCE) {
                                         isLocationEnabled = locationProvider.isLocationEnabled()
                                         if (isLocationEnabled) {
-                                            scope.launch {
-                                                locationProvider.getCurrentLocation().onSuccess { location ->
-                                                    weatherViewModel.fetchWeather(location.latitude, location.longitude)
-                                                }
-                                            }
+                                            refreshWeatherData()
                                         } else {
                                             showLocationSettingsDialog = true
                                         }
                                     } else {
-                                        showPermissionDialog = true
+                                        showPermissionBottomSheet = true
                                     }
                                 },
                                 onEnterCity = {
@@ -542,57 +590,82 @@ private fun ErrorWeatherCard(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun LocationPermissionDialog(
+private fun LocationPermissionBottomSheet(
     onDismiss: () -> Unit,
     onConfirmOnce: () -> Unit,
     onConfirmAlways: () -> Unit
 ) {
-    AlertDialog(
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    
+    ModalBottomSheet(
         onDismissRequest = onDismiss,
-        icon = {
+        sheetState = sheetState
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             Icon(
                 imageVector = Icons.Default.LocationOn,
-                contentDescription = null
+                contentDescription = null,
+                modifier = Modifier.size(48.dp),
+                tint = MaterialTheme.colorScheme.primary
             )
-        },
-        title = {
-            Text("Standortzugriff erforderlich")
-        },
-        text = {
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
             Text(
-                "Um das Wetter an deinem Standort anzuzeigen, " +
-                        "benötigt Looksy Zugriff auf deinen Standort. " +
-                        "Diese Information wird nur für die Wetter-API verwendet."
+                text = "Standortzugriff erforderlich",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
             )
-        },
-        confirmButton = {
-            Column {
-                Button(
-                    onClick = onConfirmAlways,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Während der Nutzung der App")
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedButton(
-                    onClick = onConfirmOnce,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Nur dieses Mal")
-                }
-            }
-        },
-        dismissButton = {
-
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Text(
+                text = "Um das Wetter an deinem Standort anzuzeigen, benötigt Looksy Zugriff auf deinen Standort. Diese Information wird nur für die Wetter-API verwendet.",
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            // Button: Während der Nutzung der App
             Button(
+                onClick = onConfirmAlways,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Während der Nutzung der App")
+            }
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // Button: Nur dieses Mal
+            OutlinedButton(
+                onClick = onConfirmOnce,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Nur dieses Mal")
+            }
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // Button: Ablehnen
+            TextButton(
                 onClick = onDismiss,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Ablehnen")
             }
+            
+            Spacer(modifier = Modifier.height(16.dp))
         }
-    )
+    }
 }
 
 @Composable
@@ -688,6 +761,7 @@ private fun LocationDisabledCard(
 private fun CityInputCard(
     cityName: String,
     onCityNameChange: (String) -> Unit,
+    isLoading: Boolean = false,
     onSubmit: () -> Unit,
     onRequestPermission: (() -> Unit)? = null
 ) {
@@ -738,16 +812,24 @@ private fun CityInputCard(
             
             Button(
                 onClick = onSubmit,
-                enabled = cityName.isNotBlank(),
+                enabled = cityName.isNotBlank() && !isLoading,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Wetter suchen")
+                Text(if (isLoading) "Suche läuft..." else "Wetter suchen")
             }
             
             if (onRequestPermission != null) {

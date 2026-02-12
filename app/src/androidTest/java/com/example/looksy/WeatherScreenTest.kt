@@ -4,9 +4,10 @@ import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.example.looksy.data.location.LocationProvider
 import com.example.looksy.data.model.Weather
-import com.example.looksy.data.repository.GeocodingRepository
 import com.example.looksy.ui.screens.WeatherScreen
 import com.example.looksy.ui.theme.LooksyTheme
+import com.example.looksy.ui.viewmodel.GeocodingUiState
+import com.example.looksy.ui.viewmodel.GeocodingViewModel
 import com.example.looksy.ui.viewmodel.WeatherUiState
 import com.example.looksy.ui.viewmodel.WeatherViewModel
 import io.mockk.coEvery
@@ -27,13 +28,15 @@ class WeatherScreenTest {
 
     private val mockWeatherViewModel = mockk<WeatherViewModel>(relaxed = true)
     private val mockLocationProvider = mockk<LocationProvider>(relaxed = true)
-    private val mockGeocodingRepository = mockk<GeocodingRepository>(relaxed = true)
+    private val mockGeocodingViewModel = mockk<GeocodingViewModel>(relaxed = true)
     private val weatherStateFlow = MutableStateFlow<WeatherUiState>(WeatherUiState.Loading)
+    private val geocodingStateFlow = MutableStateFlow<GeocodingUiState>(GeocodingUiState.Idle)
 
     @Test
     fun weatherScreen_displaysLoadingState() {
         // Given: Weather state is Loading
         every { mockWeatherViewModel.weatherState } returns weatherStateFlow
+        every { mockGeocodingViewModel.geocodingState } returns geocodingStateFlow
         every { mockLocationProvider.hasLocationPermission() } returns true
         weatherStateFlow.value = WeatherUiState.Loading
 
@@ -42,8 +45,8 @@ class WeatherScreenTest {
             LooksyTheme {
                 WeatherScreen(
                     weatherViewModel = mockWeatherViewModel,
+                    geocodingViewModel = mockGeocodingViewModel,
                     locationProvider = mockLocationProvider,
-                    geocodingRepository = mockGeocodingRepository,
                     onNavigateBack = {}
                 )
             }
@@ -65,6 +68,7 @@ class WeatherScreenTest {
             iconUrl = "https://openweathermap.org/img/w/01d.png"
         )
         every { mockWeatherViewModel.weatherState } returns weatherStateFlow
+        every { mockGeocodingViewModel.geocodingState } returns geocodingStateFlow
         every { mockLocationProvider.hasLocationPermission() } returns true
         weatherStateFlow.value = WeatherUiState.Success(testWeather)
 
@@ -73,8 +77,8 @@ class WeatherScreenTest {
             LooksyTheme {
                 WeatherScreen(
                     weatherViewModel = mockWeatherViewModel,
+                    geocodingViewModel = mockGeocodingViewModel,
                     locationProvider = mockLocationProvider,
-                    geocodingRepository = mockGeocodingRepository,
                     onNavigateBack = {}
                 )
             }
@@ -92,6 +96,7 @@ class WeatherScreenTest {
     fun weatherScreen_displaysErrorState_withRetryButton() {
         // Given: Weather state is Error
         every { mockWeatherViewModel.weatherState } returns weatherStateFlow
+        every { mockGeocodingViewModel.geocodingState } returns geocodingStateFlow
         every { mockLocationProvider.hasLocationPermission() } returns true
         weatherStateFlow.value = WeatherUiState.Error("Network error")
 
@@ -100,8 +105,8 @@ class WeatherScreenTest {
             LooksyTheme {
                 WeatherScreen(
                     weatherViewModel = mockWeatherViewModel,
+                    geocodingViewModel = mockGeocodingViewModel,
                     locationProvider = mockLocationProvider,
-                    geocodingRepository = mockGeocodingRepository,
                     onNavigateBack = {}
                 )
             }
@@ -116,6 +121,7 @@ class WeatherScreenTest {
     fun weatherScreen_showsPermissionDialog_whenPermissionNotGranted() {
         // Given: Location permission not granted
         every { mockWeatherViewModel.weatherState } returns weatherStateFlow
+        every { mockGeocodingViewModel.geocodingState } returns geocodingStateFlow
         every { mockLocationProvider.hasLocationPermission() } returns false
         weatherStateFlow.value = WeatherUiState.Loading
 
@@ -124,17 +130,15 @@ class WeatherScreenTest {
             LooksyTheme {
                 WeatherScreen(
                     weatherViewModel = mockWeatherViewModel,
+                    geocodingViewModel = mockGeocodingViewModel,
                     locationProvider = mockLocationProvider,
-                    geocodingRepository = mockGeocodingRepository,
                     onNavigateBack = {}
                 )
             }
         }
 
-        // Then: Permission dialog is visible
-        composeTestRule.onNodeWithText("Standortzugriff erforderlich").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Erlauben").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Abbrechen").assertIsDisplayed()
+        // Then: Permission prompt is visible (updated for BottomSheet)
+        composeTestRule.onNodeWithText("🏙️").assertIsDisplayed() // Permission not asked card emoji
     }
 
     @Test
@@ -149,6 +153,7 @@ class WeatherScreenTest {
             iconUrl = "https://openweathermap.org/img/w/03d.png"
         )
         every { mockWeatherViewModel.weatherState } returns weatherStateFlow
+        every { mockGeocodingViewModel.geocodingState } returns geocodingStateFlow
         every { mockLocationProvider.hasLocationPermission() } returns true
         weatherStateFlow.value = WeatherUiState.Success(coldWeather)
 
@@ -157,8 +162,8 @@ class WeatherScreenTest {
             LooksyTheme {
                 WeatherScreen(
                     weatherViewModel = mockWeatherViewModel,
+                    geocodingViewModel = mockGeocodingViewModel,
                     locationProvider = mockLocationProvider,
-                    geocodingRepository = mockGeocodingRepository,
                     onNavigateBack = {}
                 )
             }
@@ -181,6 +186,7 @@ class WeatherScreenTest {
             iconUrl = "https://openweathermap.org/img/w/01d.png"
         )
         every { mockWeatherViewModel.weatherState } returns weatherStateFlow
+        every { mockGeocodingViewModel.geocodingState } returns geocodingStateFlow
         every { mockLocationProvider.hasLocationPermission() } returns true
         weatherStateFlow.value = WeatherUiState.Success(warmWeather)
 
@@ -189,8 +195,8 @@ class WeatherScreenTest {
             LooksyTheme {
                 WeatherScreen(
                     weatherViewModel = mockWeatherViewModel,
+                    geocodingViewModel = mockGeocodingViewModel,
                     locationProvider = mockLocationProvider,
-                    geocodingRepository = mockGeocodingRepository,
                     onNavigateBack = {}
                 )
             }
@@ -206,6 +212,7 @@ class WeatherScreenTest {
         // Given: Screen is displayed
         var backCalled = false
         every { mockWeatherViewModel.weatherState } returns weatherStateFlow
+        every { mockGeocodingViewModel.geocodingState } returns geocodingStateFlow
         every { mockLocationProvider.hasLocationPermission() } returns true
         weatherStateFlow.value = WeatherUiState.Loading
 
@@ -213,8 +220,8 @@ class WeatherScreenTest {
             LooksyTheme {
                 WeatherScreen(
                     weatherViewModel = mockWeatherViewModel,
+                    geocodingViewModel = mockGeocodingViewModel,
                     locationProvider = mockLocationProvider,
-                    geocodingRepository = mockGeocodingRepository,
                     onNavigateBack = { backCalled = true }
                 )
             }
@@ -231,6 +238,7 @@ class WeatherScreenTest {
     fun weatherScreen_retryButton_retriggersWeatherFetch() {
         // Given: Error state
         every { mockWeatherViewModel.weatherState } returns weatherStateFlow
+        every { mockGeocodingViewModel.geocodingState } returns geocodingStateFlow
         every { mockLocationProvider.hasLocationPermission() } returns true
         coEvery { mockLocationProvider.getCurrentLocation() } returns Result.success(
             mockk {
@@ -244,8 +252,8 @@ class WeatherScreenTest {
             LooksyTheme {
                 WeatherScreen(
                     weatherViewModel = mockWeatherViewModel,
+                    geocodingViewModel = mockGeocodingViewModel,
                     locationProvider = mockLocationProvider,
-                    geocodingRepository = mockGeocodingRepository,
                     onNavigateBack = {}
                 )
             }

@@ -34,6 +34,8 @@ import com.example.looksy.data.model.Clothes
 import com.example.looksy.data.model.Outfit
 import com.example.looksy.data.model.Type
 import com.example.looksy.ui.viewmodel.ClothesViewModel
+import com.example.looksy.ui.viewmodel.GeocodingViewModel
+import com.example.looksy.ui.viewmodel.GeocodingViewModelFactory
 import com.example.looksy.ui.viewmodel.WeatherViewModel
 import com.example.looksy.ui.screens.AddNewClothesScreen
 import com.example.looksy.ui.screens.CameraScreenPermission
@@ -536,11 +538,14 @@ fun NavGraph(
 
         composable(route = Routes.Weather.route) {
             val application = LocalContext.current.applicationContext as LooksyApplication
+            val geocodingViewModel: GeocodingViewModel = viewModel(
+                factory = GeocodingViewModelFactory(application.geocodingRepository)
+            )
 
             WeatherScreen(
                 weatherViewModel = weatherViewModel,
+                geocodingViewModel = geocodingViewModel,
                 locationProvider = application.locationProvider,
-                geocodingRepository = application.geocodingRepository,
                 onNavigateBack = { navController.popBackStack() }
             )
         }
