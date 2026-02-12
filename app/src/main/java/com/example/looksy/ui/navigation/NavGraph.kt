@@ -34,6 +34,7 @@ import com.example.looksy.ui.screens.AddNewClothesScreen
 import com.example.looksy.ui.screens.CameraScreen
 import com.example.looksy.ui.screens.Category
 import com.example.looksy.ui.screens.CategoryItems
+import com.example.looksy.ui.screens.DiscardScreen
 import com.example.looksy.ui.screens.SavedOutfitsScreen
 import com.example.looksy.ui.screens.SpecificCategoryScreen
 import com.example.looksy.ui.screens.WashingMachineScreen
@@ -178,6 +179,9 @@ fun NavGraph(
                 },
                 onButtonClicked = { itemId ->
                     navController.navigate(Routes.Details.createRoute(itemId))
+                },
+                onNavigateToDiscard = {
+                    navController.navigate(Routes.Discard.route)
                 }
             )
         }
@@ -449,10 +453,36 @@ fun NavGraph(
                 onNavigateBack = { navController.popBackStack() },
                 onConfirmWashed = { washedClothes ->
                     washedClothes.forEach { cloth ->
-                        val updatedCloth = cloth.copy(clean = true, wornSince = null, daysWorn = 0)
+                        val updatedCloth = cloth.copy(
+                            clean = true, 
+                            wornSince = null, 
+                            daysWorn = 0,
+                            lastWorn = System.currentTimeMillis()
+                        )
                         clothesViewModel.update(updatedCloth)
                     }
                 }
+            )
+        }
+
+        composable(route = Routes.Discard.route) {
+            //ToDo: für den Beta-Test unter Umständen raus nehmen
+            val oneYearAgo = System.currentTimeMillis() - 31536000000L // ca. 1 Jahr (365 Tage)
+            val clothesToDiscard = allClothesFromDb.filter { 
+                it.lastWorn != null && it.lastWorn!! < oneYearAgo 
+            }
+            val canUndo = clothesViewModel.lastDiscardedClothes.value != null
+
+            DiscardScreen(
+                clothesToDiscard = clothesToDiscard,
+                onNavigateBack = { navController.popBackStack() },
+                onConfirmDiscard = { clothes ->
+                    clothesViewModel.discardClothes(clothes)
+                },
+                onUndoDiscard = {
+                    clothesViewModel.undoLastDiscard()
+                },
+                canUndo = canUndo
             )
         }
 

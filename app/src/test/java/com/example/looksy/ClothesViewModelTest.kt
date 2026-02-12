@@ -19,6 +19,8 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 
@@ -121,5 +123,55 @@ class ClothesViewModelTest {
 
         // Then
         coVerify { repository.getClothesById(id) }
+    }
+    @Test
+    fun `discardClothes() should delete from repository and set lastDiscardedClothes`() = testScope.runTest {
+        // Given
+        val clothes = Clothes(
+            id = 1,
+            size = Size._M,
+            seasonUsage = Season.Summer,
+            type = Type.Tops,
+            material = Material.Cotton,
+            clean = true,
+            washingNotes = WashingNotes.Temperature30,
+            imagePath = "",
+            isSynced = false
+        )
+        val clothesList = listOf(clothes) // testCloth muss im @Before oder als Property definiert sein
+
+        viewModel.discardClothes(clothesList)
+        advanceUntilIdle()
+
+        coVerify { repository.deleteAll(clothesList) }
+        assertEquals(clothesList, viewModel.lastDiscardedClothes.value)
+    }
+
+    @Test
+    fun `undoLastDiscard() should insert clothes back into repository`() = testScope.runTest {
+        // Given
+        val clothes = Clothes(
+            id = 1,
+            size = Size._M,
+            seasonUsage = Season.Summer,
+            type = Type.Tops,
+            material = Material.Cotton,
+            clean = true,
+            washingNotes = WashingNotes.Temperature30,
+            imagePath = "",
+            isSynced = false
+        )
+        val clothesList = listOf(clothes)
+
+        // Zuerst aussortieren, um einen Zustand zum Rückgängigmachen zu haben
+        viewModel.discardClothes(clothesList)
+        advanceUntilIdle()
+
+        // Dann rückgängig machen
+        viewModel.undoLastDiscard()
+        advanceUntilIdle()
+
+        coVerify { repository.insertAll(clothesList) }
+        assertNull(viewModel.lastDiscardedClothes.value)
     }
 }

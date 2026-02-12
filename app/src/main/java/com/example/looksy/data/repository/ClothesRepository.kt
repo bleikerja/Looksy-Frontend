@@ -12,6 +12,10 @@ class ClothesRepository(private val clothesDao: ClothesDao) {
         clothesDao.insert(clothes)
     }
 
+    suspend fun insertAll(clothes: List<Clothes>) {
+        clothesDao.insertAll(clothes)
+    }
+
     fun getClothesById(id: Int): Flow<Clothes?> {
         return clothesDao.getClothesById(id)
     }
@@ -30,6 +34,10 @@ class ClothesRepository(private val clothesDao: ClothesDao) {
 
     suspend fun delete(clothes: Clothes) {
         clothesDao.delete(clothes)
+    }
+
+    suspend fun deleteAll(clothes: List<Clothes>) {
+        clothesDao.deleteAll(clothes)
     }
 
     suspend fun getByIdDirect(id: Int): Clothes? {
