@@ -54,7 +54,7 @@ class ClothesViewModelTest {
             type = Type.Tops,
             material = Material.Cotton,
             clean = true,
-            washingNotes = WashingNotes.Temperature30,
+            washingNotes = listOf(WashingNotes.Temperature30),
             imagePath = "",
             isSynced = false
         )
@@ -77,7 +77,7 @@ class ClothesViewModelTest {
             type = Type.Tops,
             material = Material.Cotton,
             clean = true,
-            washingNotes = WashingNotes.Temperature30,
+            washingNotes = listOf(WashingNotes.Temperature30),
             imagePath = "",
             isSynced = false
         )
@@ -100,7 +100,7 @@ class ClothesViewModelTest {
             type = Type.Tops,
             material = Material.Cotton,
             clean = true,
-            washingNotes = WashingNotes.Temperature30,
+            washingNotes = listOf(WashingNotes.Temperature30),
             imagePath = "",
             isSynced = false
         )
@@ -134,7 +134,7 @@ class ClothesViewModelTest {
             type = Type.Tops,
             material = Material.Cotton,
             clean = true,
-            washingNotes = WashingNotes.Temperature30,
+            washingNotes = listOf(WashingNotes.Temperature30),
             imagePath = "",
             isSynced = false
         )
@@ -157,7 +157,7 @@ class ClothesViewModelTest {
             type = Type.Tops,
             material = Material.Cotton,
             clean = true,
-            washingNotes = WashingNotes.Temperature30,
+            washingNotes = listOf(WashingNotes.Temperature30),
             imagePath = "",
             isSynced = false
         )

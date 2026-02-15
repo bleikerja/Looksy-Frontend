@@ -43,7 +43,7 @@ class NavGraphIntegrationTest {
     private val testTop = Clothes(
         id = 1, type = Type.Tops, clean = true, size = Size._M,
         seasonUsage = Season.inBetween, material = Material.Cotton,
-        washingNotes = WashingNotes.Temperature30, 
+        washingNotes = listOf(WashingNotes.Temperature30),
         imagePath = "android.resource://com.example.looksy/${R.drawable.shirt_category}", 
         isSynced = false
     )
@@ -51,7 +51,7 @@ class NavGraphIntegrationTest {
     private val testPants = Clothes(
         id = 2, type = Type.Pants, clean = true, size = Size._M,
         seasonUsage = Season.inBetween, material = Material.Cotton,
-        washingNotes = WashingNotes.Temperature30, 
+        washingNotes = listOf(WashingNotes.Temperature30),
         imagePath = "android.resource://com.example.looksy/${R.drawable.jeans}", 
         isSynced = false
     )
