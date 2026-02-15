@@ -235,17 +235,4 @@ fun SavedOutfitsScreenEmptyPreview() {
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun SavedOutfitsScreenWithOutfitsPreview() {
-    LooksyTheme {
-        SavedOutfitsScreen(
-            outfits = listOf(
-                Outfit(id = 1, topsId = 1, pantsId = 2),
-                Outfit(id = 2, dressId = 3),
-                Outfit(id = 3, topsId = 1, skirtId = 4, jacketId = 5)
-            ),
-            allClothes = allClothes // Verwendet die Mock-Daten aus ScreenAddNewClothes
-        )
-    }
-}
+
