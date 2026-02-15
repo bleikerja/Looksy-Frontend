@@ -57,7 +57,7 @@ fun WashingMachineScreen(
     val washingNotesToShow by remember(selectedIds, dirtyClothes) {
         mutableStateOf(
             dirtyClothes
-                .filter { it.id in selectedIds && it.washingNotes != WashingNotes.None }
+                .filter { it.id in selectedIds && checkForWashingNotes(it.washingNotes) }
                 .map { it.washingNotes }
                 .distinct() // Zeige jeden Waschhinweis nur einmal an
         )
@@ -68,14 +68,14 @@ fun WashingMachineScreen(
             Header(
                 onNavigateBack = onNavigateBack,
                 onNavigateToRightIcon = {
-                    if (selectedIds.size == dirtyClothes.size) {
+                    selectedIds = if (selectedIds.size == dirtyClothes.size) {
                         // Wenn alles ausgewählt ist, Auswahl aufheben
-                        selectedIds = emptySet()
+                        emptySet()
                     } else {
                         // Sonst alles auswählen
-                        selectedIds = dirtyClothes.map { it.id }.toSet()
+                        dirtyClothes.map { it.id }.toSet()
                     }
-                                        },
+                },
                 clothesData = null,
                 headerText = "Waschmaschine",
                 rightIconContentDescription = "Alle auswählen",
@@ -119,16 +119,18 @@ fun WashingMachineScreen(
                 ) {
                     items(washingNotesToShow) { note ->
                         // Einfacher "Chip" zur Anzeige des Hinweises
-                        Text(
-                            text = note.displayName,
-                            modifier = Modifier
-                                .background(
-                                    MaterialTheme.colorScheme.primaryContainer,
-                                    RoundedCornerShape(8.dp)
-                                )
-                                .padding(horizontal = 12.dp, vertical = 6.dp),
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
+                        for (oneNote in note) {
+                            Text(
+                                text = oneNote.displayName,
+                                modifier = Modifier
+                                    .background(
+                                        MaterialTheme.colorScheme.primaryContainer,
+                                        RoundedCornerShape(8.dp)
+                                    )
+                                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
                     }
                 }
             }
@@ -209,3 +211,12 @@ fun WashingItemContainer(
     )
 }
 
+fun checkForWashingNotes(washingNotes: List<WashingNotes>): Boolean {
+    var noneIsFound = true
+    for (note in washingNotes) {
+        if (note == WashingNotes.None) {
+            noneIsFound = false
+        }
+    }
+    return noneIsFound
+}

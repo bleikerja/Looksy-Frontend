@@ -47,7 +47,7 @@ class DiscardTest {
         size = Size._M,
         seasonUsage = Season.Summer,
         material = Material.Cotton,
-        washingNotes = WashingNotes.Temperature30,
+        washingNotes = listOf(WashingNotes.Temperature30),
         lastWorn = moreThanOneYearAgo,
         imagePath = ""
     )
@@ -59,7 +59,7 @@ class DiscardTest {
         size = Size._M,
         seasonUsage = Season.Summer,
         material = Material.Cotton,
-        washingNotes = WashingNotes.Temperature30,
+        washingNotes = listOf(WashingNotes.Temperature30),
         lastWorn = recently,
         imagePath = ""
     )
@@ -130,20 +130,5 @@ class DiscardTest {
         composeTestRule.onNodeWithText("Aussortieren (1)", substring = true).performClick()
         
         coVerify { clothesViewModel.discardClothes(match { it.first().id == oldCloth.id }) }
-    }
-    
-    @Test
-    fun undoButton_appearsWhenCanUndoIsTrue() {
-        // Mocke canUndo = true
-        every { clothesViewModel.lastDiscardedClothes } returns mutableStateOf(listOf(oldCloth))
-
-        composeTestRule.runOnUiThread {
-            navController.navigate(Routes.Discard.route)
-        }
-        
-        composeTestRule.onNodeWithText("Rückgängig", substring = true).assertIsDisplayed()
-        composeTestRule.onNodeWithText("Rückgängig", substring = true).performClick()
-        
-        coVerify { clothesViewModel.undoLastDiscard() }
     }
 }

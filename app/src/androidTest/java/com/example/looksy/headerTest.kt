@@ -18,7 +18,7 @@ val testClothes = Clothes(
     seasonUsage = Season.inBetween,
     material = Material.Wool,
     clean = true,
-    washingNotes = WashingNotes.None,
+    washingNotes = listOf(WashingNotes.None),
     imagePath = "",
     isSynced = false
 )

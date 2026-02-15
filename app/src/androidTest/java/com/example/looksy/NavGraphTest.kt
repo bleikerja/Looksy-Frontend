@@ -46,7 +46,7 @@ class NavGraphTest {
         size = Size._M,
         seasonUsage = Season.inBetween,
         material = Material.Cotton,
-        washingNotes = WashingNotes.Temperature30,
+        washingNotes = listOf(WashingNotes.Temperature30),
         imagePath = "android.resource://com.example.looksy/${R.drawable.shirt_category}",
         isSynced = false,
         wornClothes = 5
@@ -59,7 +59,7 @@ class NavGraphTest {
         size = Size._M,
         seasonUsage = Season.inBetween,
         material = Material.Cotton,
-        washingNotes = WashingNotes.Temperature30,
+        washingNotes = listOf(WashingNotes.Temperature30),
         imagePath = "android.resource://com.example.looksy/${R.drawable.jeans}",
         isSynced = false,
         wornClothes = 2
@@ -71,7 +71,7 @@ class NavGraphTest {
         size = Size._M,
         seasonUsage = Season.inBetween,
         material = Material.Cotton,
-        washingNotes = WashingNotes.Temperature30,
+        washingNotes = listOf(WashingNotes.Temperature30),
         imagePath = "android.resource://com.example.looksy/${R.drawable.jeans}",
         isSynced = false
     )
@@ -349,7 +349,7 @@ class NavGraphTest {
             size = Size._M,
             seasonUsage = Season.inBetween,
             material = Material.Cotton,
-            washingNotes = WashingNotes.Dryer,
+            washingNotes = listOf(WashingNotes.Dryer),
             imagePath = "",
             isSynced = false
         )
@@ -360,7 +360,7 @@ class NavGraphTest {
             size = Size._M,
             seasonUsage = Season.inBetween,
             material = Material.Cotton,
-            washingNotes = WashingNotes.Dryer,
+            washingNotes = listOf(WashingNotes.Dryer),
             imagePath = "",
             isSynced = false
         )

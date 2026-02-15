@@ -57,7 +57,7 @@ var allClothes = listOf(
         type = Type.Pants,
         material = Material.Wool,
         clean = true,
-        washingNotes = WashingNotes.Temperature30,
+        washingNotes = listOf(WashingNotes.Temperature30),
         imagePath = "android.resource://com.example.looksy/${R.drawable.jeans}"
     ),
     Clothes(
@@ -66,7 +66,7 @@ var allClothes = listOf(
         type = Type.Pants,
         material = Material.jeans,
         clean = true,
-        washingNotes = WashingNotes.Temperature30,
+        washingNotes = listOf(WashingNotes.Temperature30),
         imagePath = "android.resource://com.example.looksy/${R.drawable.jeans}"
     ),
     Clothes(
@@ -75,7 +75,7 @@ var allClothes = listOf(
         type = Type.Tops,
         material = Material.Wool,
         clean = true,
-        washingNotes = WashingNotes.Temperature30,
+        washingNotes = listOf(WashingNotes.Temperature30),
         imagePath = "android.resource://com.example.looksy/${R.drawable.colorful_sweater}"
     )
 )
@@ -131,7 +131,7 @@ fun ClothInformationScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.padding(bottom = 20.dp)
         ) {
-            Information("Waschhinweise", clothesData.washingNotes.displayName)
+            Information("Waschhinweise", clothesData.washingNotes[0].displayName)
             Information("Typ", clothesData.type.displayName)
             Information("Material", clothesData.material.displayName)
             Information("Größe", clothesData.size.displayName)
