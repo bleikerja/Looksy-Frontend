@@ -16,7 +16,7 @@ data class Clothes(
     val lastWorn: Long? = null,
     val daysWorn: Int = 0,
     val clean: Boolean,
-    val washingNotes: WashingNotes,
+    val washingNotes: List<WashingNotes>,
 
     val selected: Boolean = false,
 

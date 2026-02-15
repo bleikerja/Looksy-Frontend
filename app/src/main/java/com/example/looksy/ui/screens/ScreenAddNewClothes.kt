@@ -15,7 +15,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PhotoCamera
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -39,7 +38,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.net.toUri
 import coil.compose.AsyncImage
 import com.example.looksy.R
@@ -52,6 +50,7 @@ import com.example.looksy.data.model.Size
 import com.example.looksy.data.model.Type
 import com.example.looksy.data.model.WashingNotes
 import com.example.looksy.ui.components.ConfirmationDialog
+import com.example.looksy.ui.components.MultiSelectDropdown
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -69,28 +68,24 @@ fun AddNewClothesScreen(
     val clothesToEdit by if (clothesIdToEdit != null) {
         viewModel.getClothesById(clothesIdToEdit).collectAsState(initial = null)
     } else {
-        // Im "Neu anlegen"-Modus haben wir kein Objekt zum Bearbeiten
         remember { mutableStateOf(null) }
     }
 
-    // --- ANPASSUNG: Zustände mit den geladenen Daten initialisieren ---
     var size by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.size) }
     var season by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.seasonUsage) }
     var type by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.type) }
     var material by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.material) }
-    var washingNotes by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.washingNotes) }
+    var washingNotes by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.washingNotes ?: emptyList()) }
     var clean by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.clean ?: true) }
 
     val isFormValid =
-                size != null && season != null && type != null && material != null && washingNotes != null
+                size != null && season != null && type != null && material != null && washingNotes.isNotEmpty()
     var edited by remember { mutableStateOf(false) }
+    
     val imageToShowUri = remember(clothesToEdit, imageUriString) {
         when {
-            // Neu-Modus mit einer neuen URI von der Kamera
             imageUriString != null -> imageUriString.toUri()
-            // Bearbeiten-Modus und es gibt einen Pfad
             clothesToEdit?.imagePath?.isNotEmpty() == true -> File(clothesToEdit!!.imagePath).toUri()
-            // Fallback
             else -> null
         }
     }
@@ -152,7 +147,6 @@ fun AddNewClothesScreen(
         floatingActionButton = {
             Button(
                 onClick = {
-                    // Erstelle das Clothes-Objekt, egal ob neu oder bearbeitet
                     val clothesItem = Clothes(
                         // Wenn wir bearbeiten, behalte die ID, sonst ist sie 0 (wird von DB auto-generiert)
                         id = clothesIdToEdit ?: clothesToEdit?.id ?: 0,
@@ -161,7 +155,7 @@ fun AddNewClothesScreen(
                         type = type!!,
                         material = material!!,
                         clean = clean, // Behalte den alten Status oder setze auf sauber
-                        washingNotes = washingNotes!!,
+                        washingNotes = washingNotes,
                         // Der imagePath wird erst in Routes.kt final gesetzt!
                         imagePath = clothesToEdit?.imagePath ?: ""
                     )
@@ -194,7 +188,14 @@ fun AddNewClothesScreen(
                 material = material,
                 onMaterialChange = { material = it; edited = true },
                 washingNotes = washingNotes,
-                onWashingNotesChange = { washingNotes = it; edited = true },
+                onWashingNotesChange = { note ->
+                    washingNotes = if (washingNotes.contains(note)) {
+                        washingNotes - note
+                    } else {
+                        washingNotes + note
+                    }
+                    edited = true
+                },
                 clean = clean,
                 onCleanChange = { clean = it; edited = true },
                 edit = (clothesIdToEdit != null)
@@ -218,7 +219,7 @@ private fun AddNewClothesForm(
     onTypeChange: (Type) -> Unit,
     material: Material?,
     onMaterialChange: (Material) -> Unit,
-    washingNotes: WashingNotes?,
+    washingNotes: List<WashingNotes>,
     onWashingNotesChange: (WashingNotes) -> Unit,
     clean: Boolean,
     onCleanChange: (Boolean) -> Unit,
@@ -306,13 +307,14 @@ private fun AddNewClothesForm(
                 )
         }
         item {
-            EnumDropdown(
-                "Waschhinweise",
-                WashingNotes.entries,
-                washingNotes,
-                onWashingNotesChange
+            MultiSelectDropdown(
+                label = "Waschhinweise",
+                options = WashingNotes.entries,
+                selectedOptions = washingNotes,
+                onOptionSelected = { note ->
+                    onWashingNotesChange(note)
+                },
             )
-
         }
         if (edit){
             item {
@@ -394,26 +396,4 @@ fun <T> EnumDropdown(
             }
         }
     }
-}
-
-
-@SuppressLint("ViewModelConstructorInComposable")
-@Preview(showBackground = true)
-@Composable
-fun PreviewAddNewClothesScreen() {
-    /*
-    AddNewClothesScreen(
-        imageUriString = "", // Leere URI für die Vorschau
-        onSave = { newItem, imageUri ->
-            // In der Vorschau passiert hier nichts.
-            println("Preview Save: $newItem, Uri: $imageUri")
-        },
-        onNavigateBack = {},
-        viewModel = ClothesViewModel(
-            repository =
-        ),
-        clothesIdToEdit = null
-    )
-
-     */
 }
