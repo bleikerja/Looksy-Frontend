@@ -107,5 +107,5 @@ fun generateRandomOutfit(allClothes: List<Clothes>, allOutfits: List<Outfit>): O
     val candidates = (1..MAX_ATTEMPTS).map { generateSingleRandomOutfit(cleanClothes, allOutfits) }
     val compatible = candidates.filter { OutfitCompatibilityCalculator.calculateCompatibilityScore(it) > 0 }
     return compatible.maxByOrNull { OutfitCompatibilityCalculator.calculateCompatibilityScore(it) }
-        ?: OutfitResult(null, null, null, null, null)
+        ?: candidates.random()
 }
