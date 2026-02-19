@@ -45,6 +45,7 @@ import com.example.looksy.R
 import com.example.looksy.ui.components.Header
 import com.example.looksy.ui.viewmodel.ClothesViewModel
 import com.example.looksy.data.model.Clothes
+import com.example.looksy.data.model.ClothesColor
 import com.example.looksy.data.model.Material
 import com.example.looksy.data.model.Season
 import com.example.looksy.data.model.Size
@@ -77,6 +78,7 @@ fun AddNewClothesScreen(
     var season by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.seasonUsage) }
     var type by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.type) }
     var material by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.material) }
+    var color by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.color) }
     var washingNotes by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.washingNotes) }
     var clean by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.clean ?: true) }
 
@@ -160,6 +162,7 @@ fun AddNewClothesScreen(
                         seasonUsage = season!!,
                         type = type!!,
                         material = material!!,
+                        color = color,
                         clean = clean, // Behalte den alten Status oder setze auf sauber
                         washingNotes = washingNotes!!,
                         // Der imagePath wird erst in Routes.kt final gesetzt!
@@ -193,6 +196,8 @@ fun AddNewClothesScreen(
                 onTypeChange = { type = it; edited = true },
                 material = material,
                 onMaterialChange = { material = it; edited = true },
+                color = color,
+                onColorChange = { color = it; edited = true },
                 washingNotes = washingNotes,
                 onWashingNotesChange = { washingNotes = it; edited = true },
                 clean = clean,
@@ -218,6 +223,8 @@ private fun AddNewClothesForm(
     onTypeChange: (Type) -> Unit,
     material: Material?,
     onMaterialChange: (Material) -> Unit,
+    color: ClothesColor?,
+    onColorChange: (ClothesColor?) -> Unit,
     washingNotes: WashingNotes?,
     onWashingNotesChange: (WashingNotes) -> Unit,
     clean: Boolean,
@@ -306,6 +313,15 @@ private fun AddNewClothesForm(
                 )
         }
         item {
+            OptionalEnumDropdown(
+                label = "Farbe (optional)",
+                options = ClothesColor.entries,
+                selectedOption = color,
+                onOptionSelected = onColorChange,
+                optionDisplayName = { it.displayName }
+            )
+        }
+        item {
             EnumDropdown(
                 "Waschhinweise",
                 WashingNotes.entries,
@@ -388,6 +404,58 @@ fun <T> EnumDropdown(
                     text = { Text(selectionOption.toString()) },
                     onClick = {
                         onOptionSelected(selectionOption)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+/** Dropdown that allows no selection: first option "—" sets null. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun <T> OptionalEnumDropdown(
+    label: String,
+    options: List<T>,
+    selectedOption: T?,
+    onOptionSelected: (T?) -> Unit,
+    optionDisplayName: (T) -> String,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val displayValue = selectedOption?.let { optionDisplayName(it) } ?: "—"
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded },
+        modifier = modifier
+    ) {
+        TextField(
+            modifier = Modifier.menuAnchor(),
+            readOnly = true,
+            value = displayValue,
+            onValueChange = {},
+            label = { Text(label) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            colors = ExposedDropdownMenuDefaults.textFieldColors(),
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            DropdownMenuItem(
+                text = { Text("—") },
+                onClick = {
+                    onOptionSelected(null)
+                    expanded = false
+                }
+            )
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(optionDisplayName(option)) },
+                    onClick = {
+                        onOptionSelected(option)
                         expanded = false
                     }
                 )
