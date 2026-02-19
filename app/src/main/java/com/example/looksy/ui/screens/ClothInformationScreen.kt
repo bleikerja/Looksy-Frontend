@@ -1,12 +1,14 @@
 package com.example.looksy.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,23 +19,32 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.LocalLaundryService
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
 import com.example.looksy.ui.components.LooksyButton
 import com.example.looksy.R
@@ -98,7 +109,7 @@ fun ClothInformationScreen(
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(10.dp),
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(Color(249, 246, 242))
             .verticalScroll(rememberScrollState())
@@ -131,7 +142,7 @@ fun ClothInformationScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.padding(bottom = 20.dp)
         ) {
-            Information("Waschhinweise", clothesData.washingNotes[0].displayName)
+            WaschingInformation("Waschhinweise", clothesData.washingNotes)
             Information("Typ", clothesData.type.displayName)
             Information("Material", clothesData.material.displayName)
             Information("Größe", clothesData.size.displayName)
@@ -231,7 +242,12 @@ fun SimilarClothCard(
 
 
 @Composable
-fun Information(name: String, value: String, modifier: Modifier = Modifier) {
+fun Information(
+    name: String,
+    value: String,
+    modifier: Modifier = Modifier,
+    valueFontSize: TextUnit = 25.sp
+) {
     Column(
         modifier = modifier
             .shadow(10.dp, RoundedCornerShape(20))
@@ -241,7 +257,12 @@ fun Information(name: String, value: String, modifier: Modifier = Modifier) {
     )
     {
         Text(name, fontSize = 10.sp, color = Color.DarkGray)
-        Text(value, fontSize = 25.sp)
+        Text(
+            text = value,
+            fontSize = valueFontSize,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 
@@ -255,6 +276,82 @@ fun ClothImage(image: Any?, modifier: Modifier) {
         contentDescription = "Detailansicht des Kleidungsstücks",
         error = painterResource(id = R.drawable.clothicon)
     )
+}
+
+@Composable
+fun WaschingInformation(name: String, washingNotes: List<WashingNotes>?) {
+    var showDialog by remember { mutableStateOf(false) }
+    val safeNotes = washingNotes?.filterNotNull() ?: emptyList()
+    
+    if (safeNotes.isNotEmpty()) {
+        val hasMoreThanOne = safeNotes.size > 1
+        val displayText = if (hasMoreThanOne) {
+            "${safeNotes[0].displayName} ..."
+        } else {
+            safeNotes[0].displayName
+        }
+
+        Information(
+            name = name,
+            value = displayText,
+            // Verkleinerte Schriftgröße bei mehreren Hinweisen, damit "..." sichtbar bleibt
+            valueFontSize = if (hasMoreThanOne) 18.sp else 22.sp,
+            modifier = Modifier.clickable { showDialog = true }
+        )
+
+        if (showDialog) {
+            Dialog(onDismissRequest = { showDialog = false }) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    shape = RoundedCornerShape(16.dp),
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = name,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            IconButton(onClick = { showDialog = false }) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Schließen"
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        // Scrollbare Liste für die Waschhinweise
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .verticalScroll(rememberScrollState()),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            safeNotes.forEach { note ->
+                                Text(
+                                    text = note.displayName,
+                                    fontSize = 18.sp,
+                                    modifier = Modifier.padding(vertical = 8.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 @Preview(showBackground = true)

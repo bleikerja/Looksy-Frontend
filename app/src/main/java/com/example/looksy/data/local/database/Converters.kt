@@ -59,7 +59,8 @@ class Converters {
     fun toWashingNotesList(value: String): List<WashingNotes> {
         return try {
             val listType = object : TypeToken<List<WashingNotes>>() {}.type
-            Gson().fromJson(value, listType) ?: emptyList()
+            val list: List<WashingNotes?>? = Gson().fromJson(value, listType)
+            list?.filterNotNull() ?: emptyList()
         } catch (e: Exception) {
             try {
                 listOf(WashingNotes.valueOf(value))
