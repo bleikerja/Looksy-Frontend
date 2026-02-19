@@ -97,14 +97,97 @@ class AddNewClothesScreenTest {
 
         // Fill in WashingNotes
         composeTestRule.onNodeWithText("Waschhinweise").performScrollTo().performClick()
-        composeTestRule.onNodeWithText(" Trockner", useUnmergedTree = true).performClick()
-        composeTestRule.onNodeWithText(" Waschen 40°C", substring = true, useUnmergedTree = true).performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText(" Waschen 40°C", substring = true).performScrollTo()
+            .performClick()
+        composeTestRule.waitForIdle()
+        // 2. MANUELLER SCROLL: Um tiefer liegende Elemente wie " Kein Trockner" sicher zu erreichen,
+        // scrollen wir den Container im Popup manuell per Swipe nach oben.
+        composeTestRule.onNode(hasScrollAction() and hasAnyAncestor(isPopup()))
+            .performTouchInput {
+                swipeUp(durationMillis = 1000)
+            }
+        composeTestRule.waitForIdle()
+
+        // 3. Ziel-Element auswählen. Exakter Text verhindert Verwechslungen.
+        composeTestRule.onNode(hasText(" Bleichen") and hasAnyAncestor(isPopup()))
+            .performScrollTo() // Falls der Swipe noch nicht ganz gereicht hat
+            .performClick()
+        composeTestRule.waitForIdle()
+
+        // Dropdown schließen, damit der Speichern-Button nicht überlagert wird
+        composeTestRule.onNodeWithText("Waschhinweise").performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.waitForIdle()
         // Close dropdown if necessary or just click outside, but MultiSelectDropdown might stay open
-        // Try to click the header to close or just proceed if the button is visible
-        
         // Check if "Speichern" button is enabled
         composeTestRule
             .onNodeWithText("Speichern")
             .assertIsEnabled()
+    }
+
+    @Test
+    fun washingNotes_conflictsPreventSelection() {
+        composeTestRule.setContent {
+            AddNewClothesScreen(
+                imageUriString = null,
+                viewModel = viewModel,
+                onSave = {},
+                onNavigateBack = {}
+            )
+        }
+
+        // Open WashingNotes dropdown
+        composeTestRule.onNodeWithText("Waschhinweise").performScrollTo().performClick()
+        composeTestRule.waitForIdle()
+        // 1. Test Handwäsche vs Temperature washing
+        // Select Handwäsche - use leading space and substring to be robust
+        composeTestRule.onNodeWithText(" Handwäsche", substring = true).performScrollTo()
+            .performClick()
+        composeTestRule.waitForIdle()
+        // Check if "Waschen 30°C" is disabled
+        composeTestRule.onNodeWithText(" Waschen 30°C", substring = true).performScrollTo()
+            .assertIsNotEnabled()
+        // 2. MANUELLER SCROLL: Um tiefer liegende Elemente wie " Kein Trockner" sicher zu erreichen,
+        // scrollen wir den Container im Popup manuell per Swipe nach oben.
+        composeTestRule.onNode(hasScrollAction() and hasAnyAncestor(isPopup()))
+            .performTouchInput {
+                swipeUp(durationMillis = 1000)
+            }
+        composeTestRule.waitForIdle()
+
+        // 3. Ziel-Element auswählen. Exakter Text verhindert Verwechslungen.
+        composeTestRule.onNode(hasText(" Bleichen") and hasAnyAncestor(isPopup()))
+            .performScrollTo() // Falls der Swipe noch nicht ganz gereicht hat
+            .performClick()
+        composeTestRule.waitForIdle()
+
+        // Check if "Kein Trockner" is disabled
+        composeTestRule.onNodeWithText(" Nicht Bleichen", substring = true).performScrollTo()
+            .assertIsNotEnabled()
+    }
+
+    @Test
+    fun washingNotes_noneConflictsWithEverything() {
+        composeTestRule.setContent {
+            AddNewClothesScreen(
+                imageUriString = null,
+                viewModel = viewModel,
+                onSave = {},
+                onNavigateBack = {}
+            )
+        }
+
+        // Open WashingNotes dropdown
+        composeTestRule.onNodeWithText("Waschhinweise").performScrollTo().performClick()
+
+        // Select "-" (None)
+        // Since it's exactly "-", we use substring=false or careful matching
+        composeTestRule.onNodeWithText(" -", useUnmergedTree = true).performClick()
+
+        // Check if other options are disabled
+        composeTestRule.onNodeWithText("Handwäsche", substring = true).assertIsNotEnabled()
+        composeTestRule.onNodeWithText(" Trockner").assertIsNotEnabled()
     }
 }
