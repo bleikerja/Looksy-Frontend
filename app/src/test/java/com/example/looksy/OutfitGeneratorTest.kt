@@ -1,6 +1,7 @@
 package com.example.looksy
 
 import com.example.looksy.data.model.Clothes
+import com.example.looksy.data.model.ClothesColor
 import com.example.looksy.data.model.Material
 import com.example.looksy.data.model.Outfit
 import com.example.looksy.data.model.Season
@@ -23,13 +24,15 @@ class OutfitGeneratorTest {
         season: Season = Season.Summer,
         type: Type = Type.Tops,
         material: Material = Material.Cotton,
-        clean: Boolean = true
+        clean: Boolean = true,
+        color: ClothesColor? = null
     ): Clothes = Clothes(
         id = id,
         size = size,
         seasonUsage = season,
         type = type,
         material = material,
+        color = color,
         clean = clean,
         washingNotes = listOf(WashingNotes.Temperature30),
         imagePath = "",
@@ -268,6 +271,29 @@ class OutfitGeneratorTest {
             "Zufällige Outfits ($noSavedOutfitCount) sollten insgesamt häufiger als gespeicherte(${favOutfitCount + mehOutfitCount}) vorkommen",
             (favOutfitCount + mehOutfitCount) < (noSavedOutfitCount)
         )
+    }
+
+    @Test
+    fun generatedOutfitsAreAlwaysColorCompatible() {
+        val redTop = createClothes(id = 10, type = Type.Tops, color = ClothesColor.Red)
+        val neutralTop = createClothes(id = 14, type = Type.Tops, color = ClothesColor.White)
+        val bluePants = createClothes(id = 11, type = Type.Pants, color = ClothesColor.Blue)
+        val yellowJacket = createClothes(id = 12, type = Type.Jacket, color = ClothesColor.Yellow)
+        val neutralJacket = createClothes(id = 13, type = Type.Jacket, color = ClothesColor.Black)
+        val closet = listOf(redTop, neutralTop, bluePants, yellowJacket, neutralJacket)
+
+        repeat(400) {
+            val outfit = generateRandomOutfit(closet, emptyList())
+            val score = OutfitCompatibilityCalculator.calculateCompatibilityScore(outfit)
+            assertTrue(
+                "Every generated outfit must have score > 0 (attempt ${it + 1}), got score=$score",
+                score > 0
+            )
+            assertTrue(
+                "Every generated outfit must be color compatible (attempt ${it + 1})",
+                OutfitCompatibilityCalculator.isOutfitColorCompatible(outfit)
+            )
+        }
     }
 
     @Test

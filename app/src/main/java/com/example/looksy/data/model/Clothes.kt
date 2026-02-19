@@ -12,6 +12,7 @@ data class Clothes(
     val seasonUsage: Season,
     val type: Type,
     val material: Material,
+    val color: ClothesColor? = null,
     val wornSince: Long? = null,
     val lastWorn: Long? = null,
     val daysWorn: Int = 0,

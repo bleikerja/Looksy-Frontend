@@ -1,6 +1,7 @@
 package com.example.looksy.data.local.database
 
 import androidx.room.TypeConverter
+import com.example.looksy.data.model.ClothesColor
 import com.example.looksy.data.model.Material
 import com.example.looksy.data.model.Season
 import com.example.looksy.data.model.Size
@@ -82,5 +83,15 @@ class Converters {
         } catch (e: Exception) {
             WashingNotes.None
         }
+    }
+
+    @TypeConverter
+    fun fromClothesColor(color: ClothesColor?): String? {
+        return color?.name
+    }
+
+    @TypeConverter
+    fun toClothesColor(colorString: String?): ClothesColor? {
+        return colorString?.let { ClothesColor.valueOf(it) }
     }
 }

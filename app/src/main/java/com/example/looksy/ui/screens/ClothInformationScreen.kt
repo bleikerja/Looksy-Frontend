@@ -145,6 +145,7 @@ fun ClothInformationScreen(
             WaschingInformation("Waschhinweise", clothesData.washingNotes)
             Information("Typ", clothesData.type.displayName)
             Information("Material", clothesData.material.displayName)
+            Information("Farbe", clothesData.color?.displayName ?: "—")
             Information("Größe", clothesData.size.displayName)
             Information("Saison", clothesData.seasonUsage.displayName)
             Information("Status",
