@@ -32,7 +32,7 @@ class OutfitCompatibilityCalculatorTest {
             material = material,
             color = color,
             clean = clean,
-            washingNotes = WashingNotes.Temperature30,
+            washingNotes = listOf(WashingNotes.Temperature30),
             imagePath = "",
             isSynced = false
         )

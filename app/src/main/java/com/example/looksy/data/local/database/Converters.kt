@@ -7,6 +7,8 @@ import com.example.looksy.data.model.Season
 import com.example.looksy.data.model.Size
 import com.example.looksy.data.model.Type
 import com.example.looksy.data.model.WashingNotes
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 
 class Converters {
     @TypeConverter
@@ -50,13 +52,37 @@ class Converters {
     }
 
     @TypeConverter
+    fun fromWashingNotesList(value: List<WashingNotes>): String {
+        return Gson().toJson(value)
+    }
+
+    @TypeConverter
+    fun toWashingNotesList(value: String): List<WashingNotes> {
+        return try {
+            val listType = object : TypeToken<List<WashingNotes>>() {}.type
+            val list: List<WashingNotes?>? = Gson().fromJson(value, listType)
+            list?.filterNotNull() ?: emptyList()
+        } catch (e: Exception) {
+            try {
+                listOf(WashingNotes.valueOf(value))
+            } catch (e2: Exception) {
+                emptyList()
+            }
+        }
+    }
+
+    @TypeConverter
     fun fromWashingNotes(washingNotes: WashingNotes): String {
         return washingNotes.name
     }
 
     @TypeConverter
     fun toWashingNotes(washingNotesString: String): WashingNotes {
-        return WashingNotes.valueOf(washingNotesString)
+        return try {
+            WashingNotes.valueOf(washingNotesString)
+        } catch (e: Exception) {
+            WashingNotes.None
+        }
     }
 
     @TypeConverter

@@ -38,7 +38,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.net.toUri
 import coil.compose.AsyncImage
 import com.example.looksy.R
@@ -52,6 +51,7 @@ import com.example.looksy.data.model.Size
 import com.example.looksy.data.model.Type
 import com.example.looksy.data.model.WashingNotes
 import com.example.looksy.ui.components.ConfirmationDialog
+import com.example.looksy.ui.components.MultiSelectDropdown
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -79,12 +79,13 @@ fun AddNewClothesScreen(
     var type by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.type) }
     var material by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.material) }
     var color by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.color) }
-    var washingNotes by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.washingNotes) }
+    var washingNotes by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.washingNotes ?: emptyList()) }
     var clean by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.clean ?: true) }
 
     val isFormValid =
-                size != null && season != null && type != null && material != null && washingNotes != null
+                size != null && season != null && type != null && material != null && washingNotes.isNotEmpty()
     var edited by remember { mutableStateOf(false) }
+
     val imageToShowUri = remember(clothesToEdit, imageUriString) {
         when {
             // Neu-Modus mit einer neuen URI von der Kamera
@@ -164,7 +165,7 @@ fun AddNewClothesScreen(
                         material = material!!,
                         color = color,
                         clean = clean, // Behalte den alten Status oder setze auf sauber
-                        washingNotes = washingNotes!!,
+                        washingNotes = washingNotes,
                         // Der imagePath wird erst in Routes.kt final gesetzt!
                         imagePath = clothesToEdit?.imagePath ?: ""
                     )
@@ -199,7 +200,14 @@ fun AddNewClothesScreen(
                 color = color,
                 onColorChange = { color = it; edited = true },
                 washingNotes = washingNotes,
-                onWashingNotesChange = { washingNotes = it; edited = true },
+                onWashingNotesChange = { note ->
+                    washingNotes = if (washingNotes.contains(note)) {
+                        washingNotes - note
+                    } else {
+                        washingNotes + note
+                    }
+                    edited = true
+                },
                 clean = clean,
                 onCleanChange = { clean = it; edited = true },
                 edit = (clothesIdToEdit != null)
@@ -225,7 +233,7 @@ private fun AddNewClothesForm(
     onMaterialChange: (Material) -> Unit,
     color: ClothesColor?,
     onColorChange: (ClothesColor?) -> Unit,
-    washingNotes: WashingNotes?,
+    washingNotes: List<WashingNotes>,
     onWashingNotesChange: (WashingNotes) -> Unit,
     clean: Boolean,
     onCleanChange: (Boolean) -> Unit,
@@ -322,13 +330,14 @@ private fun AddNewClothesForm(
             )
         }
         item {
-            EnumDropdown(
-                "Waschhinweise",
-                WashingNotes.entries,
-                washingNotes,
-                onWashingNotesChange
+            MultiSelectDropdown(
+                label = "Waschhinweise",
+                options = WashingNotes.entries,
+                selectedOptions = washingNotes,
+                onOptionSelected = { note ->
+                    onWashingNotesChange(note)
+                },
             )
-
         }
         if (edit){
             item {
@@ -462,26 +471,4 @@ fun <T> OptionalEnumDropdown(
             }
         }
     }
-}
-
-
-@SuppressLint("ViewModelConstructorInComposable")
-@Preview(showBackground = true)
-@Composable
-fun PreviewAddNewClothesScreen() {
-    /*
-    AddNewClothesScreen(
-        imageUriString = "", // Leere URI für die Vorschau
-        onSave = { newItem, imageUri ->
-            // In der Vorschau passiert hier nichts.
-            println("Preview Save: $newItem, Uri: $imageUri")
-        },
-        onNavigateBack = {},
-        viewModel = ClothesViewModel(
-            repository =
-        ),
-        clothesIdToEdit = null
-    )
-
-     */
 }

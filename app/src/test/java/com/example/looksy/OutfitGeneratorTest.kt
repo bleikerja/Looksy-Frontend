@@ -34,7 +34,7 @@ class OutfitGeneratorTest {
         material = material,
         color = color,
         clean = clean,
-        washingNotes = WashingNotes.Temperature30,
+        washingNotes = listOf(WashingNotes.Temperature30),
         imagePath = "",
         isSynced = false
     )
@@ -45,7 +45,7 @@ class OutfitGeneratorTest {
         size = Size._M,
         seasonUsage = Season.inBetween,
         material = Material.Cotton,
-        washingNotes = WashingNotes.Temperature30,
+        washingNotes = listOf(WashingNotes.Temperature30),
         imagePath = "android.resource://com.example.looksy/${R.drawable.shirt_category}",
         isSynced = false,
         wornClothes = 5
@@ -58,7 +58,7 @@ class OutfitGeneratorTest {
         size = Size._M,
         seasonUsage = Season.inBetween,
         material = Material.Cotton,
-        washingNotes = WashingNotes.Temperature30,
+        washingNotes = listOf(WashingNotes.Temperature30),
         imagePath = "android.resource://com.example.looksy/${R.drawable.shirt_category}",
         isSynced = false,
         wornClothes = 1
@@ -70,7 +70,7 @@ class OutfitGeneratorTest {
         size = Size._M,
         seasonUsage = Season.inBetween,
         material = Material.Cotton,
-        washingNotes = WashingNotes.Temperature30,
+        washingNotes = listOf(WashingNotes.Temperature30),
         imagePath = "path/to/shirt",
         isSynced = false,
         wornClothes = 1
@@ -82,7 +82,7 @@ class OutfitGeneratorTest {
         size = Size._M,
         seasonUsage = Season.inBetween,
         material = Material.Cotton,
-        washingNotes = WashingNotes.Temperature30,
+        washingNotes = listOf(WashingNotes.Temperature30),
         imagePath = "path/to/shirt",
         isSynced = false,
         wornClothes = 1
@@ -94,7 +94,7 @@ class OutfitGeneratorTest {
         size = Size._M,
         seasonUsage = Season.inBetween,
         material = Material.Cotton,
-        washingNotes = WashingNotes.Temperature30,
+        washingNotes = listOf(WashingNotes.Temperature30),
         imagePath = "android.resource://com.example.looksy/${R.drawable.jeans}",
         isSynced = false,
         wornClothes = 2
@@ -106,7 +106,7 @@ class OutfitGeneratorTest {
         size = Size._M,
         seasonUsage = Season.inBetween,
         material = Material.Cotton,
-        washingNotes = WashingNotes.Temperature30,
+        washingNotes = listOf(WashingNotes.Temperature30),
         imagePath = "path/to/jeans",
         isSynced = false,
         wornClothes = 2
@@ -118,7 +118,7 @@ class OutfitGeneratorTest {
         size = Size._M,
         seasonUsage = Season.inBetween,
         material = Material.Cotton,
-        washingNotes = WashingNotes.Temperature30,
+        washingNotes = listOf(WashingNotes.Temperature30),
         imagePath = "path/to/jeans",
         isSynced = false,
         wornClothes = 2
@@ -131,7 +131,7 @@ class OutfitGeneratorTest {
         size = Size._M,
         seasonUsage = Season.inBetween,
         material = Material.Cotton,
-        washingNotes = WashingNotes.Temperature30,
+        washingNotes = listOf(WashingNotes.Temperature30),
         imagePath = "path/to/skirt",
         isSynced = false,
         wornClothes = 3
@@ -305,7 +305,7 @@ class OutfitGeneratorTest {
             size = Size._M,
             seasonUsage = Season.Summer,
             material = Material.Cotton,
-            washingNotes = WashingNotes.Temperature30
+            washingNotes = listOf(WashingNotes.Temperature30)
         )
         val dirtyPants = Clothes(
             id = 102,
@@ -314,7 +314,7 @@ class OutfitGeneratorTest {
             size = Size._M,
             seasonUsage = Season.Summer,
             material = Material.Cotton,
-            washingNotes = WashingNotes.Temperature30
+            washingNotes = listOf(WashingNotes.Temperature30)
         )
 
         val outfitWithDirtyPart =
