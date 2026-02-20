@@ -3,7 +3,7 @@ package com.example.looksy.data.model
 import com.example.looksy.R
 
 enum class WashingNotes(val displayName: String, val iconRes: Int? = null) {
-    None("-"),
+    None("—"),
     Hand("Handwäsche", R.drawable.hand),
     DontWash("Nicht Waschen", R.drawable.no_w),
     Temperature30("Waschen 30°C", R.drawable.temp30),
