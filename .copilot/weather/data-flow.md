@@ -1,54 +1,77 @@
 # Weather Feature - Data Flow
 
-This diagram shows the simplified data flow from UI to API and back.
+This diagram shows the data flow from UI through the unified refresh entry point to the API and back. Includes the geocoding (manual city) fallback path.
 
 ```mermaid
-flowchart LR
-    A[UI/Composable] -->|1. Get location| B[LocationProvider]
-    B -->|2. Return Location| A
-    A -->|3. fetchWeather lat, lon| C[WeatherViewModel]
-    C -->|4. getWeather lat, lon| D[WeatherRepository]
-    D -->|5. API call| E[WeatherApiService]
-    E -->|6. WeatherResponse| D
-    D -->|7. Convert to Weather| D
-    D -->|8. Flow Result Weather| C
-    C -->|9. Update weatherState| C
-    A -->|10. collectAsState| C
-    A -->|11. Render UI| A
+flowchart TD
+    subgraph Triggers["Refresh Triggers"]
+        T1["LaunchedEffect(Unit)"] --> R
+        T2["ON_RESUME lifecycle event"] --> R
+        T3["PullToRefreshBox swipe"] --> R
+        T4["Retry button"] --> R
+    end
 
-    style A fill:#e1f5ff
-    style C fill:#fff4e1
-    style D fill:#f0e1ff
-    style E fill:#ffe1e1
+    R["refreshWeatherState()"] --> P{Location\npermission?}
+
+    P -->|granted + location on| GPS[LocationProvider\ngetCurrentLocation]
+    P -->|granted + location off| MANUAL[Show manual\ncity input]
+    P -->|not asked| PERM[PermissionLauncher\nAndroid OS dialog]
+    P -->|denied| MANUAL
+
+    PERM -->|granted| R
+    PERM -->|denied| MANUAL
+
+    GPS -->|Result.success| FETCH[WeatherViewModel\nfetchWeather lat,lon]
+    MANUAL -->|city entered| GEO[GeocodingViewModel\nsearchCity]
+    GEO --> GREPO[GeocodingRepository]
+    GREPO --> GAPI[GeocodingApiService\n/geo/1.0/direct]
+    GAPI -->|coordinates| FETCH
+
+    FETCH --> WREPO[WeatherRepository]
+    WREPO --> WAPI[WeatherApiService\n/data/2.5/weather]
+    WAPI -->|WeatherResponse DTO| WREPO
+    WREPO -->|map to Weather domain| STATE
+
+    STATE[WeatherViewModel\n_weatherState] -->|Loading / Success / Error| UI[WeatherScreen\nor WeatherIconRow]
+
+    style R fill:#fff4e1,stroke:#e6c700
+    style STATE fill:#e1f5ff,stroke:#0078d4
+    style WAPI fill:#ffe1e1,stroke:#d40000
+    style GAPI fill:#ffe1e1,stroke:#d40000
+    style UI fill:#e1ffe1,stroke:#00aa00
 ```
 
 ## Step-by-Step Flow
 
-1. **UI requests location** from LocationProvider
-2. **LocationProvider returns** latitude and longitude
-3. **UI calls fetchWeather()** on WeatherViewModel with coordinates
-4. **ViewModel requests data** from WeatherRepository
-5. **Repository makes API call** via WeatherApiService (Retrofit)
-6. **API returns WeatherResponse** (DTO from OpenWeatherMap)
-7. **Repository converts** WeatherResponse → Weather (domain model)
-8. **Repository emits** Result<Weather> via Flow
-9. **ViewModel updates** \_weatherState (Loading → Success/Error)
-10. **UI collects state** via collectAsState()
-11. **UI renders** weather data to screen
+1. **Any trigger** (mount / resume / swipe / retry) calls `refreshWeatherState()`
+2. **Permission + location check** determines which path:
+   - GPS path → `getCurrentLocation()` → `fetchWeather(lat, lon)`
+   - Manual city → user types city → `GeocodingRepository` resolves coordinates → `fetchWeather(lat, lon)`
+   - No permission → OS dialog → on grant loops back to step 1
+3. **WeatherRepository** calls `WeatherApiService`, maps DTO → domain `Weather`
+4. **WeatherViewModel** updates `_weatherState` (Loading → Success/Error)
+5. **UI** collects `weatherState` via `collectAsState()` and renders accordingly
 
 ## Layer Responsibilities
 
-| Layer           | Component         | Responsibility                                |
-| --------------- | ----------------- | --------------------------------------------- |
-| **UI**          | Composable        | Request location, trigger fetch, display data |
-| **ViewModel**   | WeatherViewModel  | Manage UI state, coordinate operations        |
-| **Repository**  | WeatherRepository | Transform DTOs, handle errors, provide Flow   |
-| **Data Source** | WeatherApiService | HTTP communication with API                   |
-| **Utility**     | LocationProvider  | GPS/location access                           |
+| Layer           | Component                             | Responsibility                                          |
+| --------------- | ------------------------------------- | ------------------------------------------------------- |
+| **UI**          | `WeatherScreen`                       | Permission flow, refresh coordination, PullToRefreshBox |
+| **UI**          | `FullOutfitScreen` → `WeatherIconRow` | Compact weather summary, always visible                 |
+| **ViewModel**   | `WeatherViewModel`                    | `weatherState: StateFlow<WeatherUiState>`               |
+| **ViewModel**   | `GeocodingViewModel`                  | `geocodingState: StateFlow<GeocodingUiState>`           |
+| **Repository**  | `WeatherRepository`                   | DTO→domain mapping, error wrapping                      |
+| **Repository**  | `GeocodingRepository`                 | City name → `Location(lat, lon)`                        |
+| **Data Source** | `WeatherApiService`                   | HTTP `/data/2.5/weather`                                |
+| **Data Source** | `GeocodingApiService`                 | HTTP `/geo/1.0/direct`                                  |
+| **Utility**     | `LocationProvider`                    | GPS / `FusedLocationProviderClient`                     |
 
 ## Data Types at Each Layer
 
-- **UI ↔ ViewModel**: `WeatherUiState` (Loading/Success/Error)
-- **ViewModel ↔ Repository**: `Flow<Result<Weather>>`
-- **Repository ↔ API**: `WeatherResponse` (DTO)
-- **Repository internal**: `Weather` (domain model)
+| Boundary                        | Type                                                  |
+| ------------------------------- | ----------------------------------------------------- |
+| UI ↔ WeatherViewModel           | `WeatherUiState` (Loading / Success / Error)          |
+| UI ↔ GeocodingViewModel         | `GeocodingUiState` (Idle / Loading / Success / Error) |
+| ViewModel ↔ WeatherRepository   | `Result<Weather>`                                     |
+| ViewModel ↔ GeocodingRepository | `Result<Location>`                                    |
+| Repository ↔ API                | `WeatherResponse` / `List<GeocodingResponse>` (DTOs)  |

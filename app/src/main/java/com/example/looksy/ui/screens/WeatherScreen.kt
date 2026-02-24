@@ -25,6 +25,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.looksy.data.location.LocationInputMode
 import com.example.looksy.data.location.LocationProvider
 import com.example.looksy.data.location.PermissionState
@@ -34,6 +37,7 @@ import com.example.looksy.ui.viewmodel.GeocodingUiState
 import com.example.looksy.ui.viewmodel.GeocodingViewModel
 import com.example.looksy.ui.viewmodel.WeatherUiState
 import com.example.looksy.ui.viewmodel.WeatherViewModel
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -48,12 +52,12 @@ fun WeatherScreen(
     val weatherState by weatherViewModel.weatherState.collectAsState()
     val geocodingState by geocodingViewModel.geocodingState.collectAsState()
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     val scope = rememberCoroutineScope()
 
     // State management
     var permissionState by remember { mutableStateOf(PermissionState.NOT_ASKED) }
     var locationInputMode by remember { mutableStateOf(LocationInputMode.GPS) }
-    var showPermissionBottomSheet by remember { mutableStateOf(false) }
     var showCityInput by remember { mutableStateOf(false) }
     var cityName by remember { mutableStateOf("") }
     var isLocationEnabled by remember { mutableStateOf(true) }
@@ -61,48 +65,59 @@ fun WeatherScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var isRefreshing by remember { mutableStateOf(false) }
 
+    fun refreshWeatherState() {
+        if (isRefreshing) return
+
+        scope.launch {
+            isRefreshing = true
+
+            val hasPermission = locationProvider.hasLocationPermission()
+            isLocationEnabled = locationProvider.isLocationEnabled()
+
+            if (hasPermission) {
+                permissionState = PermissionState.GRANTED_WHILE_IN_USE
+
+                if (isLocationEnabled) {
+                    locationInputMode = LocationInputMode.GPS
+                    showCityInput = false
+
+                    locationProvider.getCurrentLocation().onSuccess { location ->
+                        weatherViewModel.fetchWeather(location.latitude, location.longitude)
+                    }.onFailure {
+                        locationInputMode = LocationInputMode.MANUAL_CITY
+                        showCityInput = true
+                    }
+                } else {
+                    locationInputMode = LocationInputMode.MANUAL_CITY
+                    showCityInput = false
+                }
+            } else {
+                if (permissionState != PermissionState.DENIED) {
+                    permissionState = PermissionState.NOT_ASKED
+                }
+                locationInputMode = LocationInputMode.MANUAL_CITY
+                showCityInput = permissionState == PermissionState.DENIED
+            }
+
+            isRefreshing = false
+        }
+    }
+
     // Location permission launcher
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         if (permissions.values.any { it }) {
             permissionState = PermissionState.GRANTED_WHILE_IN_USE
-            // Check if location is enabled
-            isLocationEnabled = locationProvider.isLocationEnabled()
-            if (isLocationEnabled) {
-                scope.launch {
-                    locationProvider.getCurrentLocation().onSuccess { location ->
-                        weatherViewModel.fetchWeather(location.latitude, location.longitude)
-                        locationInputMode = LocationInputMode.GPS
-                    }.onFailure {
-                        // If location fails, show city input
-                        locationInputMode = LocationInputMode.MANUAL_CITY
-                        showCityInput = true
-                    }
-                }
-            } else {
+            refreshWeatherState()
+
+            if (!locationProvider.isLocationEnabled()) {
                 showLocationSettingsDialog = true
             }
         } else {
             permissionState = PermissionState.DENIED
             locationInputMode = LocationInputMode.MANUAL_CITY
             showCityInput = true
-        }
-    }
-
-    // Function to refresh weather data
-    val refreshWeatherData = {
-        if (!isRefreshing) {
-            isRefreshing = true
-            scope.launch {
-                if (locationProvider.hasLocationPermission() && locationProvider.isLocationEnabled()) {
-                    locationProvider.getCurrentLocation().onSuccess { location ->
-                        weatherViewModel.fetchWeather(location.latitude, location.longitude)
-                    }
-                }
-                kotlinx.coroutines.delay(500)
-                isRefreshing = false
-            }
         }
     }
 
@@ -130,58 +145,19 @@ fun WeatherScreen(
 
     // Check permissions and location services on launch
     LaunchedEffect(Unit) {
-        if (locationProvider.hasLocationPermission()) {
-            permissionState = PermissionState.GRANTED_WHILE_IN_USE
-            isLocationEnabled = locationProvider.isLocationEnabled()
-            
-            if (isLocationEnabled) {
-                locationProvider.getCurrentLocation().onSuccess { location ->
-                    weatherViewModel.fetchWeather(location.latitude, location.longitude)
-                    locationInputMode = LocationInputMode.GPS
-                }.onFailure {
-                    locationInputMode = LocationInputMode.MANUAL_CITY
-                    showCityInput = true
-                }
-            } else {
-                // Permission granted but location is off
-                locationInputMode = LocationInputMode.MANUAL_CITY
-                showCityInput = false // Don't auto-show, will show indicator
-            }
-        } else {
-            permissionState = PermissionState.NOT_ASKED
-        }
+        refreshWeatherState()
     }
 
-    // Permission BottomSheet with 3 options
-    if (showPermissionBottomSheet) {
-        LocationPermissionBottomSheet(
-            onDismiss = { 
-                showPermissionBottomSheet = false
-                permissionState = PermissionState.DENIED
-                locationInputMode = LocationInputMode.MANUAL_CITY
-                showCityInput = true
-            },
-            onConfirmOnce = {
-                showPermissionBottomSheet = false
-                permissionState = PermissionState.GRANTED_ONCE
-                locationPermissionLauncher.launch(
-                    arrayOf(
-                        Manifest.permission.ACCESS_COARSE_LOCATION,
-                        Manifest.permission.ACCESS_FINE_LOCATION
-                    )
-                )
-            },
-            onConfirmAlways = {
-                showPermissionBottomSheet = false
-                permissionState = PermissionState.GRANTED_WHILE_IN_USE
-                locationPermissionLauncher.launch(
-                    arrayOf(
-                        Manifest.permission.ACCESS_COARSE_LOCATION,
-                        Manifest.permission.ACCESS_FINE_LOCATION
-                    )
-                )
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                refreshWeatherState()
             }
-        )
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
 
     // Location Settings Dialog
@@ -238,117 +214,121 @@ fun WeatherScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
-        Column(
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = { refreshWeatherState() },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Show appropriate UI based on state
-            when {
-                // Permission not asked yet - show prompt to grant permission
-                permissionState == PermissionState.NOT_ASKED -> {
-                    PermissionNotAskedCard(
-                        onRequestPermission = { showPermissionBottomSheet = true }
-                    )
-                }
-                
-                // Permission granted but location is off
-                permissionState != PermissionState.NOT_ASKED && 
-                permissionState != PermissionState.DENIED && 
-                !isLocationEnabled && 
-                locationInputMode == LocationInputMode.MANUAL_CITY && 
-                !showCityInput -> {
-                    LocationDisabledCard(
-                        onEnableLocation = { 
-                            context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
-                        },
-                        onEnterCity = { showCityInput = true }
-                    )
-                }
-                
-                // Permission denied or user chose to enter city manually
-                (permissionState == PermissionState.DENIED || showCityInput) && 
-                locationInputMode == LocationInputMode.MANUAL_CITY -> {
-                    CityInputCard(
-                        cityName = cityName,
-                        onCityNameChange = { cityName = it },
-                        isLoading = geocodingState is GeocodingUiState.Loading,
-                        onSubmit = {
-                            if (cityName.isNotBlank()) {
-                                geocodingViewModel.getCityCoordinates(cityName)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Show appropriate UI based on state
+                when {
+                    // Permission not asked yet - show prompt to grant permission
+                    permissionState == PermissionState.NOT_ASKED -> {
+                        PermissionNotAskedCard(
+                            onRequestPermission = {
+                                locationPermissionLauncher.launch(
+                                    arrayOf(
+                                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                                        Manifest.permission.ACCESS_FINE_LOCATION
+                                    )
+                                )
                             }
-                        },
-                        onRequestPermission = if (permissionState == PermissionState.DENIED) {
-                            { showPermissionBottomSheet = true }
-                        } else null
-                    )
-                }
-                
-                // Normal weather display
-                else -> {
-                    when (weatherState) {
-                        is WeatherUiState.Loading -> {
-                            LoadingWeatherCard()
-                        }
+                        )
+                    }
 
-                        is WeatherUiState.Success -> {
-                            val weather = (weatherState as WeatherUiState.Success).weather
+                    // Permission granted but location is off
+                    permissionState != PermissionState.NOT_ASKED &&
+                    permissionState != PermissionState.DENIED &&
+                    !isLocationEnabled &&
+                    locationInputMode == LocationInputMode.MANUAL_CITY &&
+                    !showCityInput -> {
+                        LocationDisabledCard(
+                            onEnableLocation = {
+                                context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+                            },
+                            onEnterCity = { showCityInput = true }
+                        )
+                    }
 
-                            // Refresh button
-                            if (locationProvider.hasLocationPermission() && locationProvider.isLocationEnabled()) {
-                                IconButton(
-                                    onClick = { refreshWeatherData() },
-                                    enabled = !isRefreshing
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Refresh,
-                                        contentDescription = "Aktualisieren",
-                                        modifier = if (isRefreshing) Modifier.size(24.dp) else Modifier.size(24.dp)
+                    // Permission denied or user chose to enter city manually
+                    (permissionState == PermissionState.DENIED || showCityInput) &&
+                    locationInputMode == LocationInputMode.MANUAL_CITY -> {
+                        CityInputCard(
+                            cityName = cityName,
+                            onCityNameChange = { cityName = it },
+                            isLoading = geocodingState is GeocodingUiState.Loading,
+                            onSubmit = {
+                                if (cityName.isNotBlank()) {
+                                    geocodingViewModel.getCityCoordinates(cityName)
+                                }
+                            },
+                            onRequestPermission = if (permissionState == PermissionState.DENIED) {
+                                {
+                                    locationPermissionLauncher.launch(
+                                        arrayOf(
+                                            Manifest.permission.ACCESS_COARSE_LOCATION,
+                                            Manifest.permission.ACCESS_FINE_LOCATION
+                                        )
                                     )
                                 }
-                                if (isRefreshing) {
-                                    Text(
-                                        text = "Wird aktualisiert...",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                Spacer(modifier = Modifier.height(8.dp))
+                            } else null
+                        )
+                    }
+
+                    // Normal weather display
+                    else -> {
+                        when (weatherState) {
+                            is WeatherUiState.Loading -> {
+                                LoadingWeatherCard()
                             }
 
-                            // Main Weather Card
-                            WeatherCard(weather = weather)
+                            is WeatherUiState.Success -> {
+                                val weather = (weatherState as WeatherUiState.Success).weather
 
-                            Spacer(modifier = Modifier.height(16.dp))
+                                // Main Weather Card
+                                WeatherCard(weather = weather)
 
-                            // Outfit Recommendations
-                            OutfitRecommendationsCard(weather = weather)
-                        }
+                                Spacer(modifier = Modifier.height(16.dp))
 
-                        is WeatherUiState.Error -> {
-                            ErrorWeatherCard(
-                                message = (weatherState as WeatherUiState.Error).message,
-                                onRetry = {
-                                    if (permissionState == PermissionState.GRANTED_WHILE_IN_USE ||
-                                        permissionState == PermissionState.GRANTED_ONCE) {
-                                        isLocationEnabled = locationProvider.isLocationEnabled()
-                                        if (isLocationEnabled) {
-                                            refreshWeatherData()
+                                // Outfit Recommendations
+                                OutfitRecommendationsCard(weather = weather)
+                            }
+
+                            is WeatherUiState.Error -> {
+                                ErrorWeatherCard(
+                                    message = (weatherState as WeatherUiState.Error).message,
+                                    onRetry = {
+                                        if (permissionState == PermissionState.GRANTED_WHILE_IN_USE ||
+                                            permissionState == PermissionState.GRANTED_ONCE) {
+                                            isLocationEnabled = locationProvider.isLocationEnabled()
+                                            if (isLocationEnabled) {
+                                                refreshWeatherState()
+                                            } else {
+                                                showLocationSettingsDialog = true
+                                            }
                                         } else {
-                                            showLocationSettingsDialog = true
+                                            locationPermissionLauncher.launch(
+                                                arrayOf(
+                                                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                                                    Manifest.permission.ACCESS_FINE_LOCATION
+                                                )
+                                            )
                                         }
-                                    } else {
-                                        showPermissionBottomSheet = true
+                                    },
+                                    onEnterCity = {
+                                        locationInputMode = LocationInputMode.MANUAL_CITY
+                                        showCityInput = true
                                     }
-                                },
-                                onEnterCity = {
-                                    locationInputMode = LocationInputMode.MANUAL_CITY
-                                    showCityInput = true
-                                }
-                            )
+                                )
+                            }
                         }
                     }
                 }
@@ -586,84 +566,6 @@ private fun ErrorWeatherCard(
                     Text("Erneut versuchen")
                 }
             }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun LocationPermissionBottomSheet(
-    onDismiss: () -> Unit,
-    onConfirmOnce: () -> Unit,
-    onConfirmAlways: () -> Unit
-) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(
-                imageVector = Icons.Default.LocationOn,
-                contentDescription = null,
-                modifier = Modifier.size(48.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            Text(
-                text = "Standortzugriff erforderlich",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Text(
-                text = "Um das Wetter an deinem Standort anzuzeigen, benötigt Looksy Zugriff auf deinen Standort. Diese Information wird nur für die Wetter-API verwendet.",
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            // Button: Während der Nutzung der App
-            Button(
-                onClick = onConfirmAlways,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Während der Nutzung der App")
-            }
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            // Button: Nur dieses Mal
-            OutlinedButton(
-                onClick = onConfirmOnce,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Nur dieses Mal")
-            }
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            // Button: Ablehnen
-            TextButton(
-                onClick = onDismiss,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Ablehnen")
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }

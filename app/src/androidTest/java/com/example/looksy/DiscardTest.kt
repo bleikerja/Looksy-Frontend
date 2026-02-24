@@ -13,6 +13,7 @@ import com.example.looksy.ui.navigation.NavGraph
 import com.example.looksy.ui.navigation.Routes
 import com.example.looksy.ui.viewmodel.ClothesViewModel
 import com.example.looksy.ui.viewmodel.OutfitViewModel
+import com.example.looksy.ui.viewmodel.WeatherUiState
 import com.example.looksy.ui.viewmodel.WeatherViewModel
 import io.mockk.clearMocks
 import io.mockk.coVerify
@@ -73,6 +74,7 @@ class DiscardTest {
     fun setup() {
         every { clothesViewModel.lastDiscardedClothes } returns lastDiscardedState
         every { clothesViewModel.allClothes } returns clothesFlow
+        every { weatherViewModel.weatherState } returns MutableStateFlow(WeatherUiState.Loading)
         //every { clothesViewModel.lastDiscardedClothes } returns mutableStateOf(null)
 
         composeTestRule.setContent {

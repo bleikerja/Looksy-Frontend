@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Create
+import androidx.compose.material.icons.filled.DomainDisabled
 import androidx.compose.material.icons.filled.LocalLaundryService
 import androidx.compose.material.icons.filled.LocationOff
 import androidx.compose.material.icons.filled.LocationOn
@@ -127,16 +128,6 @@ fun FullOutfitScreen(
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
-
-                Header(
-                    onNavigateBack = {},
-                    onNavigateToRightIcon = { onWashingMachine() },
-                    clothesData = null,
-                    headerText = "Heutiges Outfit",
-                    rightIconContentDescription = "Zur Waschmaschine",
-                    rightIcon = Icons.Default.LocalLaundryService,
-                    isFirstHeader = true
-                )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -321,6 +312,16 @@ fun FullOutfitScreen(
         }
     } else {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            WeatherIconRow(
+                weatherState = weatherState,
+                permissionState = permissionState,
+                isLocationEnabled = isLocationEnabled,
+                onClick = onWeatherClick,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(start = 16.dp, top = 16.dp)
+            )
+
             IconButton(
                 onClick = onGenerateRandom,
                 modifier = Modifier
@@ -399,9 +400,11 @@ private fun WeatherIconRow(
             // Permission not asked yet - show crossed city icon
             permissionState == PermissionState.NOT_ASKED -> {
                 Spacer(modifier = Modifier.width(20.dp))
-                Text(
-                    text = "🏙️🚫",
-                    fontSize = 24.sp
+                Icon(
+                    imageVector = Icons.Default.DomainDisabled,
+                    contentDescription = "Standortzugriff erforderlich",
+                    modifier = Modifier.size(24.dp),
+                    tint = MaterialTheme.colorScheme.tertiary
                 )
             }
 
@@ -440,7 +443,9 @@ private fun WeatherIconRow(
                         // More compact loading state to fit in left space
                         Spacer(modifier = Modifier.width(20.dp))
                         CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
+                            modifier = Modifier
+                                .size(24.dp)
+                                .testTag("weather_loading"),
                             strokeWidth = 2.dp,
                             color = MaterialTheme.colorScheme.primary
                         )

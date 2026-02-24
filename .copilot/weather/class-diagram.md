@@ -1,13 +1,15 @@
 # Weather Feature - Class Diagram
 
-This diagram shows the structure and relationships between all weather-related classes in the Looksy app.
+This diagram shows the structure and relationships between all weather-related classes in the Looksy app, including the geocoding subsystem and permission/location state enums added during UX stabilization.
 
 ```mermaid
 classDiagram
     %% Application Layer - Dependency Injection
     class LooksyApplication {
         +weatherApiService: WeatherApiService
+        +geocodingApiService: GeocodingApiService
         +weatherRepository: WeatherRepository
+        +geocodingRepository: GeocodingRepository
         +locationProvider: LocationProvider
     }
 
@@ -15,6 +17,18 @@ classDiagram
     class WeatherApiService {
         <<interface>>
         +getWeatherByLocation(lat, lon, apiKey, units) WeatherResponse
+    }
+
+    class GeocodingApiService {
+        <<interface>>
+        +getCityCoordinates(cityName, limit, apiKey) List~GeocodingResponse~
+    }
+
+    class GeocodingResponse {
+        +name: String
+        +lat: Double
+        +lon: Double
+        +country: String
     }
 
     class WeatherResponse {
@@ -53,6 +67,7 @@ classDiagram
         -context: Context
         -fusedLocationClient: FusedLocationProviderClient
         +hasLocationPermission() Boolean
+        +isLocationEnabled() Boolean
         +getCurrentLocation() Result~Location~
     }
 
@@ -61,11 +76,31 @@ classDiagram
         +longitude: Double
     }
 
+    class LocationInputMode {
+        <<enumeration>>
+        GPS
+        MANUAL_CITY
+    }
+
+    class PermissionState {
+        <<enumeration>>
+        NOT_ASKED
+        GRANTED_WHILE_IN_USE
+        GRANTED_ONCE
+        DENIED
+    }
+
     %% Repository Layer
     class WeatherRepository {
         -apiService: WeatherApiService
         -apiKey: String
         +getWeather(lat, lon) Flow~Result~Weather~~
+    }
+
+    class GeocodingRepository {
+        -apiService: GeocodingApiService
+        -apiKey: String
+        +getCityCoordinates(cityName) Result~Location~
     }
 
     %% ViewModel Layer
@@ -79,6 +114,22 @@ classDiagram
     class WeatherViewModelFactory {
         -repository: WeatherRepository
         +create(modelClass) ViewModel
+    }
+
+    class GeocodingViewModel {
+        -repository: GeocodingRepository
+        -_geocodingState: MutableStateFlow~GeocodingUiState~
+        +geocodingState: StateFlow~GeocodingUiState~
+        +searchCity(cityName: String)
+    }
+
+    class GeocodingViewModelFactory {
+        -repository: GeocodingRepository
+        +create(modelClass) ViewModel
+    }
+
+    class GeocodingUiState {
+        <<sealed interface>>
     }
 
     %% UI State (Sealed Interface Pattern)
@@ -98,13 +149,27 @@ classDiagram
         +message: String
     }
 
+    %% UI Composables
+    class WeatherIconRow {
+        <<composable>>
+        +weatherState: WeatherUiState
+        +permissionState: PermissionState
+        +isLocationEnabled: Boolean
+        +onClick: () -> Unit
+    }
+
     %% Relationships - Composition and Dependencies
     LooksyApplication --> WeatherApiService : creates (lazy)
+    LooksyApplication --> GeocodingApiService : creates (lazy)
     LooksyApplication --> WeatherRepository : creates (lazy)
+    LooksyApplication --> GeocodingRepository : creates (lazy)
     LooksyApplication --> LocationProvider : creates (lazy)
 
     WeatherRepository --> WeatherApiService : uses
     WeatherRepository --> Weather : returns
+
+    GeocodingRepository --> GeocodingApiService : uses
+    GeocodingRepository --> Location : returns
 
     WeatherViewModel --> WeatherRepository : uses
     WeatherViewModel --> WeatherUiState : manages
@@ -112,7 +177,15 @@ classDiagram
     WeatherViewModelFactory --> WeatherRepository : requires
     WeatherViewModelFactory --> WeatherViewModel : creates
 
+    GeocodingViewModel --> GeocodingRepository : uses
+    GeocodingViewModel --> GeocodingUiState : manages
+
+    GeocodingViewModelFactory --> GeocodingRepository : requires
+    GeocodingViewModelFactory --> GeocodingViewModel : creates
+
     LocationProvider --> Location : returns
+    WeatherIconRow --> WeatherUiState : reads
+    WeatherIconRow --> PermissionState : reads
 
     %% Data structure relationships
     WeatherResponse *-- Main : contains
@@ -140,25 +213,37 @@ classDiagram
 
 ### Application Layer
 
-- **LooksyApplication**: Provides lazy-initialized dependencies for weather feature
+- **LooksyApplication**: Provides lazy-initialized dependencies for both weather and geocoding features
 
 ### Data Layer
 
-- **WeatherApiService**: Retrofit interface for OpenWeatherMap API
-- **WeatherResponse/Main/WeatherInfo**: DTOs (Data Transfer Objects) from API
+- **WeatherApiService**: Retrofit interface — `/data/2.5/weather`
+- **GeocodingApiService**: Retrofit interface — `/geo/1.0/direct` (city name → coordinates)
+- **WeatherResponse/Main/WeatherInfo**: DTOs from OpenWeatherMap
+- **GeocodingResponse**: DTO for geocoding results
 - **Weather**: Domain model used throughout the app
-- **LocationProvider**: Handles GPS location retrieval
+- **LocationProvider**: GPS access via `FusedLocationProviderClient`; also exposes `isLocationEnabled()`
 - **Location**: Simple latitude/longitude data class
+- **LocationInputMode**: Enum (`GPS` / `MANUAL_CITY`) — controls which input path is used
+- **PermissionState**: Enum (`NOT_ASKED` / `GRANTED_WHILE_IN_USE` / `GRANTED_ONCE` / `DENIED`) — tracked in WeatherScreen UI
 
 ### Repository Layer
 
-- **WeatherRepository**: Bridges API service and ViewModel, transforms DTOs to domain models
+- **WeatherRepository**: Bridges WeatherApiService and ViewModel, transforms DTOs to domain models
+- **GeocodingRepository**: Resolves city name to `Location(lat, lon)` via GeocodingApiService
 
 ### ViewModel Layer
 
-- **WeatherViewModel**: Manages UI state, coordinates data fetching
-- **WeatherViewModelFactory**: Creates ViewModel instances with dependencies
-- **WeatherUiState**: Sealed interface representing Loading/Success/Error states
+- **WeatherViewModel**: Manages `weatherState: StateFlow<WeatherUiState>`, calls `fetchWeather(lat, lon)`
+- **WeatherViewModelFactory**: Creates WeatherViewModel with dependencies
+- **GeocodingViewModel**: Manages `geocodingState: StateFlow<GeocodingUiState>`, calls `searchCity(name)`
+- **GeocodingViewModelFactory**: Creates GeocodingViewModel with dependencies
+- **WeatherUiState**: Sealed interface — `Loading / Success(weather) / Error(message)`
+- **GeocodingUiState**: Sealed interface — `Idle / Loading / Success(location) / Error(message)`
+
+### UI Layer
+
+- **WeatherIconRow**: Private composable in `FullOutfitScreen.kt` — compact weather summary always visible in home screen (both outfit and empty-closet state). Shows loading spinner, temperature + emoji on success, or `DomainDisabled` icon when permission not granted.
 
 ## Architecture Pattern
 

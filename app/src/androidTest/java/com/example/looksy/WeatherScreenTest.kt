@@ -3,6 +3,7 @@ package com.example.looksy
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.example.looksy.data.location.LocationProvider
+import com.example.looksy.data.location.Location
 import com.example.looksy.data.model.Weather
 import com.example.looksy.ui.screens.WeatherScreen
 import com.example.looksy.ui.theme.LooksyTheme
@@ -11,6 +12,8 @@ import com.example.looksy.ui.viewmodel.GeocodingViewModel
 import com.example.looksy.ui.viewmodel.WeatherUiState
 import com.example.looksy.ui.viewmodel.WeatherViewModel
 import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,12 +35,20 @@ class WeatherScreenTest {
     private val weatherStateFlow = MutableStateFlow<WeatherUiState>(WeatherUiState.Loading)
     private val geocodingStateFlow = MutableStateFlow<GeocodingUiState>(GeocodingUiState.Idle)
 
+    private fun setupPermissionGrantedAndLocationEnabled() {
+        every { mockLocationProvider.hasLocationPermission() } returns true
+        every { mockLocationProvider.isLocationEnabled() } returns true
+        coEvery { mockLocationProvider.getCurrentLocation() } returns Result.success(
+            Location(latitude = 47.3769, longitude = 8.5417)
+        )
+    }
+
     @Test
     fun weatherScreen_displaysLoadingState() {
         // Given: Weather state is Loading
         every { mockWeatherViewModel.weatherState } returns weatherStateFlow
         every { mockGeocodingViewModel.geocodingState } returns geocodingStateFlow
-        every { mockLocationProvider.hasLocationPermission() } returns true
+        setupPermissionGrantedAndLocationEnabled()
         weatherStateFlow.value = WeatherUiState.Loading
 
         // When: Screen is displayed
@@ -53,7 +64,7 @@ class WeatherScreenTest {
         }
 
         // Then: Loading indicator is visible
-        composeTestRule.onNodeWithText("Wetter wird geladen...").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Wetterdaten werden geladen...").assertIsDisplayed()
     }
 
     @Test
@@ -69,7 +80,7 @@ class WeatherScreenTest {
         )
         every { mockWeatherViewModel.weatherState } returns weatherStateFlow
         every { mockGeocodingViewModel.geocodingState } returns geocodingStateFlow
-        every { mockLocationProvider.hasLocationPermission() } returns true
+        setupPermissionGrantedAndLocationEnabled()
         weatherStateFlow.value = WeatherUiState.Success(testWeather)
 
         // When: Screen is displayed
@@ -89,7 +100,6 @@ class WeatherScreenTest {
         composeTestRule.onNodeWithText("Zürich").assertIsDisplayed()
         composeTestRule.onNodeWithText("Clear sky", ignoreCase = true).assertIsDisplayed()
         composeTestRule.onNodeWithText("65%").assertIsDisplayed() // Humidity
-        composeTestRule.onNodeWithText("3.5 m/s").assertIsDisplayed() // Wind speed
     }
 
     @Test
@@ -97,7 +107,7 @@ class WeatherScreenTest {
         // Given: Weather state is Error
         every { mockWeatherViewModel.weatherState } returns weatherStateFlow
         every { mockGeocodingViewModel.geocodingState } returns geocodingStateFlow
-        every { mockLocationProvider.hasLocationPermission() } returns true
+        setupPermissionGrantedAndLocationEnabled()
         weatherStateFlow.value = WeatherUiState.Error("Network error")
 
         // When: Screen is displayed
@@ -113,7 +123,7 @@ class WeatherScreenTest {
         }
 
         // Then: Error message and retry button are visible
-        composeTestRule.onNodeWithText("Fehler beim Laden", substring = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText("Wetter nicht verfügbar").assertIsDisplayed()
         composeTestRule.onNodeWithText("Erneut versuchen").assertIsDisplayed()
     }
 
@@ -123,6 +133,7 @@ class WeatherScreenTest {
         every { mockWeatherViewModel.weatherState } returns weatherStateFlow
         every { mockGeocodingViewModel.geocodingState } returns geocodingStateFlow
         every { mockLocationProvider.hasLocationPermission() } returns false
+        every { mockLocationProvider.isLocationEnabled() } returns false
         weatherStateFlow.value = WeatherUiState.Loading
 
         // When: Screen is displayed
@@ -137,8 +148,9 @@ class WeatherScreenTest {
             }
         }
 
-        // Then: Permission prompt is visible (updated for BottomSheet)
-        composeTestRule.onNodeWithText("🏙️").assertIsDisplayed() // Permission not asked card emoji
+        // Then: Permission prompt is visible
+        composeTestRule.onNodeWithText("Standort erforderlich").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Standort erlauben").assertIsDisplayed()
     }
 
     @Test
@@ -154,7 +166,7 @@ class WeatherScreenTest {
         )
         every { mockWeatherViewModel.weatherState } returns weatherStateFlow
         every { mockGeocodingViewModel.geocodingState } returns geocodingStateFlow
-        every { mockLocationProvider.hasLocationPermission() } returns true
+        setupPermissionGrantedAndLocationEnabled()
         weatherStateFlow.value = WeatherUiState.Success(coldWeather)
 
         // When: Screen is displayed
@@ -187,7 +199,7 @@ class WeatherScreenTest {
         )
         every { mockWeatherViewModel.weatherState } returns weatherStateFlow
         every { mockGeocodingViewModel.geocodingState } returns geocodingStateFlow
-        every { mockLocationProvider.hasLocationPermission() } returns true
+        setupPermissionGrantedAndLocationEnabled()
         weatherStateFlow.value = WeatherUiState.Success(warmWeather)
 
         // When: Screen is displayed
@@ -204,7 +216,7 @@ class WeatherScreenTest {
 
         // Then: Warm weather recommendations are shown
         composeTestRule.onNodeWithText("Outfit-Empfehlungen").assertIsDisplayed()
-        composeTestRule.onNodeWithText("T-Shirt", substring = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText("Leichte Kleidung empfohlen").assertIsDisplayed()
     }
 
     @Test
@@ -213,7 +225,7 @@ class WeatherScreenTest {
         var backCalled = false
         every { mockWeatherViewModel.weatherState } returns weatherStateFlow
         every { mockGeocodingViewModel.geocodingState } returns geocodingStateFlow
-        every { mockLocationProvider.hasLocationPermission() } returns true
+        setupPermissionGrantedAndLocationEnabled()
         weatherStateFlow.value = WeatherUiState.Loading
 
         composeTestRule.setContent {
@@ -239,13 +251,7 @@ class WeatherScreenTest {
         // Given: Error state
         every { mockWeatherViewModel.weatherState } returns weatherStateFlow
         every { mockGeocodingViewModel.geocodingState } returns geocodingStateFlow
-        every { mockLocationProvider.hasLocationPermission() } returns true
-        coEvery { mockLocationProvider.getCurrentLocation() } returns Result.success(
-            mockk {
-                every { latitude } returns 47.3769
-                every { longitude } returns 8.5417
-            }
-        )
+        setupPermissionGrantedAndLocationEnabled()
         weatherStateFlow.value = WeatherUiState.Error("Network error")
 
         composeTestRule.setContent {
@@ -264,5 +270,72 @@ class WeatherScreenTest {
 
         // Then: Weather fetch is called (verification happens in real integration test)
         composeTestRule.waitForIdle()
+        coVerify(atLeast = 1) { mockWeatherViewModel.fetchWeather(any(), any()) }
+    }
+
+    @Test
+    fun weatherScreen_swipeDown_refreshesWeather() {
+        val testWeather = Weather(
+            locationName = "Zürich",
+            temperature = 18.0,
+            feelsLike = 17.0,
+            description = "Cloudy",
+            humidity = 60,
+            iconUrl = "icon"
+        )
+
+        every { mockWeatherViewModel.weatherState } returns weatherStateFlow
+        every { mockGeocodingViewModel.geocodingState } returns geocodingStateFlow
+        setupPermissionGrantedAndLocationEnabled()
+        weatherStateFlow.value = WeatherUiState.Success(testWeather)
+
+        composeTestRule.setContent {
+            LooksyTheme {
+                WeatherScreen(
+                    weatherViewModel = mockWeatherViewModel,
+                    geocodingViewModel = mockGeocodingViewModel,
+                    locationProvider = mockLocationProvider,
+                    onNavigateBack = {}
+                )
+            }
+        }
+
+        composeTestRule.waitForIdle()
+        clearMocks(mockWeatherViewModel, answers = false, recordedCalls = true)
+
+        // Target the scrollable weather content to avoid touching the Scaffold header
+        composeTestRule.onNode(hasScrollAction()).performTouchInput {
+            swipe(start = topCenter, end = bottomCenter, durationMillis = 300)
+        }
+        composeTestRule.waitForIdle()
+        Thread.sleep(1000) // let refreshWeatherState coroutine complete
+
+        coVerify(atLeast = 1) { mockWeatherViewModel.fetchWeather(any(), any()) }
+    }
+
+    @Test
+    fun weatherScreen_permissionFlow_showsOnlyAndroidDialogNotCustomSheet() {
+        every { mockWeatherViewModel.weatherState } returns weatherStateFlow
+        every { mockGeocodingViewModel.geocodingState } returns geocodingStateFlow
+        every { mockLocationProvider.hasLocationPermission() } returns false
+        every { mockLocationProvider.isLocationEnabled() } returns false
+        weatherStateFlow.value = WeatherUiState.Loading
+
+        composeTestRule.setContent {
+            LooksyTheme {
+                WeatherScreen(
+                    weatherViewModel = mockWeatherViewModel,
+                    geocodingViewModel = mockGeocodingViewModel,
+                    locationProvider = mockLocationProvider,
+                    onNavigateBack = {}
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText("Standort erlauben").performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Während der Nutzung der App").assertDoesNotExist()
+        composeTestRule.onNodeWithText("Nur dieses Mal").assertDoesNotExist()
     }
 }

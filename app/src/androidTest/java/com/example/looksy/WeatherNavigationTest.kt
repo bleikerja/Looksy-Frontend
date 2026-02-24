@@ -1,11 +1,13 @@
 package com.example.looksy
 
+import android.Manifest
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.navigation.compose.ComposeNavigator
 import androidx.navigation.testing.TestNavHostController
+import androidx.test.rule.GrantPermissionRule
 import com.example.looksy.data.model.*
 import com.example.looksy.ui.navigation.NavGraph
 import com.example.looksy.ui.navigation.Routes
@@ -28,6 +30,12 @@ class WeatherNavigationTest {
 
     @get:Rule
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()
+
+    @get:Rule
+    val grantPermissionRule: GrantPermissionRule = GrantPermissionRule.grant(
+        Manifest.permission.ACCESS_FINE_LOCATION,
+        Manifest.permission.ACCESS_COARSE_LOCATION
+    )
 
     private lateinit var navController: TestNavHostController
     private val clothesViewModel = mockk<ClothesViewModel>(relaxed = true)
@@ -225,9 +233,6 @@ class WeatherNavigationTest {
         composeTestRule.waitForIdle()
 
         // Then: Error state is displayed
-        composeTestRule.onNode(
-            hasText("Fehler beim Laden", substring = true) or
-            hasText("Erneut versuchen")
-        ).assertExists()
+        composeTestRule.onNodeWithText("Wetter nicht verfügbar", substring = true).assertIsDisplayed()
     }
 }

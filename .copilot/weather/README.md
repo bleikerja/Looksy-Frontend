@@ -37,20 +37,30 @@ OpenWeatherMap API
 com.example.looksy/
 ├── data/
 │   ├── location/
-│   │   └── LocationProvider.kt          # GPS location access
+│   │   ├── LocationProvider.kt          # GPS location access
+│   │   ├── Location.kt                  # lat/lon data class
+│   │   ├── LocationInputMode.kt         # GPS vs MANUAL_CITY enum
+│   │   └── PermissionState.kt           # NOT_ASKED / GRANTED_* / DENIED
 │   ├── model/
 │   │   └── Weather.kt                   # Domain model
 │   ├── remote/
 │   │   ├── api/
-│   │   │   └── WeatherApiService.kt     # Retrofit interface
+│   │   │   ├── WeatherApiService.kt     # Retrofit: /data/2.5/weather
+│   │   │   └── GeocodingApiService.kt   # Retrofit: /geo/1.0/direct
 │   │   └── dto/
-│   │       └── WeatherResponse.kt       # API DTOs
+│   │       ├── WeatherResponse.kt       # OpenWeatherMap DTOs
+│   │       └── GeocodingResponse.kt     # Geocoding API DTOs
 │   └── repository/
-│       └── WeatherRepository.kt         # Data coordination
+│       ├── WeatherRepository.kt         # Weather data coordination
+│       └── GeocodingRepository.kt       # City → coordinates
 └── ui/
+    ├── screens/
+    │   └── WeatherScreen.kt             # Full weather detail screen
     └── viewmodel/
-        ├── WeatherViewModel.kt           # State management
-        └── WeatherViewModelFactory.kt    # DI factory
+        ├── WeatherViewModel.kt          # weatherState: StateFlow<WeatherUiState>
+        ├── WeatherViewModelFactory.kt   # DI factory
+        ├── GeocodingViewModel.kt        # geocodingState: StateFlow<GeocodingUiState>
+        └── GeocodingViewModelFactory.kt # DI factory
 ```
 
 ## 🔑 Key Components
@@ -99,38 +109,37 @@ play-services-location = "21.0.1"
 ## 🚀 Usage Example
 
 ```kotlin
+// WeatherScreen is wired in NavGraph — it owns permission + location logic internally.
+// FullOutfitScreen receives already-resolved weatherState from NavGraph:
 @Composable
-fun WeatherScreen() {
-    val application = LocalContext.current.applicationContext as LooksyApplication
-    val weatherViewModel: WeatherViewModel = viewModel(
-        factory = WeatherViewModelFactory(application.weatherRepository)
+fun FullOutfitScreen(
+    weatherState: WeatherUiState = WeatherUiState.Loading,
+    permissionState: PermissionState = PermissionState.NOT_ASKED,
+    isLocationEnabled: Boolean = true,
+    onWeatherClick: () -> Unit = {}
+) {
+    // Weather row top-left — always visible in both outfit and empty-closet state
+    WeatherIconRow(
+        weatherState = weatherState,
+        permissionState = permissionState,
+        isLocationEnabled = isLocationEnabled,
+        onClick = onWeatherClick
     )
-    val locationProvider = remember { application.locationProvider }
-    val weatherState by weatherViewModel.weatherState.collectAsState()
+}
 
-    // Request location and fetch weather
-    LaunchedEffect(Unit) {
-        if (locationProvider.hasLocationPermission()) {
+// WeatherScreen refresh entry point (called by LaunchedEffect, ON_RESUME, and pull-to-refresh):
+fun refreshWeatherState() {
+    if (isRefreshing) return
+    scope.launch {
+        isRefreshing = true
+        val hasPermission = locationProvider.hasLocationPermission()
+        isLocationEnabled = locationProvider.isLocationEnabled()
+        if (hasPermission && isLocationEnabled) {
             locationProvider.getCurrentLocation().onSuccess { location ->
                 weatherViewModel.fetchWeather(location.latitude, location.longitude)
             }
         }
-    }
-
-    when (val state = weatherState) {
-        is WeatherUiState.Loading -> CircularProgressIndicator()
-        is WeatherUiState.Success -> {
-            Column {
-                Text("${state.weather.locationName}")
-                Text("${state.weather.temperature}°C")
-                Text(state.weather.description)
-                AsyncImage(
-                    model = state.weather.iconUrl,
-                    contentDescription = "Weather icon"
-                )
-            }
-        }
-        is WeatherUiState.Error -> Text("Error: ${state.message}")
+        isRefreshing = false
     }
 }
 ```
@@ -173,10 +182,18 @@ For detailed visualizations, see:
 - [x] Gradle dependencies
 - [x] AndroidManifest permissions
 - [x] BuildConfig API key setup
-- [ ] UI screen implementation
-- [ ] Location permission request UI
-- [ ] Error handling UI
-- [ ] Loading state UI
+- [x] WeatherScreen UI (GPS + manual city fallback)
+- [x] GeocodingScreen integration (city search → coordinates)
+- [x] Unified `refreshWeatherState()` — single entry point for load/resume/swipe
+- [x] Lifecycle-aware resume reload (`DisposableEffect` + `ON_RESUME`)
+- [x] Swipe-to-refresh via `PullToRefreshBox` (Material3 experimental)
+- [x] Android-only permission dialog (no custom bottom sheet)
+- [x] WeatherIconRow in FullOutfitScreen (both outfit and empty-closet states)
+- [x] Semantic `testTag("weather_loading")` on loading indicator
+- [x] Material icon for "no permission" state (`Icons.Default.DomainDisabled`)
+- [x] Duplicate header removed from FullOutfitScreen
+- [x] Full JVM unit test coverage (GeocodingRepository, GeocodingViewModel, integration)
+- [x] Instrumented test suite stabilized for API 36 (espresso-core 3.7.0 forced)
 
 ## 🎯 Design Patterns Used
 

@@ -1,82 +1,114 @@
 # Weather Feature - Sequence Diagram
 
-This diagram shows the complete interaction flow between components when fetching weather data.
+This diagram shows the complete interaction flow between components when fetching weather data, including the unified refresh entry point and lifecycle-aware reload introduced in the UX stabilization pass.
 
 ```mermaid
 sequenceDiagram
-    participant UI as UI/Composable
+    participant UI as WeatherScreen
+    participant LC as LifecycleOwner
+    participant PTR as PullToRefreshBox
     participant LP as LocationProvider
+    participant Perm as PermissionLauncher
     participant VM as WeatherViewModel
     participant Repo as WeatherRepository
     participant API as WeatherApiService
-    participant OpenWeather as OpenWeatherMap API
+    participant OWM as OpenWeatherMap API
 
-    Note over UI: User opens weather screen
+    Note over UI: ON_CREATE — initial mount
+    UI->>UI: LaunchedEffect(Unit) → refreshWeatherState()
 
+    Note over UI,LC: ON_RESUME (return from Settings)
+    LC-->>UI: Lifecycle.Event.ON_RESUME
+    UI->>UI: DisposableEffect observer → refreshWeatherState()
+
+    Note over PTR,UI: User swipes down
+    PTR-->>UI: onRefresh callback → refreshWeatherState()
+
+    activate UI
     UI->>LP: hasLocationPermission()
-    LP-->>UI: true/false
+    LP-->>UI: true / false
 
     alt Permission granted
+        UI->>LP: isLocationEnabled()
+        LP-->>UI: true
         UI->>LP: getCurrentLocation()
-        activate LP
-        LP->>LP: Check fusedLocationClient
         LP-->>UI: Result.success(Location(lat, lon))
-        deactivate LP
-
         UI->>VM: fetchWeather(lat, lon)
         activate VM
         VM->>VM: _weatherState = Loading
-
-        VM->>Repo: getWeather(lat, lon).collect()
-        activate Repo
-
-        Repo->>API: getWeatherByLocation(lat, lon, apiKey)
-        activate API
-        API->>OpenWeather: HTTP GET /weather?lat=X&lon=Y&appid=KEY
-        OpenWeather-->>API: WeatherResponse JSON
-        deactivate API
-
-        Repo->>Repo: Convert WeatherResponse to Weather
-        Repo-->>VM: emit(Result.success(Weather))
-        deactivate Repo
-
+        VM->>Repo: getWeather(lat, lon)
+        Repo->>API: getWeatherByLocation(lat, lon, apiKey, "metric")
+        API->>OWM: GET /data/2.5/weather
+        OWM-->>API: WeatherResponse JSON
+        API-->>Repo: WeatherResponse
+        Repo->>Repo: map DTO → Weather domain model
+        Repo-->>VM: Result.success(Weather)
         VM->>VM: _weatherState = Success(weather)
         deactivate VM
 
-        UI->>VM: weatherState.collectAsState()
-        VM-->>UI: Success(weather)
+    else Permission not yet asked
+        UI->>UI: Show PermissionNotAskedCard
+        UI->>Perm: rememberLauncherForActivityResult
+        Note over Perm: Android OS dialog only (no custom sheet)
+        Perm-->>UI: permissions granted/denied
+        alt Granted
+            UI->>UI: permissionState = GRANTED_WHILE_IN_USE
+            UI->>UI: refreshWeatherState()
+        else Denied
+            UI->>UI: permissionState = DENIED
+            UI->>UI: Show manual city input
+        end
 
-        UI->>UI: Render weather data
-
-    else Permission denied
-        UI->>UI: Show permission request
+    else Permission denied (manual city fallback)
+        UI->>UI: showCityInput = true
+        UI->>UI: GeocodingViewModel.searchCity(cityName)
+        activate VM
+        VM->>Repo: GeocodingRepository.getCityCoordinates(city)
+        Repo->>API: GeocodingApiService.getCityCoordinates
+        API-->>Repo: List<GeocodingResponse>
+        Repo-->>VM: Result.success(Location)
+        VM->>VM: geocodingState = Success(location)
+        deactivate VM
+        UI->>VM: fetchWeather(lat, lon)
     end
+    deactivate UI
 
-    alt API Error
-        API--xRepo: Exception (network error)
-        Repo-->>VM: emit(Result.failure(exception))
+    alt API error
+        OWM--xAPI: Network / HTTP error
+        API-->>Repo: Exception
+        Repo-->>VM: Result.failure(exception)
         VM->>VM: _weatherState = Error(message)
-        VM-->>UI: Error state
-        UI->>UI: Show error message
     end
 ```
 
 ## Sequence Breakdown
 
-### Happy Path (Success Flow)
+### Unified Refresh (`refreshWeatherState()`)
 
-1. **Permission Check**
-   - UI asks LocationProvider if location permission is granted
-   - If granted, proceed; otherwise show permission request
+All three load triggers (initial mount, `ON_RESUME`, swipe) funnel into a single `refreshWeatherState()` function that:
 
-2. **Location Retrieval**
-   - UI requests current location
-   - LocationProvider queries FusedLocationProviderClient
-   - Returns `Result.success(Location)` with latitude/longitude
+1. Guards against re-entrant calls (`if (isRefreshing) return`)
+2. Checks permission and location state
+3. Either requests GPS coordinates → `fetchWeather()` or shows manual city input
 
-3. **Weather Fetch Initiation**
-   - UI calls `fetchWeather(lat, lon)` on ViewModel
-   - ViewModel immediately sets state to `Loading`
+### Happy Path (GPS permission granted, location on)
+
+1. `refreshWeatherState()` detects permission + location enabled
+2. Calls `locationProvider.getCurrentLocation()`
+3. On success calls `weatherViewModel.fetchWeather(lat, lon)`
+4. ViewModel sets `Loading`, calls repository, updates to `Success(weather)` or `Error`
+
+### Permission Flow (Android dialog only)
+
+- **No custom bottom sheet** — the OS permission dialog is shown directly
+- On grant: `permissionState = GRANTED_WHILE_IN_USE` then `refreshWeatherState()`
+- On deny: `permissionState = DENIED`, show manual city input automatically
+
+### Lifecycle Resume Reload
+
+- `DisposableEffect(lifecycleOwner)` adds a `LifecycleEventObserver`
+- `ON_RESUME` fires when the user returns from Android Settings
+- Calls `refreshWeatherState()` which re-checks newly granted permissions
 
 4. **Repository Data Fetch**
    - ViewModel collects from `repository.getWeather()` Flow

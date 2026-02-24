@@ -3,6 +3,7 @@ package com.example.looksy
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.example.looksy.R
+import com.example.looksy.data.location.PermissionState
 import com.example.looksy.data.model.*
 import com.example.looksy.ui.screens.FullOutfitScreen
 import com.example.looksy.ui.theme.LooksyTheme
@@ -52,16 +53,14 @@ class FullOutfitScreenWeatherTest {
                     top = testTop,
                     pants = testPants,
                     weatherState = WeatherUiState.Loading,
+                    permissionState = PermissionState.GRANTED_WHILE_IN_USE,
                     onWeatherClick = {}
                 )
             }
         }
 
         // Then: Loading spinner is visible
-        composeTestRule.onNode(
-            hasContentDescription("Loading")
-                .or(hasTestTag("weather_loading"))
-        ).assertExists()
+        composeTestRule.onNodeWithTag("weather_loading").assertExists()
     }
 
     @Test
@@ -82,6 +81,7 @@ class FullOutfitScreenWeatherTest {
                     top = testTop,
                     pants = testPants,
                     weatherState = WeatherUiState.Success(testWeather),
+                    permissionState = PermissionState.GRANTED_WHILE_IN_USE,
                     onWeatherClick = {}
                 )
             }
@@ -102,6 +102,7 @@ class FullOutfitScreenWeatherTest {
                     top = testTop,
                     pants = testPants,
                     weatherState = WeatherUiState.Error("Network error"),
+                    permissionState = PermissionState.GRANTED_WHILE_IN_USE,
                     onWeatherClick = {}
                 )
             }
@@ -132,6 +133,7 @@ class FullOutfitScreenWeatherTest {
                     top = testTop,
                     pants = testPants,
                     weatherState = WeatherUiState.Success(testWeather),
+                    permissionState = PermissionState.GRANTED_WHILE_IN_USE,
                     onWeatherClick = { weatherClicked = true }
                 )
             }
@@ -162,6 +164,7 @@ class FullOutfitScreenWeatherTest {
                     top = testTop,
                     pants = testPants,
                     weatherState = WeatherUiState.Success(sunnyWeather),
+                    permissionState = PermissionState.GRANTED_WHILE_IN_USE,
                     onWeatherClick = {}
                 )
             }
@@ -189,6 +192,7 @@ class FullOutfitScreenWeatherTest {
                     top = testTop,
                     pants = testPants,
                     weatherState = WeatherUiState.Success(rainyWeather),
+                    permissionState = PermissionState.GRANTED_WHILE_IN_USE,
                     onWeatherClick = {}
                 )
             }
@@ -216,6 +220,7 @@ class FullOutfitScreenWeatherTest {
                     top = testTop,
                     pants = testPants,
                     weatherState = WeatherUiState.Success(cloudyWeather),
+                    permissionState = PermissionState.GRANTED_WHILE_IN_USE,
                     onWeatherClick = {}
                 )
             }
@@ -243,6 +248,7 @@ class FullOutfitScreenWeatherTest {
                     top = testTop,
                     pants = testPants,
                     weatherState = WeatherUiState.Success(testWeather),
+                    permissionState = PermissionState.GRANTED_WHILE_IN_USE,
                     onWeatherClick = {}
                 )
             }
@@ -270,6 +276,7 @@ class FullOutfitScreenWeatherTest {
                     top = testTop,
                     pants = testPants,
                     weatherState = WeatherUiState.Success(testWeather),
+                    permissionState = PermissionState.GRANTED_WHILE_IN_USE,
                     onWeatherClick = {}
                 )
             }
@@ -280,5 +287,42 @@ class FullOutfitScreenWeatherTest {
         composeTestRule.onNodeWithText("Heutiges Outfit").assertIsDisplayed()
         // Washing machine icon should also be visible
         composeTestRule.onNodeWithContentDescription("Zur Waschmaschine").assertIsDisplayed()
+    }
+
+    @Test
+    fun fullOutfitScreen_rendersSingleHeader_only() {
+        composeTestRule.setContent {
+            LooksyTheme {
+                FullOutfitScreen(
+                    top = testTop,
+                    pants = testPants,
+                    weatherState = WeatherUiState.Loading,
+                    onWeatherClick = {}
+                )
+            }
+        }
+
+        composeTestRule.onAllNodesWithText("Heutiges Outfit").assertCountEquals(1)
+    }
+
+    @Test
+    fun fullOutfitScreen_emptyState_stillShowsWeatherRowTopLeft() {
+        composeTestRule.setContent {
+            LooksyTheme {
+                FullOutfitScreen(
+                    top = null,
+                    pants = null,
+                    skirt = null,
+                    dress = null,
+                    jacket = null,
+                    weatherState = WeatherUiState.Loading,
+                    permissionState = PermissionState.NOT_ASKED,
+                    isLocationEnabled = false,
+                    onWeatherClick = {}
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithContentDescription("Standortzugriff erforderlich").assertIsDisplayed()
     }
 }
