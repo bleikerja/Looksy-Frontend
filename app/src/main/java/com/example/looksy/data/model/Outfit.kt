@@ -15,5 +15,6 @@ data class Outfit(
     val pantsId: Int? = null,
     val jacketId: Int? = null,
     val preference: Int = 0,
-    val isSynced: Boolean = false
+    val isSynced: Boolean = false,
+    val isManuelSaved: Boolean = false
 )

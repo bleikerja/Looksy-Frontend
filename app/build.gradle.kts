@@ -43,9 +43,11 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions {
-        jvmTarget = "11"
+
+    kotlin {
+        jvmToolchain(11)
     }
+
     buildFeatures {
         compose = true
     }
@@ -88,12 +90,8 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.compose.foundation.layout)
-    implementation(libs.androidx.navigation.testing)
-    implementation(libs.androidx.rules)
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.navigation.compose)
-    implementation(libs.androidx.material.icons.extended)
-    implementation(libs.androidx.navigation.testing)
 
     // Test dependencies
     testImplementation(libs.junit)
@@ -104,10 +102,10 @@ dependencies {
     testImplementation(kotlin("test"))
 
     androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
-    androidTestImplementation("io.mockk:mockk-android:1.13.11")
+    androidTestImplementation(libs.androidx.navigation.testing)
+    //androidTestImplementation(libs.mockk.android.v11311)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation(libs.retrofit.core)

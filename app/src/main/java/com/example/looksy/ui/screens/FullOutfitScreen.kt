@@ -64,6 +64,8 @@ import com.example.looksy.data.model.Clothes
 import com.example.looksy.ui.components.Header
 import com.example.looksy.ui.theme.LooksyTheme
 import com.example.looksy.ui.viewmodel.WeatherUiState
+import com.example.looksy.util.OutfitCompatibilityCalculator
+import com.example.looksy.util.OutfitResult
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -125,7 +127,17 @@ fun FullOutfitScreen(
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
-                   
+
+                Header(
+                    onNavigateBack = {},
+                    onNavigateToRightIcon = { onWashingMachine() },
+                    clothesData = null,
+                    headerText = "Heutiges Outfit",
+                    rightIconContentDescription = "Zur Waschmaschine",
+                    rightIcon = Icons.Default.LocalLaundryService,
+                    isFirstHeader = true
+                )
+
                 Spacer(modifier = Modifier.height(16.dp))
 
                 jacket?.let {
@@ -392,10 +404,10 @@ private fun WeatherIconRow(
                     fontSize = 24.sp
                 )
             }
-            
+
             // Permission granted but location is off
-            (permissionState == PermissionState.GRANTED_WHILE_IN_USE || 
-             permissionState == PermissionState.GRANTED_ONCE) && 
+            (permissionState == PermissionState.GRANTED_WHILE_IN_USE ||
+             permissionState == PermissionState.GRANTED_ONCE) &&
             !isLocationEnabled -> {
                 Spacer(modifier = Modifier.width(20.dp))
                 Icon(
@@ -405,7 +417,7 @@ private fun WeatherIconRow(
                     tint = MaterialTheme.colorScheme.tertiary
                 )
             }
-            
+
             // Permission denied - show icon indicating no permission
             permissionState == PermissionState.DENIED -> {
                 Spacer(modifier = Modifier.width(20.dp))
@@ -420,7 +432,7 @@ private fun WeatherIconRow(
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
             }
-            
+
             // Normal weather states
             else -> {
                 when (weatherState) {

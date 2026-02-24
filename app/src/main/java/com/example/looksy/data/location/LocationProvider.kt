@@ -22,7 +22,7 @@ data class Location(
 
 /**
  * Handles location retrieval using Google Play Services Location API
- * 
+ *
  * Usage:
  * ```
  * val locationProvider = LocationProvider(context)
@@ -35,10 +35,10 @@ data class Location(
  * ```
  */
 class LocationProvider(private val context: Context) {
-    
+
     private val fusedLocationClient: FusedLocationProviderClient =
         LocationServices.getFusedLocationProviderClient(context)
-    
+
     /**
      * Checks if the app has location permission
      * @return true if ACCESS_COARSE_LOCATION or ACCESS_FINE_LOCATION is granted
@@ -48,12 +48,12 @@ class LocationProvider(private val context: Context) {
             context,
             Manifest.permission.ACCESS_COARSE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED ||
-        ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED
     }
-    
+
     /**
      * Checks if location services (GPS) are enabled on the device
      * @return true if GPS or network location provider is enabled
@@ -63,11 +63,11 @@ class LocationProvider(private val context: Context) {
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
                 locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
     }
-    
+
     /**
      * Gets the current device location
      * @return Result<Location> - Success with Location or Failure with exception
-     * 
+     *
      * Possible failures:
      * - SecurityException: Location permission not granted
      * - Exception: Location is null (GPS disabled, no last known location)
@@ -80,9 +80,9 @@ class LocationProvider(private val context: Context) {
             )
             return@suspendCancellableCoroutine
         }
-        
+
         val cancellationTokenSource = CancellationTokenSource()
-        
+
         try {
             fusedLocationClient.getCurrentLocation(
                 Priority.PRIORITY_BALANCED_POWER_ACCURACY,
@@ -108,7 +108,7 @@ class LocationProvider(private val context: Context) {
         } catch (e: SecurityException) {
             continuation.resume(Result.failure(e))
         }
-        
+
         continuation.invokeOnCancellation {
             cancellationTokenSource.cancel()
         }

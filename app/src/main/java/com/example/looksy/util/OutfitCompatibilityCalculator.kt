@@ -1,6 +1,7 @@
 package com.example.looksy.util
 
 import com.example.looksy.data.model.Clothes
+import com.example.looksy.data.model.ClothesColor
 import com.example.looksy.data.model.Material
 import com.example.looksy.data.model.Season
 import com.example.looksy.data.model.Size
@@ -17,42 +18,124 @@ object OutfitCompatibilityCalculator {
         // Empty outfit gets 0 points
         if (items.isEmpty()) return 0
         
-        // Validate required rules - returns 0 if rules are violated
+        // Validate required rules - returns 0 if rules are violated (includes color clash)
         if (!validateOutfitRules(outfit)) return 0
-        
+
+        val colorScore = calculateColorCompatibility(items)
+
         // Calculate scores for each attribute
         val seasonScore = calculateSeasonCompatibility(items)
         val materialScore = calculateMaterialCompatibility(items)
         val typeScore = calculateTypeCompatibility(outfit)
         val sizeScore = calculateSizeCompatibility(items)
         val cleanScore = calculateCleanScore(items)
-        
-        // Calculate final score using weighted average
-        val finalScore = (seasonScore * 0.30 + 
-                materialScore * 0.25 + 
-                typeScore * 0.20 + 
-                sizeScore * 0.15 + 
+
+        // Base score (weighted average, color not included in weights)
+        val baseScore = (seasonScore * 0.30 +
+                materialScore * 0.25 +
+                typeScore * 0.20 +
+                sizeScore * 0.15 +
                 cleanScore * 0.10)
-        
+
+        // Color as slight multiplier: 0.85..1.0 so color never dominates but can reduce score
+        val colorFactor = 0.85 + 0.15 * (colorScore / 100.0)
+        val finalScore = baseScore * colorFactor
+
         return finalScore.toInt().coerceIn(0, 100)
     }
     
     /**
+     * Returns true if the outfit passes color compatibility (no 3+ accent clash).
+     * Used by generator to filter invalid outfits and by tests.
+     */
+    fun isOutfitColorCompatible(outfit: OutfitResult): Boolean {
+        val items = listOfNotNull(outfit.top, outfit.pants, outfit.skirt, outfit.jacket, outfit.dress)
+        return calculateColorCompatibility(items) > 0.0
+    }
+
+    /**
+     * Color compatibility score 0..100. Returns 0 when >= 3 different ACCENT colors (clash).
+     * null (unknown) is allowed but slightly penalized; NEUTRAL/EARTH are high; 0–2 ACCENT scored by hue pairs.
+     */
+    private fun calculateColorCompatibility(items: List<Clothes>): Double {
+        if (items.isEmpty()) return 100.0
+
+        val colors = items.map { it.color }
+        val accentColors = colors.filterNotNull().filter { it.kind == ClothesColor.Kind.ACCENT }
+        val distinctAccents = accentColors.distinct()
+
+        // Hard rule: >= 3 different ACCENT colors => clash => 0
+        if (distinctAccents.size >= 3) return 0.0
+
+        // Slight penalty for null (uncertainty)
+        val nullCount = colors.count { it == null }
+        val nullPenalty = nullCount * 2.0 // up to ~2*5 = 10 points if many nulls
+
+        return when (distinctAccents.size) {
+            0 -> 100.0 - nullPenalty.coerceAtMost(10.0)  // no accent: high
+            1 -> 98.0 - nullPenalty.coerceAtMost(5.0)    // one accent: high
+            2 -> {
+                val pairScore = getAccentPairScore(distinctAccents[0], distinctAccents[1])
+                (pairScore - nullPenalty.coerceAtMost(5.0)).coerceAtLeast(0.0)
+            }
+            else -> 0.0
+        }
+    }
+
+    /** Score for two accent colors: EXCELLENT 100, GOOD 90, other 75. */
+    private fun getAccentPairScore(a: ClothesColor, b: ClothesColor): Double {
+        val c1 = canonicalHue(a)
+        val c2 = canonicalHue(b)
+        val pair = setOf(c1, c2)
+
+        val excellentPairs = setOf(
+            setOf(ClothesColor.Blue, ClothesColor.Orange),
+            setOf(ClothesColor.Red, ClothesColor.Green),
+            setOf(ClothesColor.Yellow, ClothesColor.Purple),
+            setOf(ClothesColor.Red, ClothesColor.Blue)
+        )
+        if (excellentPairs.any { it == pair }) return 100.0
+
+        val goodPairs = setOf(
+            setOf(ClothesColor.Red, ClothesColor.Orange),
+            setOf(ClothesColor.Orange, ClothesColor.Yellow),
+            setOf(ClothesColor.Yellow, ClothesColor.Green),
+            setOf(ClothesColor.Green, ClothesColor.Blue),
+            setOf(ClothesColor.Blue, ClothesColor.Purple),
+            setOf(ClothesColor.Purple, ClothesColor.Red),
+            setOf(ClothesColor.Blue, ClothesColor.Yellow)
+        )
+        if (goodPairs.any { it == pair }) return 90.0
+
+        return 75.0
+    }
+
+    /** Normalize accent color for pairing (LightBlue->Blue, Burgundy/Pink->Red). */
+    private fun canonicalHue(c: ClothesColor): ClothesColor = when (c) {
+        ClothesColor.LightBlue -> ClothesColor.Blue
+        ClothesColor.Burgundy, ClothesColor.Pink -> ClothesColor.Red
+        else -> c
+    }
+
+    /**
      * Validates required outfit rules
      * - Dress cannot be worn with pants or skirt
      * - At least a top or dress must be present
+     * - Color: no 3+ accent clash (isOutfitColorCompatible)
      */
     private fun validateOutfitRules(outfit: OutfitResult): Boolean {
         // Dress cannot be combined with pants or skirt
         if (outfit.dress != null && (outfit.pants != null || outfit.skirt != null)) {
             return false
         }
-        
+
         // At least a top or dress must be present
         if (outfit.top == null && outfit.dress == null) {
             return false
         }
-        
+
+        if (!isOutfitColorCompatible(outfit)) return false
+
         return true
     }
     

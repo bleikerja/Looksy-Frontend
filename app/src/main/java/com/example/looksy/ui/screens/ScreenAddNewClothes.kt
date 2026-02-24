@@ -15,7 +15,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PhotoCamera
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -39,19 +38,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.net.toUri
 import coil.compose.AsyncImage
 import com.example.looksy.R
 import com.example.looksy.ui.components.Header
 import com.example.looksy.ui.viewmodel.ClothesViewModel
 import com.example.looksy.data.model.Clothes
+import com.example.looksy.data.model.ClothesColor
 import com.example.looksy.data.model.Material
 import com.example.looksy.data.model.Season
 import com.example.looksy.data.model.Size
 import com.example.looksy.data.model.Type
 import com.example.looksy.data.model.WashingNotes
 import com.example.looksy.ui.components.ConfirmationDialog
+import com.example.looksy.ui.components.MultiSelectDropdown
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -78,12 +78,14 @@ fun AddNewClothesScreen(
     var season by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.seasonUsage) }
     var type by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.type) }
     var material by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.material) }
-    var washingNotes by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.washingNotes) }
+    var color by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.color) }
+    var washingNotes by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.washingNotes ?: emptyList()) }
     var clean by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.clean ?: true) }
 
     val isFormValid =
-                size != null && season != null && type != null && material != null && washingNotes != null
+                size != null && season != null && type != null && material != null && washingNotes.isNotEmpty()
     var edited by remember { mutableStateOf(false) }
+
     val imageToShowUri = remember(clothesToEdit, imageUriString) {
         when {
             // Neu-Modus mit einer neuen URI von der Kamera
@@ -112,6 +114,7 @@ fun AddNewClothesScreen(
             dismissText = "Abbrechen",
             onDismiss = { showDeleteDialog = false },
             confirmText = "Löschen",
+            isDeletion = true,
             onConfirm = {
                 onDelete()
                 showDeleteDialog = false
@@ -160,8 +163,9 @@ fun AddNewClothesScreen(
                         seasonUsage = season!!,
                         type = type!!,
                         material = material!!,
+                        color = color,
                         clean = clean, // Behalte den alten Status oder setze auf sauber
-                        washingNotes = washingNotes!!,
+                        washingNotes = washingNotes,
                         // Der imagePath wird erst in Routes.kt final gesetzt!
                         imagePath = clothesToEdit?.imagePath ?: ""
                     )
@@ -193,8 +197,17 @@ fun AddNewClothesScreen(
                 onTypeChange = { type = it; edited = true },
                 material = material,
                 onMaterialChange = { material = it; edited = true },
+                color = color,
+                onColorChange = { color = it; edited = true },
                 washingNotes = washingNotes,
-                onWashingNotesChange = { washingNotes = it; edited = true },
+                onWashingNotesChange = { note ->
+                    washingNotes = if (washingNotes.contains(note)) {
+                        washingNotes - note
+                    } else {
+                        washingNotes + note
+                    }
+                    edited = true
+                },
                 clean = clean,
                 onCleanChange = { clean = it; edited = true },
                 edit = (clothesIdToEdit != null)
@@ -218,7 +231,9 @@ private fun AddNewClothesForm(
     onTypeChange: (Type) -> Unit,
     material: Material?,
     onMaterialChange: (Material) -> Unit,
-    washingNotes: WashingNotes?,
+    color: ClothesColor?,
+    onColorChange: (ClothesColor?) -> Unit,
+    washingNotes: List<WashingNotes>,
     onWashingNotesChange: (WashingNotes) -> Unit,
     clean: Boolean,
     onCleanChange: (Boolean) -> Unit,
@@ -306,13 +321,23 @@ private fun AddNewClothesForm(
                 )
         }
         item {
-            EnumDropdown(
-                "Waschhinweise",
-                WashingNotes.entries,
-                washingNotes,
-                onWashingNotesChange
+            OptionalEnumDropdown(
+                label = "Farbe (optional)",
+                options = ClothesColor.entries,
+                selectedOption = color,
+                onOptionSelected = onColorChange,
+                optionDisplayName = { it.displayName }
             )
-
+        }
+        item {
+            MultiSelectDropdown(
+                label = "Waschhinweise",
+                options = WashingNotes.entries,
+                selectedOptions = washingNotes,
+                onOptionSelected = { note ->
+                    onWashingNotesChange(note)
+                },
+            )
         }
         if (edit){
             item {
@@ -396,24 +421,54 @@ fun <T> EnumDropdown(
     }
 }
 
-
-@SuppressLint("ViewModelConstructorInComposable")
-@Preview(showBackground = true)
+/** Dropdown that allows no selection: first option "—" sets null. */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PreviewAddNewClothesScreen() {
-    /*
-    AddNewClothesScreen(
-        imageUriString = "", // Leere URI für die Vorschau
-        onSave = { newItem, imageUri ->
-            // In der Vorschau passiert hier nichts.
-            println("Preview Save: $newItem, Uri: $imageUri")
-        },
-        onNavigateBack = {},
-        viewModel = ClothesViewModel(
-            repository =
-        ),
-        clothesIdToEdit = null
-    )
+fun <T> OptionalEnumDropdown(
+    label: String,
+    options: List<T>,
+    selectedOption: T?,
+    onOptionSelected: (T?) -> Unit,
+    optionDisplayName: (T) -> String,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val displayValue = selectedOption?.let { optionDisplayName(it) } ?: "—"
 
-     */
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded },
+        modifier = modifier
+    ) {
+        TextField(
+            modifier = Modifier.menuAnchor(),
+            readOnly = true,
+            value = displayValue,
+            onValueChange = {},
+            label = { Text(label) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            colors = ExposedDropdownMenuDefaults.textFieldColors(),
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            DropdownMenuItem(
+                text = { Text("—") },
+                onClick = {
+                    onOptionSelected(null)
+                    expanded = false
+                }
+            )
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(optionDisplayName(option)) },
+                    onClick = {
+                        onOptionSelected(option)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
 }

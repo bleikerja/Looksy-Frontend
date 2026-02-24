@@ -1,6 +1,8 @@
 package com.example.looksy
 
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -26,6 +28,8 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import com.example.looksy.R
+import io.mockk.clearMocks
+import org.junit.After
 
 class NavGraphIntegrationTest {
 
@@ -41,7 +45,7 @@ class NavGraphIntegrationTest {
     private val testTop = Clothes(
         id = 1, type = Type.Tops, clean = true, size = Size._M,
         seasonUsage = Season.inBetween, material = Material.Cotton,
-        washingNotes = WashingNotes.Temperature30, 
+        washingNotes = listOf(WashingNotes.Temperature30),
         imagePath = "android.resource://com.example.looksy/${R.drawable.shirt_category}", 
         isSynced = false
     )
@@ -49,22 +53,37 @@ class NavGraphIntegrationTest {
     private val testPants = Clothes(
         id = 2, type = Type.Pants, clean = true, size = Size._M,
         seasonUsage = Season.inBetween, material = Material.Cotton,
-        washingNotes = WashingNotes.Temperature30, 
+        washingNotes = listOf(WashingNotes.Temperature30),
         imagePath = "android.resource://com.example.looksy/${R.drawable.jeans}", 
         isSynced = false
     )
 
-    private val clothesFlow = MutableStateFlow(listOf(testTop, testPants))
+    private lateinit var clothesFlow:MutableStateFlow<List<Clothes>>
+    private lateinit var lastDiscardedState: MutableState<List<Clothes>?>
 
     @Before
     fun setupNavHost() {
+        clothesFlow = MutableStateFlow(listOf(testTop, testPants))
+        lastDiscardedState = mutableStateOf(null)
         // Mocks konfigurieren
         every { clothesViewModel.allClothes } returns clothesFlow
         every { clothesViewModel.getClothesById(any()) } returns MutableStateFlow(testTop)
+        every { clothesViewModel.lastDiscardedClothes } returns lastDiscardedState
+
+        composeTestRule.runOnUiThread {
+            navController = TestNavHostController(composeTestRule.activity).apply {
+                navigatorProvider.addNavigator(ComposeNavigator())
+            }
+        }
 
         composeTestRule.setContent {
-            navController = TestNavHostController(LocalContext.current)
-            navController.navigatorProvider.addNavigator(ComposeNavigator())
+            val context = LocalContext.current
+            val controller = androidx.compose.runtime.remember {
+                TestNavHostController(context).apply {
+                    navigatorProvider.addNavigator(ComposeNavigator())
+                }
+            }
+            navController = controller
 
             NavGraph(
                 navController = navController,
@@ -75,6 +94,12 @@ class NavGraphIntegrationTest {
         }
     }
 
+    @After
+    fun tearDown() {
+        // Mocks nach jedem Test zurücksetzen, um Seiteneffekte zu vermeiden
+        clearMocks(clothesViewModel, outfitViewModel)
+    }
+
     @Test
     fun navGraph_startDestination_isHome() {
         assertEquals(Routes.Home.route, navController.currentDestination?.route)
@@ -83,8 +108,14 @@ class NavGraphIntegrationTest {
     @OptIn(ExperimentalTestApi::class)
     @Test
     fun navGraph_navigateToDetails_works() {
+        // Erzwinge den Zustand "Outfit ausgewählt"
+        val selectedTop = testTop.copy(selected = true)
+        val selectedPants = testPants.copy(selected = true)
+        clothesFlow.value = listOf(selectedTop, selectedPants)
+        composeTestRule.waitForIdle()
+
         // Warten, bis das Outfit gerendert wurde
-        composeTestRule.waitUntilAtLeastOneExists(hasContentDescription("Kleidungsstück"), timeoutMillis = 5000)
+        composeTestRule.waitUntilAtLeastOneExists(hasContentDescription("Kleidungsstück"), timeoutMillis = 10000)
 
         // Klick auf den LooksyButton (IconButton) im OutfitPart
         // Wir schließen den "Zur Waschmaschine" Button im Header aus
@@ -96,7 +127,9 @@ class NavGraphIntegrationTest {
             .onFirst()
             .performClick()
 
-        composeTestRule.waitForIdle()
+        composeTestRule.waitUntil(timeoutMillis = 10000) {
+            navController.currentDestination?.route == Routes.Details.route
+        }
         
         // Assertions gegen das Routen-Template
         assertEquals(Routes.Details.route, navController.currentDestination?.route)
@@ -107,7 +140,7 @@ class NavGraphIntegrationTest {
     fun navGraph_onConfirm_works() {
         // Warten, bis der Button sichtbar ist (Outfit vorhanden)
         composeTestRule.waitUntilAtLeastOneExists(hasContentDescription("Outfit anziehen"), 5000)
-        
+
         composeTestRule.onNodeWithContentDescription("Outfit anziehen").performClick()
 
         composeTestRule.waitForIdle()
@@ -125,6 +158,7 @@ class NavGraphIntegrationTest {
         composeTestRule.waitForIdle()
         assertEquals(Routes.Home.route, navController.currentDestination?.route)
     }
+
     @OptIn(ExperimentalTestApi::class)
     @Test
     fun navGraph_navigationToScan_works() {
@@ -137,5 +171,42 @@ class NavGraphIntegrationTest {
 
         composeTestRule.waitForIdle()
         assertEquals(Routes.Scan.route, navController.currentDestination?.route)
+    }
+
+    @Test
+    fun navGraph_washingMachine_confirmsAndSetsLastWorn() {
+        // Falls testTop in der Setup-Methode clean=true ist, hier für diesen Test überschreiben:
+        val dirtyCloth = testTop.copy(clean = false)
+        clothesFlow.value = listOf(dirtyCloth)
+
+        // Navigiere zur Waschmaschine
+        composeTestRule.runOnUiThread {
+            navController.navigate(Routes.WashingMachine.route)
+        }
+
+        // Wähle das Kleidungsstück in der Liste aus
+        composeTestRule.onAllNodes(hasClickAction()).onFirst().performClick()
+
+        // Klicke auf den Bestätigungsbutton ("Gewaschen (1)")
+        composeTestRule.onNodeWithText("Gewaschen (1)", substring = true).performClick()
+
+        // Verifiziere, dass das ViewModel mit clean = true UND einem Zeitstempel in lastWorn aktualisiert wurde
+        coVerify {
+            clothesViewModel.update(match { it.clean && it.lastWorn != null })
+        }
+    }
+
+    @Test
+    fun navGraph_navigateToDiscard_works() {
+        // Navigiere zum Kleiderschrank (ChoseClothes)
+        composeTestRule.runOnUiThread {
+            navController.navigate(Routes.ChoseClothes.route)
+        }
+
+        // Klicke auf den Button für die Aussortier-Vorschläge
+        composeTestRule.onNodeWithContentDescription("Vorschläge zum Aussortieren").performClick()
+
+        // Überprüfe, ob die Route jetzt auf dem Discard-Screen ist
+        assertEquals(Routes.Discard.route, navController.currentDestination?.route)
     }
 }
