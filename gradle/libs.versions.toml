@@ -26,8 +26,6 @@ playServicesLocation = "21.3.0"
 navigationTesting = "2.9.7"
 mockkAndroid = "1.14.9"
 uiTestJunit4 = "1.10.2"
-navigationTesting = "2.9.6"
-mockkAndroid = "1.14.7"
 rules = "1.7.0"
 
 [libraries]

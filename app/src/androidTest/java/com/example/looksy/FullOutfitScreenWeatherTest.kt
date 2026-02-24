@@ -26,7 +26,7 @@ class FullOutfitScreenWeatherTest {
         size = Size._M,
         seasonUsage = Season.inBetween,
         material = Material.Cotton,
-        washingNotes = WashingNotes.Temperature30,
+        washingNotes = listOf(WashingNotes.Temperature30),
         imagePath = "android.resource://com.example.looksy/${R.drawable.shirt_category}",
         isSynced = false
     )
@@ -38,7 +38,7 @@ class FullOutfitScreenWeatherTest {
         size = Size._M,
         seasonUsage = Season.inBetween,
         material = Material.Cotton,
-        washingNotes = WashingNotes.Temperature30,
+        washingNotes = listOf(WashingNotes.Temperature30),
         imagePath = "android.resource://com.example.looksy/${R.drawable.jeans}",
         isSynced = false
     )
