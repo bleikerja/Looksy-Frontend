@@ -64,6 +64,9 @@ fun WeatherScreen(
     var showLocationSettingsDialog by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     var isRefreshing by remember { mutableStateOf(false) }
+    // Holds the error message to show in a snackbar, decoupled from geocodingState
+    // so the LaunchedEffect key change doesn't cancel the running snackbar coroutine.
+    var lastGeocodingError by remember { mutableStateOf<String?>(null) }
 
     fun refreshWeatherState() {
         if (isRefreshing) return
@@ -127,19 +130,34 @@ fun WeatherScreen(
             is GeocodingUiState.Success -> {
                 val success = geocodingState as GeocodingUiState.Success
                 weatherViewModel.fetchWeather(success.location.latitude, success.location.longitude)
+                // Mark location as available so the LocationDisabledCard branch
+                // doesn't re-appear after a successful city lookup.
+                isLocationEnabled = true
                 showCityInput = false
                 cityName = ""
                 geocodingViewModel.resetState()
             }
             is GeocodingUiState.Error -> {
                 val error = geocodingState as GeocodingUiState.Error
-                snackbarHostState.showSnackbar(
-                    message = error.message,
-                    duration = SnackbarDuration.Short
-                )
+                // Copy the message first, then reset state immediately.
+                // If we called resetState() after showSnackbar() the key change
+                // would cancel the coroutine and the snackbar would never appear.
+                lastGeocodingError = error.message
                 geocodingViewModel.resetState()
             }
             else -> {}
+        }
+    }
+
+    // Show geocoding error in a snackbar, keyed separately so it is never
+    // cancelled by a state transition in geocodingState.
+    LaunchedEffect(lastGeocodingError) {
+        lastGeocodingError?.let { message ->
+            snackbarHostState.showSnackbar(
+                message = message,
+                duration = SnackbarDuration.Short
+            )
+            lastGeocodingError = null
         }
     }
 

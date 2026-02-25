@@ -74,6 +74,18 @@ class GeocodingViewModelTest {
     }
 
     @Test
+    fun `getCityCoordinates uses fallback message when repository error has no message`() = runTest {
+        coEvery { repository.getCityCoordinates("Xyz") } returns Result.failure(Exception())
+
+        viewModel.getCityCoordinates("Xyz")
+        advanceUntilIdle()
+
+        val state = viewModel.geocodingState.value
+        assertTrue(state is GeocodingUiState.Error)
+        assertEquals("Fehler beim Suchen der Stadt", (state as GeocodingUiState.Error).message)
+    }
+
+    @Test
     fun `resetState sets idle`() = runTest {
         coEvery { repository.getCityCoordinates("Luzern") } returns Result.failure(Exception("No result"))
         viewModel.getCityCoordinates("Luzern")
