@@ -2,6 +2,7 @@ package com.example.looksy.ui.screens
 
 import android.Manifest
 import android.content.Intent
+import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -38,6 +39,7 @@ import com.example.looksy.ui.viewmodel.GeocodingViewModel
 import com.example.looksy.ui.viewmodel.WeatherUiState
 import com.example.looksy.ui.viewmodel.WeatherViewModel
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.core.app.ActivityCompat
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -67,12 +69,32 @@ fun WeatherScreen(
     // Holds the error message to show in a snackbar, decoupled from geocodingState
     // so the LaunchedEffect key change doesn't cancel the running snackbar coroutine.
     var lastGeocodingError by remember { mutableStateOf<String?>(null) }
+    // Persists the last city the user searched, so a pull-to-refresh re-fetches
+    // weather for that city instead of reverting back to the permission/GPS flow.
+    var lastSearchedCity by remember { mutableStateOf("") }
 
     fun refreshWeatherState() {
         if (isRefreshing) return
 
         scope.launch {
             isRefreshing = true
+
+            // If the user previously entered a city manually, keep fetching for
+            // that city on every refresh — unless location permission and services
+            // are both available again, in which case switch back to GPS.
+            if (lastSearchedCity.isNotBlank()) {
+                val hasPermissionNow = locationProvider.hasLocationPermission()
+                val locationOnNow = locationProvider.isLocationEnabled()
+                if (hasPermissionNow && locationOnNow) {
+                    // Location is back — clear the city override and fall through
+                    // to the GPS branch below.
+                    lastSearchedCity = ""
+                } else {
+                    geocodingViewModel.getCityCoordinates(lastSearchedCity)
+                    isRefreshing = false
+                    return@launch
+                }
+            }
 
             val hasPermission = locationProvider.hasLocationPermission()
             isLocationEnabled = locationProvider.isLocationEnabled()
@@ -95,11 +117,20 @@ fun WeatherScreen(
                     showCityInput = false
                 }
             } else {
-                if (permissionState != PermissionState.DENIED) {
-                    permissionState = PermissionState.NOT_ASKED
-                }
+                // shouldShowRequestPermissionRationale returns true when the user
+                // denied once in the current install, so we can differentiate
+                // "never asked" from "already denied" on a fresh screen load.
+                val activity = context as? android.app.Activity
+                val wasDeniedBefore = (activity != null &&
+                    ActivityCompat.shouldShowRequestPermissionRationale(
+                        activity, Manifest.permission.ACCESS_FINE_LOCATION
+                    )) || permissionState == PermissionState.DENIED
+
+                permissionState = if (wasDeniedBefore) PermissionState.DENIED else PermissionState.NOT_ASKED
                 locationInputMode = LocationInputMode.MANUAL_CITY
-                showCityInput = permissionState == PermissionState.DENIED
+                // Jump straight to city input when permission was already denied,
+                // so the user lands on the city card rather than the prompt card.
+                showCityInput = wasDeniedBefore
             }
 
             isRefreshing = false
@@ -112,15 +143,33 @@ fun WeatherScreen(
     ) { permissions ->
         if (permissions.values.any { it }) {
             permissionState = PermissionState.GRANTED_WHILE_IN_USE
+            // Drop the saved city so the newly granted GPS location is used.
+            lastSearchedCity = ""
             refreshWeatherState()
 
             if (!locationProvider.isLocationEnabled()) {
                 showLocationSettingsDialog = true
             }
         } else {
+            // Detect permanent denial: rationale is false AND we already knew we
+            // were DENIED (set during this composable's lifetime).  In that case the
+            // OS won't show a dialog at all, so send the user straight to App Settings.
+            val activity = context as? android.app.Activity
+            val isPermanentlyDenied = activity != null &&
+                !ActivityCompat.shouldShowRequestPermissionRationale(
+                    activity, Manifest.permission.ACCESS_FINE_LOCATION
+                ) && permissionState == PermissionState.DENIED
+
             permissionState = PermissionState.DENIED
             locationInputMode = LocationInputMode.MANUAL_CITY
             showCityInput = true
+
+            if (isPermanentlyDenied) {
+                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = Uri.fromParts("package", context.packageName, null)
+                }
+                context.startActivity(intent)
+            }
         }
     }
 
@@ -129,6 +178,8 @@ fun WeatherScreen(
         when (geocodingState) {
             is GeocodingUiState.Success -> {
                 val success = geocodingState as GeocodingUiState.Success
+                // Persist city so pull-to-refresh re-fetches the same city.
+                lastSearchedCity = success.cityName
                 weatherViewModel.fetchWeather(success.location.latitude, success.location.longitude)
                 // Mark location as available so the LocationDisabledCard branch
                 // doesn't re-appear after a successful city lookup.
@@ -223,11 +274,24 @@ fun WeatherScreen(
         topBar = {
             Header(
                 onNavigateBack = onNavigateBack,
-                onNavigateToRightIcon = {},
+                // When the city-input card is on screen, show a LocationOff icon
+                // in the header so the user can tap to enable location in one tap.
+                onNavigateToRightIcon = { _ ->
+                    if (!locationProvider.hasLocationPermission()) {
+                        locationPermissionLauncher.launch(
+                            arrayOf(
+                                Manifest.permission.ACCESS_COARSE_LOCATION,
+                                Manifest.permission.ACCESS_FINE_LOCATION
+                            )
+                        )
+                    } else {
+                        context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+                    }
+                },
                 clothesData = null,
                 headerText = "Wetter",
-                rightIconContentDescription = null,
-                rightIcon = null
+                rightIconContentDescription = if (lastSearchedCity.isNotBlank() && !showCityInput) "Standort aktivieren" else null,
+                rightIcon = if (lastSearchedCity.isNotBlank() && !showCityInput) Icons.Default.LocationOff else null
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -248,17 +312,20 @@ fun WeatherScreen(
             ) {
                 // Show appropriate UI based on state
                 when {
-                    // Permission not asked yet - show prompt to grant permission
+                    // Permission not asked yet — use the same card as location-disabled,
+                    // wiring the primary button to request permission instead.
                     permissionState == PermissionState.NOT_ASKED -> {
-                        PermissionNotAskedCard(
-                            onRequestPermission = {
+                        LocationAccessCard(
+                            onEnableLocation = {
                                 locationPermissionLauncher.launch(
                                     arrayOf(
                                         Manifest.permission.ACCESS_COARSE_LOCATION,
                                         Manifest.permission.ACCESS_FINE_LOCATION
                                     )
                                 )
-                            }
+                            },
+                            onEnterCity = { showCityInput = true },
+                            enableButtonText = "Standort erlauben"
                         )
                     }
 
@@ -268,7 +335,7 @@ fun WeatherScreen(
                     !isLocationEnabled &&
                     locationInputMode == LocationInputMode.MANUAL_CITY &&
                     !showCityInput -> {
-                        LocationDisabledCard(
+                        LocationAccessCard(
                             onEnableLocation = {
                                 context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
                             },
@@ -276,8 +343,12 @@ fun WeatherScreen(
                         )
                     }
 
-                    // Permission denied or user chose to enter city manually
-                    (permissionState == PermissionState.DENIED || showCityInput) &&
+                    // User chose to enter city manually (or was sent here after
+                    // permission denial). showCityInput is the single source of truth;
+                    // removing the permissionState == DENIED check here means that
+                    // after a successful geocode (showCityInput = false) the weather
+                    // card appears even when the permission is still DENIED.
+                    showCityInput &&
                     locationInputMode == LocationInputMode.MANUAL_CITY -> {
                         CityInputCard(
                             cityName = cityName,
@@ -288,7 +359,10 @@ fun WeatherScreen(
                                     geocodingViewModel.getCityCoordinates(cityName)
                                 }
                             },
-                            onRequestPermission = if (permissionState == PermissionState.DENIED) {
+                            // Show the permission button whenever the app does not
+                            // yet have permission (covers both NOT_ASKED and DENIED).
+                            onRequestPermission = if (permissionState != PermissionState.GRANTED_WHILE_IN_USE &&
+                                permissionState != PermissionState.GRANTED_ONCE) {
                                 {
                                     locationPermissionLauncher.launch(
                                         arrayOf(
@@ -589,47 +663,10 @@ private fun ErrorWeatherCard(
 }
 
 @Composable
-private fun PermissionNotAskedCard(
-    onRequestPermission: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "🏙️",
-                fontSize = 80.sp
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Standort erforderlich",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Erlaube Looksy den Zugriff auf deinen Standort, um das aktuelle Wetter anzuzeigen.",
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = onRequestPermission) {
-                Text("Standort erlauben")
-            }
-        }
-    }
-}
-
-@Composable
-private fun LocationDisabledCard(
+private fun LocationAccessCard(
     onEnableLocation: () -> Unit,
-    onEnterCity: () -> Unit
+    onEnterCity: () -> Unit,
+    enableButtonText: String = "Standort aktivieren"
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -670,7 +707,7 @@ private fun LocationDisabledCard(
                     Text("Stadt eingeben")
                 }
                 Button(onClick = onEnableLocation) {
-                    Text("Standort aktivieren")
+                    Text(enableButtonText)
                 }
             }
         }

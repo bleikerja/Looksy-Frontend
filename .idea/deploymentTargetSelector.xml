@@ -16,9 +16,6 @@
       <SelectionState runConfigName="WeatherIntegrationTest">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="FullOutfitScreenWeatherTest">
-        <option name="selectionMode" value="DROPDOWN" />
-      </SelectionState>
       <SelectionState runConfigName="HeaderModifierTest">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
