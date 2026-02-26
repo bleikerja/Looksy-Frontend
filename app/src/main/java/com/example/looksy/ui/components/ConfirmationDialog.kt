@@ -13,6 +13,7 @@ fun ConfirmationDialog (
     onDismiss: () -> Unit,
     confirmText: String,
     onConfirm: () -> Unit,
+    isDeletion: Boolean,
 
     ) {
     AlertDialog(

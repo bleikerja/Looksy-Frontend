@@ -34,7 +34,9 @@ import com.example.looksy.ui.screens.AddNewClothesScreen
 import com.example.looksy.ui.screens.CameraScreenPermission
 import com.example.looksy.ui.screens.Category
 import com.example.looksy.ui.screens.CategoryItems
+import com.example.looksy.ui.screens.OutfitDetailsScreen
 import com.example.looksy.ui.screens.SavedOutfitsScreen
+import com.example.looksy.ui.screens.OutfitDetailsScreen
 import com.example.looksy.ui.screens.SpecificCategoryScreen
 import com.example.looksy.ui.screens.WashingMachineScreen
 import com.example.looksy.ui.viewmodel.OutfitViewModel
@@ -61,6 +63,8 @@ fun NavGraph(
     var jacketId by remember { mutableStateOf<Int?>(null) }
     var skirtId by remember { mutableStateOf<Int?>(null) }
     var dressId by remember { mutableStateOf<Int?>(null) }
+
+    var editingOutfitId by remember { mutableStateOf<Int?>(null) }
 
     LaunchedEffect(allClothesFromDb) {
         if (listOfNotNull(topId, pantsId, jacketId, skirtId, dressId).isEmpty()){
@@ -458,42 +462,79 @@ fun NavGraph(
             route = Routes.OutfitDetails.route,
             arguments = listOf(navArgument(RouteArgs.ID) { type = NavType.IntType })
         ) { backStackEntry ->
-            // TODO: Outfitdetailansicht
-//            val outfitId = backStackEntry.arguments?.getInt(RouteArgs.ID)
-//            if (outfitId != null) {
-//                val outfitData by outfitViewModel.getOutfitById(outfitId)
-//                    .collectAsState(initial = null)
-//
-//                outfitData?.let { outfit ->
-//                    val outfitTop = outfit.topsId?.let { id -> allClothesFromDb.find { it.id == id } }
-//                    val outfitPants = outfit.pantsId?.let { id -> allClothesFromDb.find { it.id == id } }
-//                    val outfitDress = outfit.dressId?.let { id -> allClothesFromDb.find { it.id == id } }
-//                    val outfitJacket = outfit.jacketId?.let { id -> allClothesFromDb.find { it.id == id } }
-//                    val outfitSkirt = outfit.skirtId?.let { id -> allClothesFromDb.find { it.id == id } }
-//
-//                    FullOutfitScreen(
-//                        top = outfitTop,
-//                        pants = outfitPants,
-//                        jacket = outfitJacket,
-//                        skirt = outfitSkirt,
-//                        dress = outfitDress,
-//                        onClick = { clothesId ->
-//                            navController.navigate(Routes.Details.createRoute(clothesId))
-//                        },
-//                        onConfirm = { wornClothesList ->
-//                            val updatedClothesList = wornClothesList.map { it.copy(clean = false) }
-//                            clothesViewModel.updateAll(updatedClothesList)
-//                            navController.popBackStack()
-//                        },
-//                        onWashingMachine = { navController.navigate(Routes.WashingMachine.route) },
-//                        onGenerateRandom = { },
-//                        onCamera = { navController.navigate(Routes.Scan.createRoute(-1)) }
-//                    )
-//                }
-//            }
+            val outfitId = backStackEntry.arguments?.getInt(RouteArgs.ID)
+            if (outfitId != null) {
+                val outfitData by outfitViewModel.getOutfitById(outfitId)
+                    .collectAsState(initial = null)
+
+                outfitData?.let { outfit ->
+                    val outfitTop = outfit.topsId?.let { id -> allClothesFromDb.find { it.id == id } }
+                    val outfitPants = outfit.pantsId?.let { id -> allClothesFromDb.find { it.id == id } }
+                    val outfitDress = outfit.dressId?.let { id -> allClothesFromDb.find { it.id == id } }
+                    val outfitJacket = outfit.jacketId?.let { id -> allClothesFromDb.find { it.id == id } }
+                    val outfitSkirt = outfit.skirtId?.let { id -> allClothesFromDb.find { it.id == id } }
+
+                    OutfitDetailsScreen(
+                        outfit = outfit,
+                        outfitTop = outfitTop,
+                        outfitPants = outfitPants,
+                        outfitDress = outfitDress,
+                        outfitJacket = outfitJacket,
+                        outfitSkirt = outfitSkirt,
+                        // Button 1: Bearbeiten - Navigiert zu Edit Screen
+                        onEdit = {
+                            editingOutfitId = outfitId
+                            navController.navigate(Routes.EditOutfit.createRoute(outfitId))
+                        },
+                        // Button 2: Löschen - Löscht Outfit und geht zurück
+                        onDelete = {
+                            outfitViewModel.delete(outfit)
+                            navController.popBackStack(Routes.SavedOutfits.route, inclusive = false)
+                        },
+                        // Button 3: Tragen/Auswählen - Setzt Outfit auf Home
+                        onWear = {
+                            topId = outfitTop?.id
+                            pantsId = outfitPants?.id
+                            dressId = outfitDress?.id
+                            jacketId = outfitJacket?.id
+                            skirtId = outfitSkirt?.id
+                            navController.navigate(Routes.Home.route) {
+                                popUpTo(Routes.SavedOutfits.route) { inclusive = false }
+                            }
+                        },
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
+            }
+        }
+
+        composable(
+            route = Routes.EditOutfit.route,
+            arguments = listOf(navArgument(RouteArgs.ID) { type = NavType.IntType })
+        ) { backStackEntry ->
+            val outfitId = backStackEntry.arguments?.getInt(RouteArgs.ID)
+            if (outfitId != null) {
+                val sampleCategories = listOf(
+                    Category("Shirt", R.drawable.shirt_category),
+                    Category("Pants", R.drawable.pants_category),
+                    Category("Glasses", R.drawable.glasses_category),
+                    Category("Shoes", R.drawable.shoes_category),
+                    Category("Watch", R.drawable.watch_category)
+                )
+
+                CategoriesScreen(
+                    categories = sampleCategories,
+                    categoryItems = categoryItems,
+                    onClick = { type ->
+                        val finalRoute = Routes.SpecificCategory.createRoute(type)
+                        navController.navigate(finalRoute)
+                    }
+                )
+            }
+        }
         }
     }
-}
+
 
 fun getClothById(clothes: List<Clothes>, id: Int): Clothes? {
     return clothes.find { it.id == id }

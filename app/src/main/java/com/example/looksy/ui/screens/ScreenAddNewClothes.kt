@@ -15,7 +15,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PhotoCamera
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -112,6 +111,7 @@ fun AddNewClothesScreen(
             dismissText = "Abbrechen",
             onDismiss = { showDeleteDialog = false },
             confirmText = "Löschen",
+            isDeletion = true,
             onConfirm = {
                 onDelete()
                 showDeleteDialog = false
@@ -125,6 +125,7 @@ fun AddNewClothesScreen(
             dismissText = "Nein",
             onDismiss = { showBackDialog = false },
             confirmText = "Ja",
+            isDeletion = false,
             onConfirm = {
                 onNavigateBack()
                 showBackDialog = false

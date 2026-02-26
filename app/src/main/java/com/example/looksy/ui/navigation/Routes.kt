@@ -25,6 +25,12 @@ sealed class Routes(override val route: String) : NavigationDestination {
             return "outfit_details/$id"
         }
     }
+
+    data object EditOutfit : Routes("edit_outfit/{${RouteArgs.ID}}") {
+        fun createRoute(id: Int): String {
+            return "edit_outfit/$id"
+        }
+    }
     
     data object Details : Routes("details/{${RouteArgs.ID}}") {
         fun createRoute(id: Int): String {
