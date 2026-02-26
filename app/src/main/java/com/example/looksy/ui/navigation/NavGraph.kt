@@ -154,7 +154,8 @@ fun NavGraph(
                         skirtId = skirtId,
                         pantsId = pantsId,
                         jacketId = jacketId,
-                        isSynced = false
+                        isSynced = false,
+                        isManuelSaved = true
                     )
                     outfitViewModel.insert(outfitToSave)
                 }
@@ -488,9 +489,10 @@ fun NavGraph(
 
         composable(route = Routes.SavedOutfits.route) {
             val savedOutfits by outfitViewModel.allOutfits.collectAsState(initial = emptyList())
+            val correctDisplayedOutfits = savedOutfits.filter { it.isManuelSaved }
 
             SavedOutfitsScreen(
-                outfits = savedOutfits,
+                outfits = correctDisplayedOutfits,
                 allClothes = allClothesFromDb,
                 onOutfitClick = { outfitId ->
                     navController.navigate(Routes.OutfitDetails.createRoute(outfitId))

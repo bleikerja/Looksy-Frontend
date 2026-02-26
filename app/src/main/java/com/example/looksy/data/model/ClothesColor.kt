@@ -6,23 +6,23 @@ package com.example.looksy.data.model
  */
 enum class ClothesColor(val displayName: String, val kind: Kind) {
     // NEUTRAL
-    Black("Black", Kind.NEUTRAL),
-    White("White", Kind.NEUTRAL),
-    Grey("Grey", Kind.NEUTRAL),
+    Black("Schwarz", Kind.NEUTRAL),
+    White("Weiß", Kind.NEUTRAL),
+    Grey("Grau", Kind.NEUTRAL),
     Navy("Navy", Kind.NEUTRAL),
     // EARTH
     Beige("Beige", Kind.EARTH),
-    Brown("Brown", Kind.EARTH),
-    Olive("Olive", Kind.EARTH),
+    Brown("Braun", Kind.EARTH),
+    Olive("Olivegrün", Kind.EARTH),
     // ACCENT
-    Blue("Blue", Kind.ACCENT),
-    LightBlue("LightBlue", Kind.ACCENT),
-    Green("Green", Kind.ACCENT),
-    Red("Red", Kind.ACCENT),
-    Burgundy("Burgundy", Kind.ACCENT),
-    Pink("Pink", Kind.ACCENT),
-    Purple("Purple", Kind.ACCENT),
-    Yellow("Yellow", Kind.ACCENT),
+    Blue("Blau", Kind.ACCENT),
+    LightBlue("Hellblau", Kind.ACCENT),
+    Green("Grün", Kind.ACCENT),
+    Red("Rot", Kind.ACCENT),
+    Burgundy("Burgunderrot", Kind.ACCENT),
+    Pink("Pink/Rosa", Kind.ACCENT),
+    Purple("Lila/Violett", Kind.ACCENT),
+    Yellow("Gelb", Kind.ACCENT),
     Orange("Orange", Kind.ACCENT);
 
     override fun toString(): String = displayName
