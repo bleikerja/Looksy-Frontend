@@ -18,7 +18,7 @@ class SavedOutfitsScreenTest {
             type = Type.Tops,
             size = Size._M,
             material = Material.Cotton,
-            washingNotes = WashingNotes.Temperature30,
+            washingNotes = listOf(WashingNotes.Temperature30),
             clean = true,
             seasonUsage = Season.Summer,
             imagePath = "path/to/top.jpg"
@@ -28,7 +28,7 @@ class SavedOutfitsScreenTest {
             type = Type.Pants,
             size = Size._M,
             material = Material.jeans,
-            washingNotes = WashingNotes.Temperature40,
+            washingNotes = listOf(WashingNotes.Temperature40),
             clean = true,
             seasonUsage = Season.inBetween,
             imagePath = "path/to/pants.jpg"
@@ -38,7 +38,7 @@ class SavedOutfitsScreenTest {
             type = Type.Dress,
             size = Size._S,
             material = Material.silk,
-            washingNotes = WashingNotes.Temperature30,
+            washingNotes = listOf(WashingNotes.Temperature30),
             clean = true,
             seasonUsage = Season.Summer,
             imagePath = "path/to/dress.jpg"
@@ -48,7 +48,7 @@ class SavedOutfitsScreenTest {
             type = Type.Jacket,
             size = Size._L,
             material = Material.Cotton,
-            washingNotes = WashingNotes.Temperature40,
+            washingNotes = listOf(WashingNotes.Temperature40),
             clean = true,
             seasonUsage = Season.Winter,
             imagePath = "path/to/jacket.jpg"

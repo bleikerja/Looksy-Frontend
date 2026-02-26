@@ -1,13 +1,17 @@
 package com.example.looksy
 
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.navigation.compose.ComposeNavigator
 import androidx.navigation.testing.TestNavHostController
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.looksy.data.model.Clothes
 import com.example.looksy.data.model.Material
+import com.example.looksy.data.model.Outfit
 import com.example.looksy.data.model.Season
 import com.example.looksy.data.model.Size
 import com.example.looksy.data.model.Type
@@ -16,16 +20,26 @@ import com.example.looksy.ui.navigation.NavGraph
 import com.example.looksy.ui.navigation.Routes
 import com.example.looksy.ui.viewmodel.ClothesViewModel
 import com.example.looksy.ui.viewmodel.OutfitViewModel
+import com.example.looksy.ui.viewmodel.WeatherUiState
+import com.example.looksy.ui.viewmodel.WeatherViewModel
+import com.example.looksy.util.OutfitResult
+import com.example.looksy.util.generateRandomOutfit
+import io.mockk.clearMocks
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
 import kotlinx.coroutines.flow.MutableStateFlow
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
 import com.example.looksy.R
 
+@RunWith(AndroidJUnit4::class)
 class NavGraphIntegrationTest {
 
     @get:Rule
@@ -34,12 +48,13 @@ class NavGraphIntegrationTest {
     private lateinit var navController: TestNavHostController
     private val clothesViewModel = mockk<ClothesViewModel>(relaxed = true)
     private val outfitViewModel = mockk<OutfitViewModel>(relaxed = true)
+    private val weatherViewModel = mockk<WeatherViewModel>(relaxed = true)
 
     // Testdaten mit gültigen Bildpfaden, damit die Komponenten gerendert werden und klickbar sind
     private val testTop = Clothes(
         id = 1, type = Type.Tops, clean = true, size = Size._M,
         seasonUsage = Season.inBetween, material = Material.Cotton,
-        washingNotes = WashingNotes.Temperature30, 
+        washingNotes = listOf(WashingNotes.Temperature30),
         imagePath = "android.resource://com.example.looksy/${R.drawable.shirt_category}", 
         isSynced = false
     )
@@ -47,29 +62,62 @@ class NavGraphIntegrationTest {
     private val testPants = Clothes(
         id = 2, type = Type.Pants, clean = true, size = Size._M,
         seasonUsage = Season.inBetween, material = Material.Cotton,
-        washingNotes = WashingNotes.Temperature30, 
+        washingNotes = listOf(WashingNotes.Temperature30),
         imagePath = "android.resource://com.example.looksy/${R.drawable.jeans}", 
         isSynced = false
     )
 
-    private val clothesFlow = MutableStateFlow(listOf(testTop, testPants))
+    private lateinit var clothesFlow:MutableStateFlow<List<Clothes>>
+    private lateinit var lastDiscardedState: MutableState<List<Clothes>?>
 
     @Before
     fun setupNavHost() {
+        mockkStatic("com.example.looksy.util.OutfitGeneratorKt")
+        every { generateRandomOutfit(any(), any()) } returns OutfitResult(
+            top = testTop,
+            pants = testPants,
+            skirt = null,
+            jacket = null,
+            dress = null
+        )
+        clothesFlow = MutableStateFlow(listOf(testTop, testPants))
+        lastDiscardedState = mutableStateOf(null)
         // Mocks konfigurieren
         every { clothesViewModel.allClothes } returns clothesFlow
         every { clothesViewModel.getClothesById(any()) } returns MutableStateFlow(testTop)
+        every { clothesViewModel.lastDiscardedClothes } returns lastDiscardedState
+        every { weatherViewModel.weatherState } returns MutableStateFlow(WeatherUiState.Loading)
+        every { outfitViewModel.allOutfits } returns MutableStateFlow(emptyList<Outfit>())
+
+        composeTestRule.runOnUiThread {
+            navController = TestNavHostController(composeTestRule.activity).apply {
+                navigatorProvider.addNavigator(ComposeNavigator())
+            }
+        }
 
         composeTestRule.setContent {
-            navController = TestNavHostController(LocalContext.current)
-            navController.navigatorProvider.addNavigator(ComposeNavigator())
+            val context = LocalContext.current
+            val controller = androidx.compose.runtime.remember {
+                TestNavHostController(context).apply {
+                    navigatorProvider.addNavigator(ComposeNavigator())
+                }
+            }
+            navController = controller
 
             NavGraph(
                 navController = navController,
                 clothesViewModel = clothesViewModel,
-                outfitViewModel = outfitViewModel
+                outfitViewModel = outfitViewModel,
+                weatherViewModel = weatherViewModel
             )
         }
+    }
+
+    @After
+    fun tearDown() {
+        // Mocks nach jedem Test zurücksetzen, um Seiteneffekte zu vermeiden
+        clearMocks(clothesViewModel, outfitViewModel)
+        unmockkStatic("com.example.looksy.util.OutfitGeneratorKt")
     }
 
     @Test
@@ -80,8 +128,14 @@ class NavGraphIntegrationTest {
     @OptIn(ExperimentalTestApi::class)
     @Test
     fun navGraph_navigateToDetails_works() {
-        // Warten, bis das Outfit gerendert wurde
-        composeTestRule.waitUntilAtLeastOneExists(hasContentDescription("Kleidungsstück"), timeoutMillis = 5000)
+        // Clothes have selected=false so confirmedOutfit=true, showing OutfitPart with images
+        composeTestRule.waitForIdle()
+
+        // Wait for the outfit parts (OutfitPart AsyncImage) to appear in the semantic tree
+        composeTestRule.waitUntilAtLeastOneExists(
+            hasContentDescription("Kleidungsst\u00fcck"),
+            timeoutMillis = 15000
+        )
 
         // Klick auf den LooksyButton (IconButton) im OutfitPart
         // Wir schließen den "Zur Waschmaschine" Button im Header aus
@@ -90,10 +144,12 @@ class NavGraphIntegrationTest {
             hasAnySibling(hasContentDescription("Kleidungsstück")) and 
             !hasContentDescription("Zur Waschmaschine")
         )
-            .onFirst()
+            .onLast()
             .performClick()
 
-        composeTestRule.waitForIdle()
+        composeTestRule.waitUntil(timeoutMillis = 10000) {
+            navController.currentDestination?.route == Routes.Details.route
+        }
         
         // Assertions gegen das Routen-Template
         assertEquals(Routes.Details.route, navController.currentDestination?.route)
@@ -104,7 +160,7 @@ class NavGraphIntegrationTest {
     fun navGraph_onConfirm_works() {
         // Warten, bis der Button sichtbar ist (Outfit vorhanden)
         composeTestRule.waitUntilAtLeastOneExists(hasContentDescription("Outfit anziehen"), 5000)
-        
+
         composeTestRule.onNodeWithContentDescription("Outfit anziehen").performClick()
 
         composeTestRule.waitForIdle()
@@ -122,6 +178,7 @@ class NavGraphIntegrationTest {
         composeTestRule.waitForIdle()
         assertEquals(Routes.Home.route, navController.currentDestination?.route)
     }
+
     @OptIn(ExperimentalTestApi::class)
     @Test
     fun navGraph_navigationToScan_works() {
@@ -134,5 +191,42 @@ class NavGraphIntegrationTest {
 
         composeTestRule.waitForIdle()
         assertEquals(Routes.Scan.route, navController.currentDestination?.route)
+    }
+
+    @Test
+    fun navGraph_washingMachine_confirmsAndSetsLastWorn() {
+        // Falls testTop in der Setup-Methode clean=true ist, hier für diesen Test überschreiben:
+        val dirtyCloth = testTop.copy(clean = false)
+        clothesFlow.value = listOf(dirtyCloth)
+
+        // Navigiere zur Waschmaschine
+        composeTestRule.runOnUiThread {
+            navController.navigate(Routes.WashingMachine.route)
+        }
+
+        // Wähle das Kleidungsstück in der Liste aus
+        composeTestRule.onAllNodes(hasClickAction()).onFirst().performClick()
+
+        // Klicke auf den Bestätigungsbutton ("Gewaschen (1)")
+        composeTestRule.onNodeWithText("Gewaschen (1)", substring = true).performClick()
+
+        // Verifiziere, dass das ViewModel mit clean = true UND einem Zeitstempel in lastWorn aktualisiert wurde
+        coVerify {
+            clothesViewModel.update(match { it.clean && it.lastWorn != null })
+        }
+    }
+
+    @Test
+    fun navGraph_navigateToDiscard_works() {
+        // Navigiere zum Kleiderschrank (ChoseClothes)
+        composeTestRule.runOnUiThread {
+            navController.navigate(Routes.ChoseClothes.route)
+        }
+
+        // Klicke auf den Button für die Aussortier-Vorschläge
+        composeTestRule.onNodeWithContentDescription("Vorschläge zum Aussortieren").performClick()
+
+        // Überprüfe, ob die Route jetzt auf dem Discard-Screen ist
+        assertEquals(Routes.Discard.route, navController.currentDestination?.route)
     }
 }

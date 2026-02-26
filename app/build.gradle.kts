@@ -2,7 +2,6 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
 }
@@ -43,12 +42,11 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions {
-        jvmTarget = "11"
+
+    kotlin {
+        jvmToolchain(11)
     }
-    buildFeatures {
-        compose = true
-    }
+
     testOptions {
         unitTests.isReturnDefaultValues = true
     }
@@ -63,6 +61,12 @@ android {
         excludes += "/META-INF/LICENSE.txt"
         excludes += "/META-INF/NOTICE.txt"
     }
+    }
+}
+
+configurations.all {
+    resolutionStrategy {
+        force("androidx.test.espresso:espresso-core:3.7.0")
     }
 }
 
@@ -88,11 +92,8 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.compose.foundation.layout)
-    implementation(libs.androidx.navigation.testing)
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.navigation.compose)
-    implementation(libs.androidx.material.icons.extended)
-    implementation(libs.androidx.navigation.testing)
 
     // Test dependencies
     testImplementation(libs.junit)
@@ -104,9 +105,11 @@ dependencies {
 
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.androidx.rules)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
-    androidTestImplementation("io.mockk:mockk-android:1.13.11")
+    androidTestImplementation(libs.androidx.navigation.testing)
+    //androidTestImplementation(libs.mockk.android.v11311)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation(libs.retrofit.core)

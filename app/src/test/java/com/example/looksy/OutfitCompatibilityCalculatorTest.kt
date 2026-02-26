@@ -1,6 +1,7 @@
 package com.example.looksy
 
 import com.example.looksy.data.model.Clothes
+import com.example.looksy.data.model.ClothesColor
 import com.example.looksy.data.model.Material
 import com.example.looksy.data.model.Season
 import com.example.looksy.data.model.Size
@@ -20,7 +21,8 @@ class OutfitCompatibilityCalculatorTest {
         season: Season = Season.Summer,
         type: Type = Type.Tops,
         material: Material = Material.Cotton,
-        clean: Boolean = true
+        clean: Boolean = true,
+        color: ClothesColor? = null
     ): Clothes {
         return Clothes(
             id = id,
@@ -28,8 +30,9 @@ class OutfitCompatibilityCalculatorTest {
             seasonUsage = season,
             type = type,
             material = material,
+            color = color,
             clean = clean,
-            washingNotes = WashingNotes.Temperature30,
+            washingNotes = listOf(WashingNotes.Temperature30),
             imagePath = "",
             isSynced = false
         )
@@ -358,6 +361,29 @@ class OutfitCompatibilityCalculatorTest {
 
         // Then - Score should be lower due to incomplete outfit (type 50 points * 20% = 10 points, total score around 90 points even with other high factors)
         assertTrue("Score should be lower for incomplete outfit", score < 95)
+    }
+
+    @Test
+    fun `three different ACCENT colors yields score 0`() {
+        val top = createClothes(id = 1, type = Type.Tops, color = ClothesColor.Red)
+        val pants = createClothes(id = 2, type = Type.Pants, color = ClothesColor.Blue)
+        val jacket = createClothes(id = 3, type = Type.Jacket, color = ClothesColor.Yellow)
+        val outfit = OutfitResult(top, pants, null, jacket, null)
+
+        assertEquals(0, OutfitCompatibilityCalculator.calculateCompatibilityScore(outfit))
+        assertFalse(OutfitCompatibilityCalculator.isOutfitColorCompatible(outfit))
+    }
+
+    @Test
+    fun `two ACCENT and one NEUTRAL yields score greater than 0`() {
+        val top = createClothes(id = 1, type = Type.Tops, color = ClothesColor.Red)
+        val pants = createClothes(id = 2, type = Type.Pants, color = ClothesColor.Blue)
+        val jacket = createClothes(id = 3, type = Type.Jacket, color = ClothesColor.Black)
+        val outfit = OutfitResult(top, pants, null, jacket, null)
+
+        val score = OutfitCompatibilityCalculator.calculateCompatibilityScore(outfit)
+        assertTrue("Score should be > 0 for 2 ACCENT + NEUTRAL", score > 0)
+        assertTrue(OutfitCompatibilityCalculator.isOutfitColorCompatible(outfit))
     }
 
     @Test

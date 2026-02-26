@@ -21,6 +21,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -45,22 +47,16 @@ data class Category(val name: String, val iconRes: Int)
 data class Item(val name: String, val imageRes: Int)
 data class CategoryItems(val category: Type, val items: List<Clothes>)
 
-var NavFunction: (String) -> Unit = {}
-
-var onButtonClickedLocal: (Int) -> Unit = {}
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoriesScreen(
     categories: List<Category>,
     categoryItems: List<CategoryItems>,
-    //navBar: @Composable () -> Unit,
     onClick: (String) -> Unit = {},
     onButtonClicked: (Int) -> Unit = {},
+    onNavigateToDiscard: () -> Unit = {}
 ) {
-    onButtonClickedLocal=onButtonClicked
-    NavFunction = onClick
     Scaffold(
-
     ) { padding ->
         Column(modifier = Modifier
             .padding(padding)
@@ -70,18 +66,20 @@ fun CategoriesScreen(
         ) {
             Header(
                 onNavigateBack = { },
-                onNavigateToRightIcon = { },
+                onNavigateToRightIcon = { onNavigateToDiscard() },
                 clothesData = null,
                 headerText = "Dein Kleiderschrank",
-                rightIconContentDescription = null,
-                rightIcon = null,
+                rightIconContentDescription = "Vorschläge zum Aussortieren",
+                rightIcon = Icons.Default.DeleteSweep,
                 isFirstHeader = true
             )
             //CategoriesBlock(categories = categories)
             Spacer(modifier = Modifier.height(25.dp))
             ItemsContainer(
                 categoryItems = categoryItems,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                onButtonClicked = onButtonClicked,
+                onClick = onClick
             )
         }
     }
@@ -126,7 +124,12 @@ fun CategoryIcon(category: Category) {
 }
 
 @Composable
-fun ItemsContainer(categoryItems: List<CategoryItems>, modifier: Modifier = Modifier) {
+fun ItemsContainer(
+    categoryItems: List<CategoryItems>,
+    modifier: Modifier = Modifier,
+    onButtonClicked: (Int) -> Unit,
+    onClick: (String) -> Unit
+) {
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -136,21 +139,27 @@ fun ItemsContainer(categoryItems: List<CategoryItems>, modifier: Modifier = Modi
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         categoryItems.forEach { categoryItem ->
-            ItemsBlock(categoryItem = categoryItem)
+            ItemsBlock(
+                categoryItem = categoryItem,
+                onButtonClicked = onButtonClicked,
+                onClick = onClick
+            )
         }
     }
 }
 
 @Composable
-fun ItemsBlock(categoryItem: CategoryItems) {
+fun ItemsBlock(categoryItem: CategoryItems, onButtonClicked: (Int) -> Unit, onClick: (String) -> Unit) {
     Column {
-        ItemsTitle(categoryItem = categoryItem)
+        ItemsTitle(categoryItem = categoryItem, onClick = onClick)
         Spacer(modifier = Modifier.height(8.dp))
         Row(
             //columns = GridCells.Fixed(2),
             horizontalArrangement = Arrangement.spacedBy(5.dp),
             //verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.height(170.dp).horizontalScroll(rememberScrollState())
+            modifier = Modifier
+                .height(170.dp)
+                .horizontalScroll(rememberScrollState())
         ) {
             categoryItem.items.forEach { item ->
                 ItemContainer(
@@ -160,7 +169,7 @@ fun ItemsBlock(categoryItem: CategoryItems) {
                         .clip(RoundedCornerShape(20.dp))
                         .background(Color(255, 255, 255))
                         .padding(16.dp),
-                    onClick = { onButtonClickedLocal(item.id) }
+                    onClick = { onButtonClicked(item.id) }
                 )
             }
         }
@@ -168,7 +177,7 @@ fun ItemsBlock(categoryItem: CategoryItems) {
 }
 
 @Composable
-fun ItemsTitle(categoryItem: CategoryItems) {
+fun ItemsTitle(categoryItem: CategoryItems, onClick: (String) -> Unit ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -181,7 +190,7 @@ fun ItemsTitle(categoryItem: CategoryItems) {
         )
 
         LooksyButton(
-            onClick = { NavFunction(categoryItem.category.name) },
+            onClick = { onClick(categoryItem.category.name) },
             picture = {
                 Image(
                     painter = painterResource(id = R.drawable.arrow),

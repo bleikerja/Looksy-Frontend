@@ -27,9 +27,10 @@ fun Header(
     rightIcon: ImageVector?,
     rightIconSize: Float = 1F,
     isFirstHeader: Boolean = false,
+    modifier: Modifier = Modifier
 ) {
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(8.dp),
         contentAlignment = Alignment.Center
