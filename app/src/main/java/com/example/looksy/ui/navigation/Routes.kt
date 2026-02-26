@@ -21,6 +21,8 @@ sealed class Routes(override val route: String) : NavigationDestination {
     data object WashingMachine : Routes("washing_machine")
     data object Discard : Routes("discard")
     
+    data object Weather : Routes("weather")
+    
     data object OutfitDetails : Routes("outfit_details/{${RouteArgs.ID}}") {
         fun createRoute(id: Int): String {
             return "outfit_details/$id"
@@ -51,6 +53,6 @@ sealed class Routes(override val route: String) : NavigationDestination {
     }
 
     data object Scan : Routes("scan/{${RouteArgs.ID}}") {
-        fun createRoute(id: Int?) = "scan/$id"
+        fun createRoute(id: Int? = -1) = "scan/$id"
     }
 }

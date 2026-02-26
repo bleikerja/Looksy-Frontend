@@ -1,6 +1,7 @@
 package com.example.looksy.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,18 +13,25 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Create
+import androidx.compose.material.icons.filled.DomainDisabled
 import androidx.compose.material.icons.filled.LocalLaundryService
+import androidx.compose.material.icons.filled.LocationOff
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Shuffle
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -42,19 +50,25 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.example.looksy.data.location.PermissionState
 import com.example.looksy.ui.components.LooksyButton
 import com.example.looksy.data.model.Clothes
 import com.example.looksy.ui.components.Header
 import com.example.looksy.ui.theme.LooksyTheme
+import com.example.looksy.ui.viewmodel.WeatherUiState
 import com.example.looksy.util.OutfitCompatibilityCalculator
 import com.example.looksy.util.OutfitResult
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,7 +84,11 @@ fun FullOutfitScreen(
     onWashingMachine: () -> Unit = {},
     onGenerateRandom: () -> Unit = {},
     onCamera: () -> Unit = {},
-    onSave: () -> Unit = {}
+    onSave: () -> Unit = {},
+    weatherState: WeatherUiState = WeatherUiState.Loading,
+    permissionState: PermissionState = PermissionState.NOT_ASKED,
+    isLocationEnabled: Boolean = true,
+    onWeatherClick: () -> Unit = {}
 ) {
     if ((top != null || dress != null) && (pants != null || skirt != null)) {
         val snackbarHostState = remember { SnackbarHostState() }
@@ -85,15 +103,31 @@ fun FullOutfitScreen(
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Header(
-                    onNavigateBack = {},
-                    onNavigateToRightIcon = { onWashingMachine() },
-                    clothesData = null,
-                    headerText = "Heutiges Outfit",
-                    rightIconContentDescription = "Zur Waschmaschine",
-                    rightIcon = Icons.Default.LocalLaundryService,
-                    isFirstHeader = true
-                )
+
+                Box(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    // Weather Icon Row on the left
+                    WeatherIconRow(
+                        weatherState = weatherState,
+                        permissionState = permissionState,
+                        isLocationEnabled = isLocationEnabled,
+                        onClick = onWeatherClick,
+                        modifier = Modifier.align(Alignment.CenterStart)
+                    )
+
+                    // Header stays centered
+                    Header(
+                        onNavigateBack = {},
+                        onNavigateToRightIcon = { onWashingMachine() },
+                        clothesData = null,
+                        headerText = "Heutiges Outfit",
+                        rightIconContentDescription = "Zur Waschmaschine",
+                        rightIcon = Icons.Default.LocalLaundryService,
+                        isFirstHeader = true,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -278,6 +312,16 @@ fun FullOutfitScreen(
         }
     } else {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            WeatherIconRow(
+                weatherState = weatherState,
+                permissionState = permissionState,
+                isLocationEnabled = isLocationEnabled,
+                onClick = onWeatherClick,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(start = 16.dp, top = 16.dp)
+            )
+
             IconButton(
                 onClick = onGenerateRandom,
                 modifier = Modifier
@@ -333,6 +377,139 @@ fun OutfitPart(imageResId: Any?, onClick: () -> Unit, modifier: Modifier = Modif
             onClick = onClick,
             modifier = Modifier.align(Alignment.CenterVertically),
             picture = { Icon(Icons.Default.Create, contentDescription = "Bearbeiten") })
+    }
+}
+
+@Composable
+private fun WeatherIconRow(
+    weatherState: WeatherUiState,
+    permissionState: PermissionState,
+    isLocationEnabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 8.dp, horizontal = 12.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        when {
+            // Permission not asked yet - show crossed city icon
+            permissionState == PermissionState.NOT_ASKED -> {
+                Spacer(modifier = Modifier.width(20.dp))
+                Icon(
+                    imageVector = Icons.Default.DomainDisabled,
+                    contentDescription = "Standortzugriff erforderlich",
+                    modifier = Modifier.size(24.dp),
+                    tint = MaterialTheme.colorScheme.tertiary
+                )
+            }
+
+            // Permission granted but location is off
+            (permissionState == PermissionState.GRANTED_WHILE_IN_USE ||
+             permissionState == PermissionState.GRANTED_ONCE) &&
+            !isLocationEnabled -> {
+                Spacer(modifier = Modifier.width(20.dp))
+                Icon(
+                    imageVector = Icons.Default.LocationOff,
+                    contentDescription = "Standort aktivieren",
+                    modifier = Modifier.size(24.dp),
+                    tint = MaterialTheme.colorScheme.tertiary
+                )
+            }
+
+            // Permission denied - show icon indicating no permission
+            permissionState == PermissionState.DENIED -> {
+                Spacer(modifier = Modifier.width(20.dp))
+                Text(
+                    text = "📍❌",
+                    fontSize = 24.sp
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Wetter",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+            }
+
+            // Normal weather states
+            else -> {
+                when (weatherState) {
+                    is WeatherUiState.Loading -> {
+                        // More compact loading state to fit in left space
+                        Spacer(modifier = Modifier.width(20.dp))
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .size(24.dp)
+                                .testTag("weather_loading"),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+
+                    is WeatherUiState.Success -> {
+                        // Weather icon based on conditions
+                        Text(
+                            text = getWeatherEmoji(weatherState.weather.description),
+                            fontSize = 28.sp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        // Temperature
+                        Text(
+                            text = "${weatherState.weather.temperature.roundToInt()}°C",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                    }
+
+                    is WeatherUiState.Error -> {
+                        Icon(
+                            imageVector = Icons.Default.CloudOff,
+                            contentDescription = "Weather unavailable",
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Wetter nicht verfügbar",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+            }
+        }
+
+        // Subtle indicator to click
+        Spacer(modifier = Modifier.width(8.dp))
+        Icon(
+            imageVector = Icons.Default.ChevronRight,
+            contentDescription = "Details anzeigen",
+            modifier = Modifier.size(16.dp),
+            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+        )
+    }
+}
+
+// Helper function to map weather descriptions to emojis
+private fun getWeatherEmoji(description: String): String {
+    return when {
+        description.contains("clear", ignoreCase = true) -> "☀️"
+        description.contains("cloud", ignoreCase = true) -> "☁️"
+        description.contains("rain", ignoreCase = true) -> "🌧️"
+        description.contains("drizzle", ignoreCase = true) -> "🌦️"
+        description.contains("thunder", ignoreCase = true) -> "⛈️"
+        description.contains("snow", ignoreCase = true) -> "❄️"
+        description.contains("mist", ignoreCase = true) ||
+        description.contains("fog", ignoreCase = true) -> "🌫️"
+        else -> "🌤️"
     }
 }
 

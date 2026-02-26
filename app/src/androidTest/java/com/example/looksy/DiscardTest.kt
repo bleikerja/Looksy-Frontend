@@ -13,6 +13,8 @@ import com.example.looksy.ui.navigation.NavGraph
 import com.example.looksy.ui.navigation.Routes
 import com.example.looksy.ui.viewmodel.ClothesViewModel
 import com.example.looksy.ui.viewmodel.OutfitViewModel
+import com.example.looksy.ui.viewmodel.WeatherUiState
+import com.example.looksy.ui.viewmodel.WeatherViewModel
 import io.mockk.clearMocks
 import io.mockk.coVerify
 import io.mockk.every
@@ -34,6 +36,7 @@ class DiscardTest {
 
     private val clothesViewModel = mockk<ClothesViewModel>(relaxed = true)
     private val outfitViewModel = mockk<OutfitViewModel>(relaxed = true)
+    private val weatherViewModel = mockk<WeatherViewModel>(relaxed = true)
     private lateinit var navController: TestNavHostController
 
     private val now = System.currentTimeMillis()
@@ -71,6 +74,7 @@ class DiscardTest {
     fun setup() {
         every { clothesViewModel.lastDiscardedClothes } returns lastDiscardedState
         every { clothesViewModel.allClothes } returns clothesFlow
+        every { weatherViewModel.weatherState } returns MutableStateFlow(WeatherUiState.Loading)
         //every { clothesViewModel.lastDiscardedClothes } returns mutableStateOf(null)
 
         composeTestRule.setContent {
@@ -80,7 +84,8 @@ class DiscardTest {
             NavGraph(
                 navController = navController,
                 clothesViewModel = clothesViewModel,
-                outfitViewModel = outfitViewModel
+                outfitViewModel = outfitViewModel,
+                weatherViewModel = weatherViewModel
             )
         }
     }

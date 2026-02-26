@@ -26,6 +26,7 @@ playServicesLocation = "21.3.0"
 navigationTesting = "2.9.7"
 mockkAndroid = "1.14.9"
 uiTestJunit4 = "1.10.2"
+rules = "1.7.0"
 
 [libraries]
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissions" }
@@ -67,6 +68,7 @@ androidx-navigation-testing = { group = "androidx.navigation", name = "navigatio
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutinesTest" }
 mockk-android = { module = "io.mockk:mockk-android", version.ref = "mockkAndroid" }
 androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4", version.ref = "uiTestJunit4" }
+androidx-rules = { group = "androidx.test", name = "rules", version.ref = "rules" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

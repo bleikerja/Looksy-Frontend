@@ -12,6 +12,8 @@ import com.example.looksy.ui.navigation.NavGraph
 import com.example.looksy.ui.navigation.Routes
 import com.example.looksy.ui.viewmodel.ClothesViewModel
 import com.example.looksy.ui.viewmodel.OutfitViewModel
+import com.example.looksy.ui.viewmodel.WeatherUiState
+import com.example.looksy.ui.viewmodel.WeatherViewModel
 import com.example.looksy.util.OutfitResult
 import com.example.looksy.util.generateRandomOutfit
 import io.mockk.coEvery
@@ -37,6 +39,8 @@ class NavGraphTest {
 
     private val clothesViewModel = mockk<ClothesViewModel>(relaxed = true)
     private val outfitViewModel = mockk<OutfitViewModel>(relaxed = true)
+
+    private val weatherViewModel = mockk<WeatherViewModel>(relaxed = true)
     private lateinit var navController: TestNavHostController
 
     private val testTop = Clothes(
@@ -89,6 +93,7 @@ class NavGraphTest {
             dress = null
         )
         every { clothesViewModel.allClothes } returns clothesFlow
+        every { weatherViewModel.weatherState } returns MutableStateFlow(WeatherUiState.Loading)
 
         every { clothesViewModel.getClothesById(any()) } answers {
             val id = it.invocation.args[0] as Int
@@ -144,7 +149,8 @@ class NavGraphTest {
             NavGraph(
                 navController = navController,
                 clothesViewModel = clothesViewModel,
-                outfitViewModel = outfitViewModel
+                outfitViewModel = outfitViewModel,
+                weatherViewModel = weatherViewModel
             )
         }
     }

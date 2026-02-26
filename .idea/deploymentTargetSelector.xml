@@ -13,16 +13,16 @@
         </DropdownSelection>
         <DialogSelection />
       </SelectionState>
-      <SelectionState runConfigName="All Tests">
+      <SelectionState runConfigName="WeatherIntegrationTest">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="OutfitGeneratorTest">
+      <SelectionState runConfigName="HeaderModifierTest">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="outfitsAreChosenImGenerator()">
+      <SelectionState runConfigName="LocationProviderInstrumentedTest">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="Tests in 'com.example.looksy'">
+      <SelectionState runConfigName="WeatherScreenTest">
         <option name="selectionMode" value="DROPDOWN" />
         <DropdownSelection timestamp="2026-02-12T11:55:16.924757600Z">
           <Target type="DEFAULT_BOOT">

@@ -17,19 +17,26 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.example.looksy.LooksyApplication
+import com.example.looksy.data.location.PermissionState
 import com.example.looksy.ui.screens.CategoriesScreen
 import com.example.looksy.ui.screens.ClothInformationScreen
 import com.example.looksy.ui.screens.FullOutfitScreen
+import com.example.looksy.ui.screens.WeatherScreen
 import com.example.looksy.R
 import com.example.looksy.data.model.Clothes
 import com.example.looksy.data.model.Outfit
 import com.example.looksy.data.model.Type
 import com.example.looksy.ui.viewmodel.ClothesViewModel
+import com.example.looksy.ui.viewmodel.GeocodingViewModel
+import com.example.looksy.ui.viewmodel.GeocodingViewModelFactory
+import com.example.looksy.ui.viewmodel.WeatherViewModel
 import com.example.looksy.ui.screens.AddNewClothesScreen
 import com.example.looksy.ui.screens.CameraScreen
 import com.example.looksy.ui.screens.Category
@@ -50,7 +57,8 @@ fun NavGraph(
     navController: NavHostController,
     modifier: Modifier = Modifier,
     clothesViewModel: ClothesViewModel,
-    outfitViewModel: OutfitViewModel
+    outfitViewModel: OutfitViewModel,
+    weatherViewModel: WeatherViewModel
 ) {
     val allClothesFromDb by clothesViewModel.allClothes.collectAsState(initial = emptyList())
     val allOutfitsFromDb by outfitViewModel.allOutfits.collectAsState(initial = emptyList())
@@ -64,6 +72,10 @@ fun NavGraph(
     var jacketId by remember { mutableStateOf<Int?>(null) }
     var skirtId by remember { mutableStateOf<Int?>(null) }
     var dressId by remember { mutableStateOf<Int?>(null) }
+    
+    // Track permission and location state for weather
+    var permissionState by remember { mutableStateOf(PermissionState.NOT_ASKED) }
+    var isLocationEnabled by remember { mutableStateOf(true) }
 
     LaunchedEffect(allClothesFromDb) {
         if (listOfNotNull(topId, pantsId, jacketId, skirtId, dressId).isEmpty()){
@@ -90,12 +102,43 @@ fun NavGraph(
         modifier = modifier
     ) {
         composable(Routes.Home.route) {
+
+            val application = LocalContext.current.applicationContext as LooksyApplication
+            val weatherState by weatherViewModel.weatherState.collectAsState()
+            val scope = rememberCoroutineScope()
+
+            // Update permission and location state
+            LaunchedEffect(Unit) {
+                if (application.locationProvider.hasLocationPermission()) {
+                    permissionState = PermissionState.GRANTED_WHILE_IN_USE
+                    isLocationEnabled = application.locationProvider.isLocationEnabled()
+                } else {
+                    permissionState = PermissionState.NOT_ASKED
+                }
+            }
+
+            // Fetch weather on launch if location permission is granted and location is on
+            LaunchedEffect(Unit) {
+                if (application.locationProvider.hasLocationPermission()) {
+                    isLocationEnabled = application.locationProvider.isLocationEnabled()
+                    if (isLocationEnabled) {
+                        application.locationProvider.getCurrentLocation().onSuccess { location ->
+                            weatherViewModel.fetchWeather(location.latitude, location.longitude)
+                        }
+                    }
+                }
+            }
+
             FullOutfitScreen(
                 top = getClothById(allClothesFromDb, topId ?: -1),
                 pants = getClothById(allClothesFromDb, pantsId ?: -1),
                 jacket = getClothById(allClothesFromDb, jacketId ?: -1),
                 skirt = getClothById(allClothesFromDb, skirtId ?: -1),
                 dress = getClothById(allClothesFromDb, dressId ?: -1),
+                weatherState = weatherState,
+                permissionState = permissionState,
+                isLocationEnabled = isLocationEnabled,
+                onWeatherClick = { navController.navigate(Routes.Weather.route) },
                 onClick = { clothesId ->
                     navController.navigate(Routes.Details.createRoute(clothesId))
                 },
@@ -536,6 +579,20 @@ fun NavGraph(
                     )
                 }
             }
+        }
+
+        composable(route = Routes.Weather.route) {
+            val application = LocalContext.current.applicationContext as LooksyApplication
+            val geocodingViewModel: GeocodingViewModel = viewModel(
+                factory = GeocodingViewModelFactory(application.geocodingRepository)
+            )
+
+            WeatherScreen(
+                weatherViewModel = weatherViewModel,
+                geocodingViewModel = geocodingViewModel,
+                locationProvider = application.locationProvider,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
     }
 }

@@ -8,8 +8,10 @@ import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.navigation.compose.ComposeNavigator
 import androidx.navigation.testing.TestNavHostController
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.looksy.data.model.Clothes
 import com.example.looksy.data.model.Material
+import com.example.looksy.data.model.Outfit
 import com.example.looksy.data.model.Season
 import com.example.looksy.data.model.Size
 import com.example.looksy.data.model.Type
@@ -18,18 +20,26 @@ import com.example.looksy.ui.navigation.NavGraph
 import com.example.looksy.ui.navigation.Routes
 import com.example.looksy.ui.viewmodel.ClothesViewModel
 import com.example.looksy.ui.viewmodel.OutfitViewModel
+import com.example.looksy.ui.viewmodel.WeatherUiState
+import com.example.looksy.ui.viewmodel.WeatherViewModel
+import com.example.looksy.util.OutfitResult
+import com.example.looksy.util.generateRandomOutfit
+import io.mockk.clearMocks
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
 import kotlinx.coroutines.flow.MutableStateFlow
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
 import com.example.looksy.R
-import io.mockk.clearMocks
-import org.junit.After
 
+@RunWith(AndroidJUnit4::class)
 class NavGraphIntegrationTest {
 
     @get:Rule
@@ -38,6 +48,7 @@ class NavGraphIntegrationTest {
     private lateinit var navController: TestNavHostController
     private val clothesViewModel = mockk<ClothesViewModel>(relaxed = true)
     private val outfitViewModel = mockk<OutfitViewModel>(relaxed = true)
+    private val weatherViewModel = mockk<WeatherViewModel>(relaxed = true)
 
     // Testdaten mit gültigen Bildpfaden, damit die Komponenten gerendert werden und klickbar sind
     private val testTop = Clothes(
@@ -61,12 +72,22 @@ class NavGraphIntegrationTest {
 
     @Before
     fun setupNavHost() {
+        mockkStatic("com.example.looksy.util.OutfitGeneratorKt")
+        every { generateRandomOutfit(any(), any()) } returns OutfitResult(
+            top = testTop,
+            pants = testPants,
+            skirt = null,
+            jacket = null,
+            dress = null
+        )
         clothesFlow = MutableStateFlow(listOf(testTop, testPants))
         lastDiscardedState = mutableStateOf(null)
         // Mocks konfigurieren
         every { clothesViewModel.allClothes } returns clothesFlow
         every { clothesViewModel.getClothesById(any()) } returns MutableStateFlow(testTop)
         every { clothesViewModel.lastDiscardedClothes } returns lastDiscardedState
+        every { weatherViewModel.weatherState } returns MutableStateFlow(WeatherUiState.Loading)
+        every { outfitViewModel.allOutfits } returns MutableStateFlow(emptyList<Outfit>())
 
         composeTestRule.runOnUiThread {
             navController = TestNavHostController(composeTestRule.activity).apply {
@@ -86,7 +107,8 @@ class NavGraphIntegrationTest {
             NavGraph(
                 navController = navController,
                 clothesViewModel = clothesViewModel,
-                outfitViewModel = outfitViewModel
+                outfitViewModel = outfitViewModel,
+                weatherViewModel = weatherViewModel
             )
         }
     }
@@ -95,6 +117,7 @@ class NavGraphIntegrationTest {
     fun tearDown() {
         // Mocks nach jedem Test zurücksetzen, um Seiteneffekte zu vermeiden
         clearMocks(clothesViewModel, outfitViewModel)
+        unmockkStatic("com.example.looksy.util.OutfitGeneratorKt")
     }
 
     @Test
@@ -105,14 +128,14 @@ class NavGraphIntegrationTest {
     @OptIn(ExperimentalTestApi::class)
     @Test
     fun navGraph_navigateToDetails_works() {
-        // Erzwinge den Zustand "Outfit ausgewählt"
-        val selectedTop = testTop.copy(selected = true)
-        val selectedPants = testPants.copy(selected = true)
-        clothesFlow.value = listOf(selectedTop, selectedPants)
+        // Clothes have selected=false so confirmedOutfit=true, showing OutfitPart with images
         composeTestRule.waitForIdle()
 
-        // Warten, bis das Outfit gerendert wurde
-        composeTestRule.waitUntilAtLeastOneExists(hasContentDescription("Kleidungsstück"), timeoutMillis = 10000)
+        // Wait for the outfit parts (OutfitPart AsyncImage) to appear in the semantic tree
+        composeTestRule.waitUntilAtLeastOneExists(
+            hasContentDescription("Kleidungsst\u00fcck"),
+            timeoutMillis = 15000
+        )
 
         // Klick auf den LooksyButton (IconButton) im OutfitPart
         // Wir schließen den "Zur Waschmaschine" Button im Header aus
