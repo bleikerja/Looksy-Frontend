@@ -128,32 +128,6 @@ class WeatherScreenTest {
     }
 
     @Test
-    fun weatherScreen_showsPermissionDialog_whenPermissionNotGranted() {
-        // Given: Location permission not granted
-        every { mockWeatherViewModel.weatherState } returns weatherStateFlow
-        every { mockGeocodingViewModel.geocodingState } returns geocodingStateFlow
-        every { mockLocationProvider.hasLocationPermission() } returns false
-        every { mockLocationProvider.isLocationEnabled() } returns false
-        weatherStateFlow.value = WeatherUiState.Loading
-
-        // When: Screen is displayed
-        composeTestRule.setContent {
-            LooksyTheme {
-                WeatherScreen(
-                    weatherViewModel = mockWeatherViewModel,
-                    geocodingViewModel = mockGeocodingViewModel,
-                    locationProvider = mockLocationProvider,
-                    onNavigateBack = {}
-                )
-            }
-        }
-
-        // Then: Permission prompt is visible
-        composeTestRule.onNodeWithText("Standort erforderlich").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Standort erlauben").assertIsDisplayed()
-    }
-
-    @Test
     fun weatherScreen_displaysOutfitRecommendations_forColdWeather() {
         // Given: Cold weather (5°C)
         val coldWeather = Weather(

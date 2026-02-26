@@ -144,7 +144,7 @@ class NavGraphIntegrationTest {
             hasAnySibling(hasContentDescription("Kleidungsstück")) and 
             !hasContentDescription("Zur Waschmaschine")
         )
-            .onFirst()
+            .onLast()
             .performClick()
 
         composeTestRule.waitUntil(timeoutMillis = 10000) {
