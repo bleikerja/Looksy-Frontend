@@ -24,7 +24,7 @@ class ConfirmationDialogTest {
                 dismissText = "Nein",
                 onDismiss = { dismissed = true },
                 confirmText = "Ja",
-                onConfirm = { confirmed = true },,
+                onConfirm = { confirmed = true }
             )
         }
 
