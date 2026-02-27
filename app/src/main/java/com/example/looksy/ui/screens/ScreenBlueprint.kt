@@ -40,7 +40,7 @@ fun ScreenBlueprint(navController: NavHostController) {
     val navItems = listOf(
         Triple(Routes.ChoseClothes.route, "Chose Clothes", R.drawable.wardrobeicon),
         Triple(Routes.Home.route, "Home", R.drawable.clothicon),
-        Triple(Routes.Scan.createRoute(-1), "Scan", R.drawable.cameraicon),
+        Triple(Routes.Scan.route, "Scan", R.drawable.cameraicon),
         Triple(Routes.SavedOutfits.route, "Saved Outfits", R.drawable.heart)
     )
     val application = LocalContext.current.applicationContext as LooksyApplication
@@ -85,14 +85,15 @@ fun ScreenBlueprint(navController: NavHostController) {
                         onClick = {
                             // Navigation zum neuen Ziel auslösen.
                             if(currentDestination?.route != Routes.EditClothes.route){
-                                navController.navigate(route){
+                                val navRoute = if (route == Routes.Scan.route) Routes.Scan.createRoute(-1) else route
+                                navController.navigate(navRoute){
                                     popUpTo(navController.graph.startDestinationId) {
                                     }
                                     launchSingleTop = true
                                     restoreState = true
                                 }
                             }else {
-                                nextRoute = route
+                                nextRoute = if (route == Routes.Scan.route) Routes.Scan.createRoute(-1) else route
                                 showBackDialog = true
                             }
                         },
