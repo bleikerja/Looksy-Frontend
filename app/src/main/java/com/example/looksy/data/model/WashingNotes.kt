@@ -31,6 +31,13 @@ enum class WashingNotes(val displayName: String, val iconRes: Int? = null) {
     IronNormalTemperatur("Bügeln mit normaler Temperatur", R.drawable.iron_n),
     IronHighTemperatur("Bügeln mit hoher Temperatur", R.drawable.iron_h),
     NoIron("Kein Bügeln", R.drawable.no_iron),
+    profClean("Reinigung", R.drawable.prof),
+    noProfClean("Kein Reinigung", R.drawable.no_profx),
+    everyProfClean("jedes Lösungsmittel", R.drawable.every_profx),
+    onlyCO_profClean("Nur Kohlenwasserstofflösungsmittel", R.drawable.only_co_prof),
+    onlyWater_profClean("Nass reinigen", R.drawable.only_water_prof),
+    onlyTetra_profClean("Nur Tetraclorthylenlösungsmittel", R.drawable.only_tetra_prof),
+
     ;
 
     override fun toString(): String {
@@ -83,6 +90,14 @@ enum class WashingNotes(val displayName: String, val iconRes: Int? = null) {
                     HangingDry,
                     LyingDry,
                     WetDry
+                ).filter { it != note }
+                profClean, noProfClean, everyProfClean, onlyCO_profClean, onlyWater_profClean, onlyTetra_profClean -> listOf(None) + listOf(
+                    profClean,
+                    noProfClean,
+                    everyProfClean,
+                    onlyCO_profClean,
+                    onlyWater_profClean,
+                    onlyTetra_profClean
                 ).filter { it != note }
             }
         }
