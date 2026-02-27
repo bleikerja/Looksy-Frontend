@@ -74,7 +74,7 @@ class WeatherScreenTest {
             locationName = "Zürich",
             temperature = 18.5,
             feelsLike = 17.0,
-            description = "Clear sky",
+            description = "Klarer Himmel",
             humidity = 65,
             iconUrl = "https://openweathermap.org/img/w/01d.png"
         )
@@ -98,7 +98,7 @@ class WeatherScreenTest {
         // Then: Weather data is displayed
         composeTestRule.onNodeWithText("19°C").assertIsDisplayed() // Temperature rounded
         composeTestRule.onNodeWithText("Zürich").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Clear sky", ignoreCase = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText("Klarer Himmel", ignoreCase = true).assertIsDisplayed()
         composeTestRule.onNodeWithText("65%").assertIsDisplayed() // Humidity
     }
 

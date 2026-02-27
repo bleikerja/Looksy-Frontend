@@ -10,6 +10,7 @@ interface WeatherApiService {
         @Query("lat") latitude: Double,
         @Query("lon") longitude: Double,
         @Query("appid") apiKey: String,
-        @Query("units") units: String = "metric" // Celsius
+        @Query("units") units: String = "metric", // Celsius
+        @Query("lang") lang: String = "de"
     ): WeatherResponse
 }

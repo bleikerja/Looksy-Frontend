@@ -448,7 +448,7 @@ private fun WeatherCard(weather: Weather) {
         ) {
             // Weather Icon (Emoji)
             Text(
-                text = getWeatherEmoji(weather.description),
+                text = getWeatherEmoji(weather.iconUrl),
                 fontSize = 80.sp
             )
 
@@ -806,16 +806,20 @@ private fun CityInputCard(
 }
 
 // Helper functions
-private fun getWeatherEmoji(description: String): String {
-    return when {
-        description.contains("clear", ignoreCase = true) -> "☀️"
-        description.contains("cloud", ignoreCase = true) -> "☁️"
-        description.contains("rain", ignoreCase = true) -> "🌧️"
-        description.contains("drizzle", ignoreCase = true) -> "🌦️"
-        description.contains("thunder", ignoreCase = true) -> "⛈️"
-        description.contains("snow", ignoreCase = true) -> "❄️"
-        description.contains("mist", ignoreCase = true) ||
-                description.contains("fog", ignoreCase = true) -> "🌫️"
+// Maps OWM icon codes to emojis (language-independent)
+// Icon codes: https://openweathermap.org/weather-conditions
+private fun getWeatherEmoji(iconUrl: String): String {
+    val code = iconUrl.substringAfterLast("/").removeSuffix(".png").take(2)
+    return when (code) {
+        "01" -> "☀️"
+        "02" -> "🌤️"
+        "03" -> "🌥️"
+        "04" -> "☁️"
+        "09" -> "🌦️"
+        "10" -> "🌧️"
+        "11" -> "⛈️"
+        "13" -> "❄️"
+        "50" -> "🌫️"
         else -> "🌤️"
     }
 }
@@ -849,7 +853,8 @@ private fun getOutfitRecommendations(weather: Weather): List<OutfitRecommendatio
         }
     }
 
-    if (weather.description.contains("rain", ignoreCase = true)) {
+    val iconCode = weather.iconUrl.substringAfterLast("/").removeSuffix(".png").take(2)
+    if (iconCode == "09" || iconCode == "10" || iconCode == "11") {
         recommendations.add(OutfitRecommendation("⚠️ Regenschirm empfohlen", true))
     }
 

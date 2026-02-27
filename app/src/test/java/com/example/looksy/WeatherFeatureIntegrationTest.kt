@@ -45,7 +45,7 @@ class WeatherFeatureIntegrationTest {
 
     @Test
     fun `viewModel to repository to api flow returns success state`() = runTest {
-        coEvery { apiService.getWeatherByLocation(52.52, 13.405, "integration_key", any()) } returns
+        coEvery { apiService.getWeatherByLocation(52.52, 13.405, "integration_key", any(), any()) } returns
             WeatherResponse(
                 name = "Berlin",
                 main = Main(
@@ -55,7 +55,7 @@ class WeatherFeatureIntegrationTest {
                     temp_max = 17.0,
                     humidity = 60
                 ),
-                weather = listOf(WeatherInfo(800, "Clear", "clear sky", "01d"))
+                weather = listOf(WeatherInfo(800, "Clear", "klarer Himmel", "01d"))
             )
 
         viewModel.fetchWeather(52.52, 13.405)
@@ -65,7 +65,7 @@ class WeatherFeatureIntegrationTest {
         assertTrue(state is WeatherUiState.Success)
         assertEquals("Berlin", (state as WeatherUiState.Success).weather.locationName)
         assertEquals(15.5, state.weather.temperature, 0.01)
-        assertEquals("clear sky", state.weather.description)
+        assertEquals("klarer Himmel", state.weather.description)
     }
 
     @Test
