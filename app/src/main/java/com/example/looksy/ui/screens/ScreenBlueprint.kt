@@ -12,6 +12,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Checklist
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.Checkroom
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.*
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,10 +43,10 @@ import com.example.looksy.ui.viewmodel.WeatherViewModel
 fun ScreenBlueprint(navController: NavHostController) {
     // Liste der Navigationselemente definieren.
     val navItems = listOf(
-        Triple(Routes.ChoseClothes.route, "Chose Clothes", R.drawable.wardrobeicon),
-        Triple(Routes.Home.route, "Home", R.drawable.clothicon),
-        Triple(Routes.Scan.route, "Scan", R.drawable.cameraicon),
-        Triple(Routes.SavedOutfits.route, "Saved Outfits", R.drawable.heart)
+        Triple(Routes.ChoseClothes.route, "Chose Clothes", Icons.Default.Checkroom),
+        Triple(Routes.Home.route, "Home", Icons.Default.Home),
+        Triple(Routes.Scan.route, "Scan", Icons.Default.PhotoCamera),
+        Triple(Routes.SavedOutfits.route, "Saved Outfits", Icons.Default.Favorite)
     )
     val application = LocalContext.current.applicationContext as LooksyApplication
     val viewModelClothes: ClothesViewModel = viewModel(
@@ -78,7 +83,7 @@ fun ScreenBlueprint(navController: NavHostController) {
             NavigationBar {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = navBackStackEntry?.destination
-                navItems.forEach { (route, label, iconResId) ->
+                navItems.forEach { (route, label, icon) ->
                     NavigationBarItem(
                         // Prüfen, ob das Element zum aktuellen Ziel gehört.
                         selected = currentDestination?.hierarchy?.any { it.route == route } == true,
@@ -100,7 +105,7 @@ fun ScreenBlueprint(navController: NavHostController) {
                         label = null,
                         icon = {
                             Icon(
-                                painter = painterResource(id = iconResId),
+                                imageVector = icon as ImageVector,  
                                 contentDescription = label,
                                 modifier = Modifier.size(32.dp)
                             )
