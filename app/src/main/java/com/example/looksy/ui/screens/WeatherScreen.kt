@@ -181,9 +181,6 @@ fun WeatherScreen(
                 // Persist city so pull-to-refresh re-fetches the same city.
                 lastSearchedCity = success.cityName
                 weatherViewModel.fetchWeather(success.location.latitude, success.location.longitude)
-                // Mark location as available so the LocationDisabledCard branch
-                // doesn't re-appear after a successful city lookup.
-                isLocationEnabled = true
                 showCityInput = false
                 cityName = ""
                 geocodingViewModel.resetState()
@@ -329,12 +326,13 @@ fun WeatherScreen(
                         )
                     }
 
-                    // Permission granted but location is off
+                    // Permission granted but location is off (and no manual city entered yet)
                     permissionState != PermissionState.NOT_ASKED &&
                     permissionState != PermissionState.DENIED &&
                     !isLocationEnabled &&
                     locationInputMode == LocationInputMode.MANUAL_CITY &&
-                    !showCityInput -> {
+                    !showCityInput &&
+                    lastSearchedCity.isBlank() -> {
                         LocationAccessCard(
                             onEnableLocation = {
                                 context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
@@ -388,7 +386,33 @@ fun WeatherScreen(
                                 // Main Weather Card
                                 WeatherCard(weather = weather)
 
-                                Spacer(modifier = Modifier.height(16.dp))
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                // Change City Button (only when manually entered city and GPS unavailable)
+                                if (lastSearchedCity.isNotBlank() && 
+                                    (permissionState == PermissionState.DENIED || 
+                                     permissionState == PermissionState.NOT_ASKED || 
+                                     !isLocationEnabled)) {
+                                    OutlinedButton(
+                                        onClick = {
+                                            showCityInput = true
+                                            lastSearchedCity = ""
+                                            cityName = ""
+                                        },
+                                        shape = RoundedCornerShape(12.dp),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Create,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text("Andere Stadt eingeben")
+                                    }
+                                    
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                }
 
                                 // Outfit Recommendations
                                 OutfitRecommendationsCard(weather = weather)
