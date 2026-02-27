@@ -429,7 +429,8 @@ fun NavGraph(
                         }
                     }
                 },
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onEditImage = { navController.navigate(Routes.Scan.createRoute(-1)) } 
             )
         }
 
