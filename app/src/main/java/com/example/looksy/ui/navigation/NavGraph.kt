@@ -390,7 +390,13 @@ fun NavGraph(
                     }
                 },
                 onNavigateBack = { navController.popBackStack() },
-                onEditImage = { navController.navigate(Routes.Scan.createRoute(-1)) } 
+                onEditImage = {
+                    navController.navigate(Routes.Scan.createRoute(-1)) {
+                        popUpTo(Routes.AddNewClothes.route) {
+                            inclusive = true
+                        }
+                    }
+                }
             )
         }
 
