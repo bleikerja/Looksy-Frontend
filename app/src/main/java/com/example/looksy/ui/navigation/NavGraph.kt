@@ -41,8 +41,10 @@ import com.example.looksy.ui.screens.AddNewClothesScreen
 import com.example.looksy.ui.screens.CameraScreen
 import com.example.looksy.ui.screens.Category
 import com.example.looksy.ui.screens.CategoryItems
+import com.example.looksy.ui.screens.OutfitDetailsScreen
 import com.example.looksy.ui.screens.DiscardScreen
 import com.example.looksy.ui.screens.SavedOutfitsScreen
+import com.example.looksy.ui.screens.OutfitDetailsScreen
 import com.example.looksy.ui.screens.SpecificCategoryScreen
 import com.example.looksy.ui.screens.WashingMachineScreen
 import com.example.looksy.ui.viewmodel.OutfitViewModel
@@ -72,10 +74,12 @@ fun NavGraph(
     var jacketId by remember { mutableStateOf<Int?>(null) }
     var skirtId by remember { mutableStateOf<Int?>(null) }
     var dressId by remember { mutableStateOf<Int?>(null) }
-    
+
     // Track permission and location state for weather
     var permissionState by remember { mutableStateOf(PermissionState.NOT_ASKED) }
     var isLocationEnabled by remember { mutableStateOf(true) }
+
+    var editingOutfitId by remember { mutableStateOf<Int?>(null) }
 
     LaunchedEffect(allClothesFromDb) {
         if (listOfNotNull(topId, pantsId, jacketId, skirtId, dressId).isEmpty()){
@@ -465,8 +469,8 @@ fun NavGraph(
                 onConfirmWashed = { washedClothes ->
                     washedClothes.forEach { cloth ->
                         val updatedCloth = cloth.copy(
-                            clean = true, 
-                            wornSince = null, 
+                            clean = true,
+                            wornSince = null,
                             daysWorn = 0,
                             lastWorn = System.currentTimeMillis()
                         )
@@ -479,8 +483,8 @@ fun NavGraph(
         composable(route = Routes.Discard.route) {
             //ToDo: für den Beta-Test unter Umständen raus nehmen
             val oneYearAgo = System.currentTimeMillis() - 31536000000L // ca. 1 Jahr (365 Tage)
-            val clothesToDiscard = allClothesFromDb.filter { 
-                it.lastWorn != null && it.lastWorn!! < oneYearAgo 
+            val clothesToDiscard = allClothesFromDb.filter {
+                it.lastWorn != null && it.lastWorn!! < oneYearAgo
             }
             val canUndo = clothesViewModel.lastDiscardedClothes.value != null
 
@@ -526,43 +530,67 @@ fun NavGraph(
                     val outfitJacket = outfit.jacketId?.let { id -> allClothesFromDb.find { it.id == id } }
                     val outfitSkirt = outfit.skirtId?.let { id -> allClothesFromDb.find { it.id == id } }
 
-                    FullOutfitScreen(
-                        top = outfitTop,
-                        pants = outfitPants,
-                        jacket = outfitJacket,
-                        skirt = outfitSkirt,
-                        dress = outfitDress,
-                        onClick = { clothesId ->
-                            navController.navigate(Routes.Details.createRoute(clothesId))
+                    OutfitDetailsScreen(
+                        outfit = outfit,
+                        outfitTop = outfitTop,
+                        outfitPants = outfitPants,
+                        outfitDress = outfitDress,
+                        outfitJacket = outfitJacket,
+                        outfitSkirt = outfitSkirt,
+                        // Button 1: Bearbeiten - Navigiert zu Edit Screen
+                        onEdit = {
+                            editingOutfitId = outfitId
+                            navController.navigate(Routes.EditOutfit.createRoute(outfitId))
                         },
-                        onConfirm = { wornClothesList ->
-                            val updatedClothesList = wornClothesList.map { it.copy(clean = false) }
-                            clothesViewModel.updateAll(updatedClothesList)
-                            navController.popBackStack()
+                        // Button 2: Löschen - Löscht Outfit und geht zurück
+                        onDelete = {
+                            outfitViewModel.delete(outfit)
+                            navController.popBackStack(Routes.SavedOutfits.route, inclusive = false)
                         },
-                        onWashingMachine = { navController.navigate(Routes.WashingMachine.route) },
-                        onGenerateRandom = { },
-                        onCamera = { navController.navigate(Routes.Scan.createRoute(-1)) }
+                        // Button 3: Tragen/Auswählen - Setzt Outfit auf Home
+                        onWear = {
+                            topId = outfitTop?.id
+                            pantsId = outfitPants?.id
+                            dressId = outfitDress?.id
+                            jacketId = outfitJacket?.id
+                            skirtId = outfitSkirt?.id
+                            navController.navigate(Routes.Home.route) {
+                                popUpTo(Routes.SavedOutfits.route) { inclusive = false }
+                            }
+                        },
+                        onNavigateBack = { navController.popBackStack() }
                     )
                 }
             }
         }
 
-        composable(route = Routes.Weather.route) {
-            val application = LocalContext.current.applicationContext as LooksyApplication
-            val geocodingViewModel: GeocodingViewModel = viewModel(
-                factory = GeocodingViewModelFactory(application.geocodingRepository)
-            )
+        composable(
+            route = Routes.EditOutfit.route,
+            arguments = listOf(navArgument(RouteArgs.ID) { type = NavType.IntType })
+        ) { backStackEntry ->
+            val outfitId = backStackEntry.arguments?.getInt(RouteArgs.ID)
+            if (outfitId != null) {
+                val sampleCategories = listOf(
+                    Category("Shirt", R.drawable.shirt_category),
+                    Category("Pants", R.drawable.pants_category),
+                    Category("Glasses", R.drawable.glasses_category),
+                    Category("Shoes", R.drawable.shoes_category),
+                    Category("Watch", R.drawable.watch_category)
+                )
 
-            WeatherScreen(
-                weatherViewModel = weatherViewModel,
-                geocodingViewModel = geocodingViewModel,
-                locationProvider = application.locationProvider,
-                onNavigateBack = { navController.popBackStack() }
-            )
+                CategoriesScreen(
+                    categories = sampleCategories,
+                    categoryItems = categoryItems,
+                    onClick = { type ->
+                        val finalRoute = Routes.SpecificCategory.createRoute(type)
+                        navController.navigate(finalRoute)
+                    }
+                )
+            }
+        }
         }
     }
-}
+
 
 fun getClothById(clothes: List<Clothes>, id: Int): Clothes? {
     return clothes.find { it.id == id }

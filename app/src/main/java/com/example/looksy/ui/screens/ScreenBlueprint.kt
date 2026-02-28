@@ -10,8 +10,6 @@ import com.example.looksy.ui.navigation.Routes
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.PhotoCamera
@@ -73,6 +71,7 @@ fun ScreenBlueprint(navController: NavHostController) {
             dismissText = "Abbrechen",
             onDismiss = { showBackDialog = false },
             confirmText = "Weiter",
+            isDeletion = false,
             onConfirm = {
                 navController.navigate(nextRoute){
                     popUpTo(navController.graph.startDestinationId) {
@@ -81,7 +80,7 @@ fun ScreenBlueprint(navController: NavHostController) {
                     restoreState = true
                 }
                 showBackDialog = false
-            }
+            },
         )
     }
     Scaffold(

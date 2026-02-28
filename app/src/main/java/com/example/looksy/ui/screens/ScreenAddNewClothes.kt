@@ -128,6 +128,7 @@ fun AddNewClothesScreen(
             dismissText = "Nein",
             onDismiss = { showBackDialog = false },
             confirmText = "Ja",
+            isDeletion = false,
             onConfirm = {
                 onNavigateBack()
                 showBackDialog = false
