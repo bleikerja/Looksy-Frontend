@@ -452,9 +452,9 @@ private fun WeatherIconRow(
                     }
 
                     is WeatherUiState.Success -> {
-                        // Weather icon based on conditions
+                        // Weather icon based on OWM icon code
                         Text(
-                            text = getWeatherEmoji(weatherState.weather.description),
+                            text = getWeatherEmoji(weatherState.weather.iconUrl),
                             fontSize = 28.sp
                         )
                         Spacer(modifier = Modifier.width(8.dp))
@@ -498,17 +498,20 @@ private fun WeatherIconRow(
     }
 }
 
-// Helper function to map weather descriptions to emojis
-private fun getWeatherEmoji(description: String): String {
-    return when {
-        description.contains("clear", ignoreCase = true) -> "☀️"
-        description.contains("cloud", ignoreCase = true) -> "☁️"
-        description.contains("rain", ignoreCase = true) -> "🌧️"
-        description.contains("drizzle", ignoreCase = true) -> "🌦️"
-        description.contains("thunder", ignoreCase = true) -> "⛈️"
-        description.contains("snow", ignoreCase = true) -> "❄️"
-        description.contains("mist", ignoreCase = true) ||
-        description.contains("fog", ignoreCase = true) -> "🌫️"
+// Helper function to map OWM icon codes to emojis (language-independent)
+// Icon codes: https://openweathermap.org/weather-conditions
+private fun getWeatherEmoji(iconUrl: String): String {
+    val code = iconUrl.substringAfterLast("/").removeSuffix(".png").take(2)
+    return when (code) {
+        "01" -> "☀️"
+        "02" -> "🌤️"
+        "03" -> "🌥️"
+        "04" -> "☁️"
+        "09" -> "🌦️"
+        "10" -> "🌧️"
+        "11" -> "⛈️"
+        "13" -> "❄️"
+        "50" -> "🌫️"
         else -> "🌤️"
     }
 }

@@ -52,7 +52,7 @@ class WeatherViewModelTest {
             locationName = "Berlin",
             temperature = 15.5,
             feelsLike = 14.0,
-            description = "clear sky",
+            description = "klarer Himmel",
             humidity = 60,
             iconUrl = "https://openweathermap.org/img/w/01d.png"
         )
@@ -89,7 +89,7 @@ class WeatherViewModelTest {
     @Test
     fun `fetchWeather() should set Loading state initially`() = runTest {
         // Given
-        val testWeather = Weather("Berlin", 15.5, 14.0, "clear", 60, "icon.png")
+        val testWeather = Weather("Berlin", 15.5, 14.0, "klarer Himmel", 60, "https://openweathermap.org/img/w/01d.png")
         coEvery { repository.getWeather(any(), any()) } returns testWeather
 
         // When

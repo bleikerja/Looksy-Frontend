@@ -70,7 +70,7 @@ class FullOutfitScreenWeatherTest {
             locationName = "Zürich",
             temperature = 18.5,
             feelsLike = 17.0,
-            description = "Clear sky",
+            description = "Klarer Himmel",
             humidity = 65,
             iconUrl = "https://openweathermap.org/img/w/01d.png"
         )
@@ -89,7 +89,7 @@ class FullOutfitScreenWeatherTest {
 
         // Then: Temperature is displayed
         composeTestRule.onNodeWithText("19°C").assertIsDisplayed()
-        // Weather emoji should be visible (☀️ for clear sky)
+        // Weather emoji should be visible (☀️ for klarer Himmel, mapped via icon code 01)
         composeTestRule.onNodeWithText("☀️").assertIsDisplayed()
     }
 
@@ -121,7 +121,7 @@ class FullOutfitScreenWeatherTest {
             locationName = "Zürich",
             temperature = 22.0,
             feelsLike = 21.0,
-            description = "Partly cloudy",
+            description = "Mäßig bewölkt",
             humidity = 60,
             iconUrl = "https://openweathermap.org/img/w/02d.png"
         )
@@ -153,7 +153,7 @@ class FullOutfitScreenWeatherTest {
             locationName = "Zürich",
             temperature = 25.0,
             feelsLike = 24.0,
-            description = "Clear sky",
+            description = "Klarer Himmel",
             humidity = 50,
             iconUrl = "https://openweathermap.org/img/w/01d.png"
         )
@@ -181,7 +181,7 @@ class FullOutfitScreenWeatherTest {
             locationName = "Zürich",
             temperature = 15.0,
             feelsLike = 13.0,
-            description = "Light rain",
+            description = "Leichter Regen",
             humidity = 85,
             iconUrl = "https://openweathermap.org/img/w/10d.png"
         )
@@ -209,7 +209,7 @@ class FullOutfitScreenWeatherTest {
             locationName = "Zürich",
             temperature = 12.0,
             feelsLike = 11.0,
-            description = "Overcast clouds",
+            description = "Bedeckt",
             humidity = 75,
             iconUrl = "https://openweathermap.org/img/w/04d.png"
         )
@@ -237,7 +237,7 @@ class FullOutfitScreenWeatherTest {
             locationName = "Zürich",
             temperature = 20.0,
             feelsLike = 19.0,
-            description = "Partly cloudy",
+            description = "Mäßig bewölkt",
             humidity = 60,
             iconUrl = "https://openweathermap.org/img/w/02d.png"
         )
@@ -265,7 +265,7 @@ class FullOutfitScreenWeatherTest {
             locationName = "Zürich",
             temperature = 16.0,
             feelsLike = 15.0,
-            description = "Cloudy",
+            description = "Bewölkt",
             humidity = 70,
             iconUrl = "https://openweathermap.org/img/w/03d.png"
         )
