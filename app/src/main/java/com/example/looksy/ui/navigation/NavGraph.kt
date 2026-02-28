@@ -466,12 +466,12 @@ fun NavGraph(
             if (clothesId != null) {
                 val context = LocalContext.current
 
-                // Read cropped URI returned by BearbeitenScreen via SavedStateHandle
+                // Read cropped URI returned by EditPictureScreen via SavedStateHandle
                 val croppedUriFromEditor by backStackEntry.savedStateHandle
                     .getStateFlow(RouteArgs.CROPPED_URI, "")
                     .collectAsState()
 
-                // Active URI: start with the route arg; override when BearbeitenScreen delivers a crop
+                // Active URI: start with the route arg; override when EditPictureScreen delivers a crop
                 var activeUriString by remember {
                     mutableStateOf(if (encodedUriString.isNullOrEmpty()) null else encodedUriString)
                 }
@@ -521,7 +521,16 @@ fun NavGraph(
                     },
                     onEditImage = { navController.navigate(Routes.Scan.createRoute(clothesId)) },
                     onEditPhoto = {
-                        activeUriString?.let { uri ->
+                        // activeUriString is null when editing an existing item that hasn't had
+                        // a new photo taken yet → fall back to the stored image path from DB
+                        val uriToEdit = if (!activeUriString.isNullOrEmpty()) {
+                            activeUriString
+                        } else {
+                            allClothesFromDb.find { it.id == clothesId }
+                                ?.imagePath?.takeIf { it.isNotEmpty() }
+                                ?.let { java.io.File(it).toUri().toString() }
+                        }
+                        uriToEdit?.let { uri ->
                             navController.navigate(Routes.EditPicture.createRoute(uri))
                         }
                     }

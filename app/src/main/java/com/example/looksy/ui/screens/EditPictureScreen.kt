@@ -121,6 +121,8 @@ fun EditPictureScreen(
     // `editedSnapshot` holds the last user-made edits so we can restore them.
     var editedSnapshot by remember { mutableStateOf<EditorSnapshot?>(null) }
     var isShowingOriginal by remember { mutableStateOf(false) }
+    // True once the user has made any crop / zoom / pan gesture
+    var hasBeenEdited by remember { mutableStateOf(false) }
 
     /** Reset view to the original (unzoomed, full-image crop). */
     fun showOriginal() {
@@ -155,10 +157,9 @@ fun EditPictureScreen(
     // Root layout
     // ─────────────────────────────────────────────────────────────────────────
     Surface(
-        modifier = Modifier
-                .fillMaxSize(),
-
-        color = Color.Black
+        modifier = Modifier.fillMaxSize(),
+        color = Color(249, 246, 242),
+        shape = RoundedCornerShape(20.dp)
     ) {
         val handleSizeDp = 24.dp
         val handleSizePx = with(density) { handleSizeDp.toPx() }
@@ -186,6 +187,7 @@ fun EditPictureScreen(
                             detectTransformGestures { _, pan, zoom, _ ->
                                 userScale = (userScale * zoom).coerceIn(0.5f, 5f)
                                 imageOffset += pan
+                                hasBeenEdited = true
                             }
                         }
 
@@ -275,6 +277,7 @@ fun EditPictureScreen(
                                         right  = newLeft + cropRect.width,
                                         bottom = newTop  + cropRect.height
                                     )
+                                    hasBeenEdited = true
                                 }
                             }
                     )
@@ -290,6 +293,7 @@ fun EditPictureScreen(
                         val newTop  = (cropRect.top + dragAmount.y)
                             .coerceIn(0f, cropRect.bottom - minCropSizePx)
                         cropRect = Rect(newLeft, newTop, cropRect.right, cropRect.bottom)
+                        hasBeenEdited = true
                     }
 
                     // ── Top-right handle ───────────────────────────────────────
@@ -303,6 +307,7 @@ fun EditPictureScreen(
                         val newTop   = (cropRect.top  + dragAmount.y)
                             .coerceIn(0f, cropRect.bottom - minCropSizePx)
                         cropRect = Rect(cropRect.left, newTop, newRight, cropRect.bottom)
+                        hasBeenEdited = true
                     }
 
                     // ── Bottom-left handle ────────────────────────────────────
@@ -316,6 +321,7 @@ fun EditPictureScreen(
                         val newBottom = (cropRect.bottom + dragAmount.y)
                             .coerceIn(cropRect.top + minCropSizePx, canvasSize.height.toFloat())
                         cropRect = Rect(newLeft, cropRect.top, cropRect.right, newBottom)
+                        hasBeenEdited = true
                     }
 
                     // ── Bottom-right handle ────────────────────────────────────
@@ -329,6 +335,7 @@ fun EditPictureScreen(
                         val newBottom = (cropRect.bottom + dragAmount.y)
                             .coerceIn(cropRect.top + minCropSizePx, canvasSize.height.toFloat())
                         cropRect = Rect(cropRect.left, cropRect.top, newRight, newBottom)
+                        hasBeenEdited = true
                     }
                 }
             }
@@ -341,27 +348,28 @@ fun EditPictureScreen(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Left arrow = show original
+                // Left arrow = show original (active only after the user has made edits)
+                val leftEnabled = hasBeenEdited && !isShowingOriginal
                 IconButton(
                     onClick = { showOriginal() },
-                    enabled = !isShowingOriginal
+                    enabled = leftEnabled
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Undo,
                         contentDescription = "Original anzeigen",
-                        tint = if (!isShowingOriginal) Color.White else Color.White.copy(alpha = 0.35f)
+                        tint = if (leftEnabled) Color.DarkGray else Color.DarkGray.copy(alpha = 0.35f)
                     )
                 }
-                // Right arrow = restore edits
+                // Right arrow = restore edits (active only after left arrow was pressed)
+                val rightEnabled = isShowingOriginal && editedSnapshot != null
                 IconButton(
                     onClick = { restoreEdits() },
-                    enabled = isShowingOriginal && editedSnapshot != null
+                    enabled = rightEnabled
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Redo,
                         contentDescription = "Änderungen wiederherstellen",
-                        tint = if (isShowingOriginal && editedSnapshot != null) Color.White
-                               else Color.White.copy(alpha = 0.35f)
+                        tint = if (rightEnabled) Color.DarkGray else Color.DarkGray.copy(alpha = 0.35f)
                     )
                 }
             }
@@ -373,7 +381,7 @@ fun EditPictureScreen(
                     .padding(horizontal = 24.dp, vertical = 12.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                OutlinedButton(
+                Button(
                     onClick = onCancel,
                     modifier = Modifier.weight(1f)
                 ) {
