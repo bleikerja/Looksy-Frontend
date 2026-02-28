@@ -77,6 +77,10 @@ fun EditPictureScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val density = LocalDensity.current
+    
+    // ── Padding for crop frame interaction area ────────────────────────────────
+    val framePaddingDp = 30.dp
+    val framePaddingPx = with(density) { framePaddingDp.toPx() }
 
     // ── Bitmap loading ────────────────────────────────────────────────────────
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
@@ -111,8 +115,12 @@ fun EditPictureScreen(
             val drawH = bmp.height * fitScale
             val drawLeft = (cw - drawW) / 2f
             val drawTop = (ch - drawH) / 2f
-            // Default crop = full image area
-            cropRect = Rect(drawLeft, drawTop, drawLeft + drawW, drawTop + drawH)
+            // Default crop = full image area, constrained by padding
+            val paddedLeft = maxOf(drawLeft, framePaddingPx)
+            val paddedTop = maxOf(drawTop, framePaddingPx)
+            val paddedRight = minOf(drawLeft + drawW, cw - framePaddingPx)
+            val paddedBottom = minOf(drawTop + drawH, ch - framePaddingPx)
+            cropRect = Rect(paddedLeft, paddedTop, paddedRight, paddedBottom)
         }
     }
 
@@ -140,7 +148,12 @@ fun EditPictureScreen(
         val drawTop = (ch - drawH) / 2f
         userScale = 1f
         imageOffset = Offset.Zero
-        cropRect = Rect(drawLeft, drawTop, drawLeft + drawW, drawTop + drawH)
+        // Constrain by padding
+        val paddedLeft = maxOf(drawLeft, framePaddingPx)
+        val paddedTop = maxOf(drawTop, framePaddingPx)
+        val paddedRight = minOf(drawLeft + drawW, cw - framePaddingPx)
+        val paddedBottom = minOf(drawTop + drawH, ch - framePaddingPx)
+        cropRect = Rect(paddedLeft, paddedTop, paddedRight, paddedBottom)
     }
 
     /** Restore the last edited state (redo). */
@@ -194,6 +207,29 @@ fun EditPictureScreen(
                     val bmp = bitmap ?: return@Canvas
                     val cw = size.width
                     val ch = size.height
+
+                    // Draw checkerboard pattern as background
+                    val squareSize = 16.dp.toPx()
+                    val lightGrey = Color(230, 230, 230)
+                    val white = Color.White
+                    var isLight = true
+                    var y = 0f
+                    while (y < ch) {
+                        var x = 0f
+                        while (x < cw) {
+                            drawRect(
+                                color = if (isLight) white else lightGrey,
+                                topLeft = Offset(x, y),
+                                size = Size(squareSize, squareSize)
+                            )
+                            isLight = !isLight
+                            x += squareSize
+                        }
+                        if ((cw / squareSize).toInt() % 2 == 0) {
+                            isLight = !isLight
+                        }
+                        y += squareSize
+                    }
 
                     // Fit-scale (base, without user zoom)
                     val fitScale = minOf(cw / bmp.width, ch / bmp.height)
@@ -267,9 +303,9 @@ fun EditPictureScreen(
                                     val canvasW = canvasSize.width.toFloat()
                                     val canvasH = canvasSize.height.toFloat()
                                     val newLeft = (cropRect.left + dragAmount.x)
-                                        .coerceIn(0f, canvasW - cropRect.width)
+                                        .coerceIn(framePaddingPx, canvasW - cropRect.width - framePaddingPx)
                                     val newTop  = (cropRect.top + dragAmount.y)
-                                        .coerceIn(0f, canvasH - cropRect.height)
+                                        .coerceIn(framePaddingPx, canvasH - cropRect.height - framePaddingPx)
                                     cropRect = Rect(
                                         left   = newLeft,
                                         top    = newTop,
@@ -288,9 +324,9 @@ fun EditPictureScreen(
                         sizeDp = handleSizeDp
                     ) { dragAmount ->
                         val newLeft = (cropRect.left + dragAmount.x)
-                            .coerceIn(0f, cropRect.right - minCropSizePx)
+                            .coerceIn(framePaddingPx, cropRect.right - minCropSizePx)
                         val newTop  = (cropRect.top + dragAmount.y)
-                            .coerceIn(0f, cropRect.bottom - minCropSizePx)
+                            .coerceIn(framePaddingPx, cropRect.bottom - minCropSizePx)
                         cropRect = Rect(newLeft, newTop, cropRect.right, cropRect.bottom)
                         hasBeenEdited = true
                     }
@@ -302,9 +338,9 @@ fun EditPictureScreen(
                         sizeDp = handleSizeDp
                     ) { dragAmount ->
                         val newRight = (cropRect.right + dragAmount.x)
-                            .coerceIn(cropRect.left + minCropSizePx, canvasSize.width.toFloat())
+                            .coerceIn(cropRect.left + minCropSizePx, canvasSize.width.toFloat() - framePaddingPx)
                         val newTop   = (cropRect.top  + dragAmount.y)
-                            .coerceIn(0f, cropRect.bottom - minCropSizePx)
+                            .coerceIn(framePaddingPx, cropRect.bottom - minCropSizePx)
                         cropRect = Rect(cropRect.left, newTop, newRight, cropRect.bottom)
                         hasBeenEdited = true
                     }
@@ -316,9 +352,9 @@ fun EditPictureScreen(
                         sizeDp = handleSizeDp
                     ) { dragAmount ->
                         val newLeft   = (cropRect.left   + dragAmount.x)
-                            .coerceIn(0f, cropRect.right - minCropSizePx)
+                            .coerceIn(framePaddingPx, cropRect.right - minCropSizePx)
                         val newBottom = (cropRect.bottom + dragAmount.y)
-                            .coerceIn(cropRect.top + minCropSizePx, canvasSize.height.toFloat())
+                            .coerceIn(cropRect.top + minCropSizePx, canvasSize.height.toFloat() - framePaddingPx)
                         cropRect = Rect(newLeft, cropRect.top, cropRect.right, newBottom)
                         hasBeenEdited = true
                     }
@@ -330,9 +366,9 @@ fun EditPictureScreen(
                         sizeDp = handleSizeDp
                     ) { dragAmount ->
                         val newRight  = (cropRect.right  + dragAmount.x)
-                            .coerceIn(cropRect.left + minCropSizePx, canvasSize.width.toFloat())
+                            .coerceIn(cropRect.left + minCropSizePx, canvasSize.width.toFloat() - framePaddingPx)
                         val newBottom = (cropRect.bottom + dragAmount.y)
-                            .coerceIn(cropRect.top + minCropSizePx, canvasSize.height.toFloat())
+                            .coerceIn(cropRect.top + minCropSizePx, canvasSize.height.toFloat() - framePaddingPx)
                         cropRect = Rect(cropRect.left, cropRect.top, newRight, newBottom)
                         hasBeenEdited = true
                     }
