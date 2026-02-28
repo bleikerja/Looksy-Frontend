@@ -20,19 +20,25 @@ View (Composables) ←→ ViewModel ←→ Repository ←→ DAO ←→ Room Dat
   - Handle user interactions and delegate to ViewModels
   - Navigation between screens
 
-**Key Screens:**
+**Key Screens** (`ui/screens/`):
 
-- `ScreenBlueprint.kt` - Main scaffold with bottom navigation
+- `ScreenBlueprint.kt` - Main scaffold with bottom navigation (4 tabs)
 - `CategoriesScreen.kt` - Grid view of clothing categories
-- `SpecificCategoryScreen.kt` - List of items for a specific type
-- `ClothInformationScreen.kt` - Detail view of a single item
-- `FullOutfitScreen.kt` - Display complete outfit (top + pants)
-- `AddNewClothesScreen.kt` - Form to add new clothing items
+- `SpecificCategoryScreen.kt` - List of items for a specific `Type`
+- `ClothInformationScreen.kt` - Detail view of a single clothing item
+- `FullOutfitScreen.kt` - Display complete outfit with weather strip
+- `ScreenAddNewClothes.kt` / `AddNewClothesScreen.kt` - Form to add new clothing
 - `Kamera.kt` - Camera integration with CameraX
+- `OutfitDetailsScreen.kt` - View/edit a saved outfit
+- `SavedOutfitsScreen.kt` - List of all saved outfits
+- `DiscardScreen.kt` - Bulk-discard clothes with undo support
+- `WashingMachineScreen.kt` - Mark selected items as clean/dirty
+- `WeatherScreen.kt` - Weather display with GPS + manual city fallback
 
 #### 2. **ViewModel Layer**
 
-- **Location**: `ViewModels/ClothesViewModel.kt`
+- **Location**: `ui/viewmodel/`
+- **ViewModels**: `ClothesViewModel`, `OutfitViewModel` (Room-backed); `WeatherViewModel`, `GeocodingViewModel` (network-backed)
 - **Responsibilities**:
   - Expose UI state as StateFlow
   - Process user actions
@@ -108,11 +114,10 @@ interface ClothesDao {
 
 #### 5. **Model Layer**
 
-- **Location**: `dataClassClones/` package
-- **Components**:
-  - `Clothes.kt` - Main entity (Room `@Entity`)
-  - Enum classes: `Size`, `Season`, `Type`, `Material`, `WashingNotes`
-  - `Filter.kt` - Utility class for filtering lists
+- **Location**: `data/model/` package
+- **Entities**: `Clothes.kt`, `Outfit.kt` (both Room `@Entity`)
+- **Enums**: `Size`, `Season`, `Type`, `Material`, `WashingNotes`, `ClothesColor`
+- **Utilities** (`util/`): `OutfitGenerator.kt`, `OutfitCompatibilityCalculator.kt`, `ImageStorage.kt`
 
 ### Data Flow Examples
 
@@ -130,35 +135,28 @@ Composable (user action) → ViewModel (viewModelScope.launch) → Repository (s
 
 ### Dependency Injection Pattern
 
-**Application-level DI** (simple lazy initialization):
+**Application-level DI** (`LooksyApplication`, simple `by lazy` initialization):
 
 ```kotlin
-class ClothesApplication : Application() {
+class LooksyApplication : Application() {
     val database by lazy { ClothesDatabase.getDatabase(this) }
     val repository by lazy { ClothesRepository(database.clothesDao()) }
+    val outfitRepository by lazy { OutfitRepository(database.outfitDao()) }
+    val weatherRepository by lazy { WeatherRepository(weatherApiService, BuildConfig.WEATHER_API_KEY) }
+    val geocodingRepository by lazy { GeocodingRepository(geocodingApiService, BuildConfig.WEATHER_API_KEY) }
+    val locationProvider by lazy { LocationProvider(this) }
+    // Retrofit services also initialized lazily here
 }
 ```
 
-**ViewModel Factory Pattern:**
+**ViewModel creation in `ScreenBlueprint`:**
 
 ```kotlin
-class ClothesViewModelFactory(private val repository: ClothesRepository) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(ClothesViewModel::class.java)) {
-            return ClothesViewModel(repository) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
-    }
-}
-```
-
-**Usage in Composables:**
-
-```kotlin
-val application = LocalContext.current.applicationContext as ClothesApplication
-val viewModel: ClothesViewModel = viewModel(
-    factory = ClothesViewModelFactory(application.repository)
-)
+val application = LocalContext.current.applicationContext as LooksyApplication
+val viewModelClothes: ClothesViewModel = viewModel(factory = ClothesViewModelFactory(application.repository))
+val viewModelOutfit: OutfitViewModel = viewModel(factory = OutfitViewModelFactory(application.outfitRepository))
+val viewModelWeather: WeatherViewModel = viewModel(factory = WeatherViewModelFactory(application.weatherRepository))
+// GeocodingViewModel is created inline in NavGraph via viewModel(factory = ...)
 ```
 
 ## Navigation Architecture
@@ -213,9 +211,9 @@ LazyColumn {
 
 ## Database Design
 
-**Single Entity**: `Clothes`
+**Two entities** — bump `version` in `ClothesDatabase` and run `./gradlew clean assembleDebug` on any schema change.
 
-**Schema:**
+**`Clothes` entity** (`clothes_table`):
 
 ```kotlin
 @Entity(tableName = "clothes_table")
@@ -225,38 +223,61 @@ data class Clothes(
     val seasonUsage: Season,
     val type: Type,
     val material: Material,
+    val color: ClothesColor? = null,
     val clean: Boolean,
-    val washingNotes: WashingNotes,
+    val washingNotes: List<WashingNotes>,  // Gson-serialized list
+    val selected: Boolean = false,
+    val wornClothes: Int = 0,
+    val daysWorn: Int = 0,
+    val wornSince: Long? = null,
+    val lastWorn: Long? = null,
     val imagePath: String = "",
     val isSynced: Boolean = false
 )
 ```
 
-**Type Converters:**
+**`Outfit` entity** (`outfits_table`):
 
-- All enum types (Size, Season, Type, Material, WashingNotes) use `Converters.kt`
-- Converts enums to String for storage: `enum.name` → String
-- Converts back using: `Enum.valueOf(string)`
+```kotlin
+@Entity(tableName = "outfits_table")
+data class Outfit(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val dressId: Int? = null,
+    val topsId: Int? = null,
+    val skirtId: Int? = null,
+    val pantsId: Int? = null,
+    val jacketId: Int? = null,
+    val shoesId: Int? = null,
+    val preference: Int = 0,
+    val isSynced: Boolean = false,
+    val isManuelSaved: Boolean = false
+)
+```
 
-**Database Access Pattern:**
+**Type Converters** (`Converters.kt`):
 
-- Singleton pattern via `ClothesDatabase.getDatabase(context)`
-- Thread-safe with `@Volatile` and `synchronized`
-- `fallbackToDestructiveMigration()` - Simple migration strategy (deletes DB on schema change)
+- All simple enums → `enum.name` / `Enum.valueOf(string)`
+- `List<WashingNotes>` → JSON via `Gson().toJson()` / `Gson().fromJson()`
+- When adding a new enum field, always add a converter pair
+
+**Current DB version: 6** — `fallbackToDestructiveMigration()` clears data on upgrade.
 
 ## Image Storage Strategy
 
-**Current Approach:**
+- Camera (`Kamera.kt`) captures to `context.cacheDir` as a temp file.
+- `saveImagePermanently(context, uri)` in `util/ImageStorage.kt` copies to `context.filesDir/images/` with a timestamped filename, returns the absolute path.
+- Absolute path is stored in `Clothes.imagePath` and displayed via Coil: `AsyncImage(model = imagePath)`.
 
-- Photos stored in app's cache directory: `context.cacheDir`
-- File path stored as String in database (`imagePath` field)
-- Loaded using Coil library: `AsyncImage(model = imagePath)`
+## Outfit Generation Logic (`util/`)
 
-**Camera Integration:**
-
-- CameraX library for camera access
-- Permission handling via Accompanist Permissions
-- Temporary file created in cache, then copied to persistent storage
+- `generateSingleRandomOutfit(allClothes, allOutfits)` in `OutfitGenerator.kt`:
+  - 70% probability: clothes list weighted by `wornClothes + 1`; 30%: uniform.
+  - 30% probability: tries to reuse a saved `Outfit` weighted by `preference`.
+  - Falls back to random slot-fill if no compatible saved outfit exists.
+- `OutfitCompatibilityCalculator.calculateCompatibilityScore(outfit)` returns 0–100:
+  - Factors: season (30%), material (25%), type (20%), size (15%), clean (10%), color multiplier.
+  - Score = 0 disqualifies an outfit (≥3 different ACCENT colors also disqualifies).
+- Both are pure functions — unit-testable without Android context.
 
 ## Theming
 
