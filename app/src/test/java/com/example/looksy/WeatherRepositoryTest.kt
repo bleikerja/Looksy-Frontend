@@ -49,7 +49,7 @@ class WeatherRepositoryTest {
                 WeatherInfo(
                     id = 800,
                     main = "Clear",
-                    description = "clear sky",
+                    description = "klarer Himmel",
                     icon = "01d"
                 )
             )
@@ -65,7 +65,7 @@ class WeatherRepositoryTest {
         assertEquals("Berlin", weather.locationName)
         assertEquals(15.5, weather.temperature, 0.01)
         assertEquals(14.0, weather.feelsLike, 0.01)
-        assertEquals("clear sky", weather.description)
+        assertEquals("klarer Himmel", weather.description)
         assertEquals(60, weather.humidity)
         assertEquals("https://openweathermap.org/img/w/01d.png", weather.iconUrl)
     }

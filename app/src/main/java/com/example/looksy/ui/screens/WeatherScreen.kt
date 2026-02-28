@@ -181,9 +181,6 @@ fun WeatherScreen(
                 // Persist city so pull-to-refresh re-fetches the same city.
                 lastSearchedCity = success.cityName
                 weatherViewModel.fetchWeather(success.location.latitude, success.location.longitude)
-                // Mark location as available so the LocationDisabledCard branch
-                // doesn't re-appear after a successful city lookup.
-                isLocationEnabled = true
                 showCityInput = false
                 cityName = ""
                 geocodingViewModel.resetState()
@@ -329,12 +326,13 @@ fun WeatherScreen(
                         )
                     }
 
-                    // Permission granted but location is off
+                    // Permission granted but location is off (and no manual city entered yet)
                     permissionState != PermissionState.NOT_ASKED &&
                     permissionState != PermissionState.DENIED &&
                     !isLocationEnabled &&
                     locationInputMode == LocationInputMode.MANUAL_CITY &&
-                    !showCityInput -> {
+                    !showCityInput &&
+                    lastSearchedCity.isBlank() -> {
                         LocationAccessCard(
                             onEnableLocation = {
                                 context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
@@ -388,7 +386,33 @@ fun WeatherScreen(
                                 // Main Weather Card
                                 WeatherCard(weather = weather)
 
-                                Spacer(modifier = Modifier.height(16.dp))
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                // Change City Button (only when manually entered city and GPS unavailable)
+                                if (lastSearchedCity.isNotBlank() && 
+                                    (permissionState == PermissionState.DENIED || 
+                                     permissionState == PermissionState.NOT_ASKED || 
+                                     !isLocationEnabled)) {
+                                    OutlinedButton(
+                                        onClick = {
+                                            showCityInput = true
+                                            lastSearchedCity = ""
+                                            cityName = ""
+                                        },
+                                        shape = RoundedCornerShape(12.dp),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Create,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text("Andere Stadt eingeben")
+                                    }
+                                    
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                }
 
                                 // Outfit Recommendations
                                 OutfitRecommendationsCard(weather = weather)
@@ -448,7 +472,7 @@ private fun WeatherCard(weather: Weather) {
         ) {
             // Weather Icon (Emoji)
             Text(
-                text = getWeatherEmoji(weather.description),
+                text = getWeatherEmoji(weather.iconUrl),
                 fontSize = 80.sp
             )
 
@@ -806,16 +830,20 @@ private fun CityInputCard(
 }
 
 // Helper functions
-private fun getWeatherEmoji(description: String): String {
-    return when {
-        description.contains("clear", ignoreCase = true) -> "☀️"
-        description.contains("cloud", ignoreCase = true) -> "☁️"
-        description.contains("rain", ignoreCase = true) -> "🌧️"
-        description.contains("drizzle", ignoreCase = true) -> "🌦️"
-        description.contains("thunder", ignoreCase = true) -> "⛈️"
-        description.contains("snow", ignoreCase = true) -> "❄️"
-        description.contains("mist", ignoreCase = true) ||
-                description.contains("fog", ignoreCase = true) -> "🌫️"
+// Maps OWM icon codes to emojis (language-independent)
+// Icon codes: https://openweathermap.org/weather-conditions
+private fun getWeatherEmoji(iconUrl: String): String {
+    val code = iconUrl.substringAfterLast("/").removeSuffix(".png").take(2)
+    return when (code) {
+        "01" -> "☀️"
+        "02" -> "🌤️"
+        "03" -> "🌥️"
+        "04" -> "☁️"
+        "09" -> "🌦️"
+        "10" -> "🌧️"
+        "11" -> "⛈️"
+        "13" -> "❄️"
+        "50" -> "🌫️"
         else -> "🌤️"
     }
 }
@@ -849,7 +877,8 @@ private fun getOutfitRecommendations(weather: Weather): List<OutfitRecommendatio
         }
     }
 
-    if (weather.description.contains("rain", ignoreCase = true)) {
+    val iconCode = weather.iconUrl.substringAfterLast("/").removeSuffix(".png").take(2)
+    if (iconCode == "09" || iconCode == "10" || iconCode == "11") {
         recommendations.add(OutfitRecommendation("⚠️ Regenschirm empfohlen", true))
     }
 

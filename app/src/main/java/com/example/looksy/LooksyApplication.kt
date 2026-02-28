@@ -71,7 +71,7 @@ class LooksyApplication : Application() {
     }
     
     // Geocoding Repository
-    // Note: reuses BuildConfig.WEATHER_API_KEY — the same free-tier OpenWeatherMap key
+        // Note: reuses BuildConfig.WEATHER_API_KEY — the same free-tier OpenWeatherMap key
     // covers both /data/2.5/weather and /geo/1.0/direct endpoints.
     val geocodingRepository by lazy {
         GeocodingRepository(geocodingApiService, BuildConfig.WEATHER_API_KEY)

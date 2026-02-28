@@ -7,6 +7,7 @@ This folder contains comprehensive documentation for the weather integration fea
 - **[class-diagram.md](class-diagram.md)** - Complete class structure and relationships
 - **[data-flow.md](data-flow.md)** - Simplified data flow visualization
 - **[sequence.md](sequence.md)** - Detailed interaction sequence with timing
+- **[localization.md](localization.md)** - Language changes made (German), emoji/icon-code mapping, guide for adding future languages
 - **README.md** (this file) - Overview and quick reference
 
 ## 🏗️ Architecture Overview

@@ -74,7 +74,7 @@ class WeatherScreenTest {
             locationName = "Zürich",
             temperature = 18.5,
             feelsLike = 17.0,
-            description = "Clear sky",
+            description = "Klarer Himmel",
             humidity = 65,
             iconUrl = "https://openweathermap.org/img/w/01d.png"
         )
@@ -98,7 +98,7 @@ class WeatherScreenTest {
         // Then: Weather data is displayed
         composeTestRule.onNodeWithText("19°C").assertIsDisplayed() // Temperature rounded
         composeTestRule.onNodeWithText("Zürich").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Clear sky", ignoreCase = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText("Klarer Himmel", ignoreCase = true).assertIsDisplayed()
         composeTestRule.onNodeWithText("65%").assertIsDisplayed() // Humidity
     }
 
@@ -311,5 +311,164 @@ class WeatherScreenTest {
 
         composeTestRule.onNodeWithText("Während der Nutzung der App").assertDoesNotExist()
         composeTestRule.onNodeWithText("Nur dieses Mal").assertDoesNotExist()
+    }
+
+    @Test
+    fun weatherScreen_showsChangeCityButton_whenManualCityAndNoPermission() {
+        // Given: Manual city entered (via geocoding) and no permission
+        val testWeather = Weather(
+            locationName = "Berlin",
+            temperature = 15.0,
+            feelsLike = 14.0,
+            description = "Cloudy",
+            humidity = 70,
+            iconUrl = "https://openweathermap.org/img/w/03d.png"
+        )
+        every { mockWeatherViewModel.weatherState } returns weatherStateFlow
+        every { mockGeocodingViewModel.geocodingState } returns geocodingStateFlow
+        every { mockLocationProvider.hasLocationPermission() } returns false
+        every { mockLocationProvider.isLocationEnabled() } returns false
+
+        composeTestRule.setContent {
+            LooksyTheme {
+                WeatherScreen(
+                    weatherViewModel = mockWeatherViewModel,
+                    geocodingViewModel = mockGeocodingViewModel,
+                    locationProvider = mockLocationProvider,
+                    onNavigateBack = {}
+                )
+            }
+        }
+
+        // When: Geocoding succeeds (simulating manual city entry)
+        geocodingStateFlow.value = GeocodingUiState.Success(Location(52.52, 13.405), "Berlin")
+        composeTestRule.waitForIdle()
+        Thread.sleep(100) // Allow LaunchedEffect to process
+
+        // Then: Weather is fetched
+        weatherStateFlow.value = WeatherUiState.Success(testWeather)
+        composeTestRule.waitForIdle()
+
+        // Then: Change city button is displayed
+        composeTestRule.onNodeWithText("Andere Stadt eingeben").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Berlin").assertIsDisplayed()
+    }
+
+    @Test
+    fun weatherScreen_showsChangeCityButton_whenManualCityAndLocationDisabled() {
+        // Given: Manual city entered and location disabled (but permission granted)
+        val testWeather = Weather(
+            locationName = "München",
+            temperature = 12.0,
+            feelsLike = 10.0,
+            description = "Rainy",
+            humidity = 80,
+            iconUrl = "https://openweathermap.org/img/w/10d.png"
+        )
+        every { mockWeatherViewModel.weatherState } returns weatherStateFlow
+        every { mockGeocodingViewModel.geocodingState } returns geocodingStateFlow
+        every { mockLocationProvider.hasLocationPermission() } returns true
+        every { mockLocationProvider.isLocationEnabled() } returns false
+
+        composeTestRule.setContent {
+            LooksyTheme {
+                WeatherScreen(
+                    weatherViewModel = mockWeatherViewModel,
+                    geocodingViewModel = mockGeocodingViewModel,
+                    locationProvider = mockLocationProvider,
+                    onNavigateBack = {}
+                )
+            }
+        }
+
+        // When: Geocoding succeeds
+        geocodingStateFlow.value = GeocodingUiState.Success(Location(48.1351, 11.582), "München")
+        composeTestRule.waitForIdle()
+        Thread.sleep(100)
+
+        weatherStateFlow.value = WeatherUiState.Success(testWeather)
+        composeTestRule.waitForIdle()
+
+        // Then: Change city button is displayed
+        composeTestRule.onNodeWithText("Andere Stadt eingeben").assertIsDisplayed()
+    }
+
+    @Test
+    fun weatherScreen_hidesChangeCityButton_whenGPSAvailable() {
+        // Given: Weather fetched via GPS (both permission and location enabled)
+        val testWeather = Weather(
+            locationName = "Zürich",
+            temperature = 18.0,
+            feelsLike = 17.0,
+            description = "Sunny",
+            humidity = 60,
+            iconUrl = "https://openweathermap.org/img/w/01d.png"
+        )
+        every { mockWeatherViewModel.weatherState } returns weatherStateFlow
+        every { mockGeocodingViewModel.geocodingState } returns geocodingStateFlow
+        setupPermissionGrantedAndLocationEnabled()
+        weatherStateFlow.value = WeatherUiState.Success(testWeather)
+
+        // When: Screen is displayed
+        composeTestRule.setContent {
+            LooksyTheme {
+                WeatherScreen(
+                    weatherViewModel = mockWeatherViewModel,
+                    geocodingViewModel = mockGeocodingViewModel,
+                    locationProvider = mockLocationProvider,
+                    onNavigateBack = {}
+                )
+            }
+        }
+
+        // Then: Change city button does NOT exist (GPS was used)
+        composeTestRule.onNodeWithText("Andere Stadt eingeben").assertDoesNotExist()
+        composeTestRule.onNodeWithText("Zürich").assertIsDisplayed()
+    }
+
+    @Test
+    fun weatherScreen_changeCityButton_showsCityInputCard() {
+        // Given: Weather displayed for manual city without permission
+        val testWeather = Weather(
+            locationName = "Hamburg",
+            temperature = 10.0,
+            feelsLike = 8.0,
+            description = "Windy",
+            humidity = 75,
+            iconUrl = "https://openweathermap.org/img/w/50d.png"
+        )
+        every { mockWeatherViewModel.weatherState } returns weatherStateFlow
+        every { mockGeocodingViewModel.geocodingState } returns geocodingStateFlow
+        every { mockLocationProvider.hasLocationPermission() } returns false
+        every { mockLocationProvider.isLocationEnabled() } returns false
+
+        composeTestRule.setContent {
+            LooksyTheme {
+                WeatherScreen(
+                    weatherViewModel = mockWeatherViewModel,
+                    geocodingViewModel = mockGeocodingViewModel,
+                    locationProvider = mockLocationProvider,
+                    onNavigateBack = {}
+                )
+            }
+        }
+
+        // Setup: Simulate manual city entry flow
+        geocodingStateFlow.value = GeocodingUiState.Success(Location(53.5511, 9.9937), "Hamburg")
+        composeTestRule.waitForIdle()
+        Thread.sleep(100)
+
+        weatherStateFlow.value = WeatherUiState.Success(testWeather)
+        composeTestRule.waitForIdle()
+
+        // When: Click "Andere Stadt eingeben" button
+        composeTestRule.onNodeWithText("Andere Stadt eingeben").performClick()
+        composeTestRule.waitForIdle()
+
+        // Then: CityInputCard is shown
+        composeTestRule.onNodeWithText("Stadt eingeben").assertIsDisplayed()
+        
+        // And: Weather data is no longer displayed (showCityInput hides it)
+        composeTestRule.onNodeWithText("Hamburg").assertDoesNotExist()
     }
 }
