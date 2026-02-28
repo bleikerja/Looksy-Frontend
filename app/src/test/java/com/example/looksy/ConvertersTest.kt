@@ -30,9 +30,9 @@ class ConvertersTest {
 
     @Test
     fun typeConversion() {
-        val type = Type.Tops
+        val type = Type.TShirt
         val converted = converters.fromType(type)
-        Assert.assertEquals("Tops", converted)
+        Assert.assertEquals("TShirt", converted)
         Assert.assertEquals(type, converters.toType(converted))
     }
 
@@ -98,5 +98,42 @@ class ConvertersTest {
     @Test
     fun toWashingNotes_defaultsOnInvalid() {
         Assert.assertEquals(WashingNotes.None, converters.toWashingNotes("DoesNotExist"))
+    }
+
+    @Test
+    fun pulloverTypeConversion() {
+        val type = Type.Pullover
+        val converted = converters.fromType(type)
+        Assert.assertEquals("Pullover", converted)
+        Assert.assertEquals(type, converters.toType(converted))
+    }
+
+    @Test
+    fun shoesTypeConversion() {
+        val type = Type.Shoes
+        val converted = converters.fromType(type)
+        Assert.assertEquals("Shoes", converted)
+        Assert.assertEquals(type, converters.toType(converted))
+    }
+
+    @Test
+    fun shoeSizeConversion() {
+        val shoeSizes = listOf(
+            Size._36 to "_36",
+            Size._37 to "_37",
+            Size._38 to "_38",
+            Size._39 to "_39",
+            Size._40 to "_40",
+            Size._41 to "_41",
+            Size._42 to "_42",
+            Size._43 to "_43",
+            Size._44 to "_44",
+            Size._45 to "_45"
+        )
+        for ((size, expectedName) in shoeSizes) {
+            val converted = converters.fromSize(size)
+            Assert.assertEquals(expectedName, converted)
+            Assert.assertEquals(size, converters.toSize(converted))
+        }
     }
 }

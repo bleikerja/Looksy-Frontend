@@ -52,7 +52,7 @@ class NavGraphIntegrationTest {
 
     // Testdaten mit gültigen Bildpfaden, damit die Komponenten gerendert werden und klickbar sind
     private val testTop = Clothes(
-        id = 1, type = Type.Tops, clean = true, size = Size._M,
+        id = 1, type = Type.TShirt, clean = true, size = Size._M,
         seasonUsage = Season.inBetween, material = Material.Cotton,
         washingNotes = listOf(WashingNotes.Temperature30),
         imagePath = "android.resource://com.example.looksy/${R.drawable.shirt_category}", 

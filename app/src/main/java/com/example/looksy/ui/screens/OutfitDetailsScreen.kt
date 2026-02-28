@@ -54,6 +54,7 @@ fun OutfitDetailsScreen(
     outfitDress: Clothes? = null,
     outfitJacket: Clothes? = null,
     outfitSkirt: Clothes? = null,
+    outfitShoes: Clothes? = null,
     onEdit: () -> Unit = {},
     onDelete: () -> Unit = {},
     onWear: () -> Unit = {},
@@ -132,6 +133,16 @@ fun OutfitDetailsScreen(
             }
 
             outfitPants?.let {
+                OutfitPart(
+                    imageResId = it.imagePath,
+                    onClick = { },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                )
+            }
+
+            outfitShoes?.let {
                 OutfitPart(
                     imageResId = it.imagePath,
                     onClick = { },

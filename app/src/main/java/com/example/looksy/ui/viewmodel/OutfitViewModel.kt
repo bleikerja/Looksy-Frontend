@@ -49,7 +49,8 @@ class OutfitViewModel(private val repository: OutfitRepository) : ViewModel() {
         selectedDressId: Int?,
         selectedSkirtId: Int?,
         selectedPantsId: Int?,
-        selectedJacketId: Int?
+        selectedJacketId: Int?,
+        selectedShoesId: Int? = null
     ){
         viewModelScope.launch {
             repository.incrementOutfitPreference(
@@ -57,7 +58,8 @@ class OutfitViewModel(private val repository: OutfitRepository) : ViewModel() {
                 selectedTopId = selectedTopId,
                 selectedSkirtId = selectedSkirtId,
                 selectedPantsId = selectedPantsId,
-                selectedJacketId = selectedJacketId
+                selectedJacketId = selectedJacketId,
+                selectedShoesId = selectedShoesId
             )
         }
     }

@@ -15,7 +15,7 @@ class SavedOutfitsScreenTest {
     private val testClothes = listOf(
         Clothes(
             id = 1,
-            type = Type.Tops,
+            type = Type.TShirt,
             size = Size._M,
             material = Material.Cotton,
             washingNotes = listOf(WashingNotes.Temperature30),
@@ -93,7 +93,7 @@ class SavedOutfitsScreenTest {
         assertNotNull(pants)
         assertNotNull(jacket)
         assertNull(dress)
-        assertEquals(Type.Tops, top?.type)
+        assertEquals(Type.TShirt, top?.type)
         assertEquals(Type.Pants, pants?.type)
         assertEquals(Type.Jacket, jacket?.type)
     }
@@ -137,7 +137,7 @@ class SavedOutfitsScreenTest {
         // Then - Die Reihenfolge sollte Jacket, Top, Pants sein
         assertEquals(3, clothesList.size)
         assertEquals(Type.Jacket, clothesList[0].type)
-        assertEquals(Type.Tops, clothesList[1].type)
+        assertEquals(Type.TShirt, clothesList[1].type)
         assertEquals(Type.Pants, clothesList[2].type)
     }
 

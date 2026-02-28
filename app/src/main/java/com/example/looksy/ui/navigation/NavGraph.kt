@@ -74,6 +74,7 @@ fun NavGraph(
     var jacketId by remember { mutableStateOf<Int?>(null) }
     var skirtId by remember { mutableStateOf<Int?>(null) }
     var dressId by remember { mutableStateOf<Int?>(null) }
+    var shoesId by remember { mutableStateOf<Int?>(null) }
 
     // Track permission and location state for weather
     var permissionState by remember { mutableStateOf(PermissionState.NOT_ASKED) }
@@ -83,11 +84,12 @@ fun NavGraph(
 
     LaunchedEffect(allClothesFromDb) {
         if (listOfNotNull(topId, pantsId, jacketId, skirtId, dressId).isEmpty()){
-            topId = allClothesFromDb.find { it.type == Type.Tops && it.selected }?.id
+            topId = allClothesFromDb.find { it.type in Type.topTypes && it.selected }?.id
             pantsId = allClothesFromDb.find { it.type == Type.Pants && it.selected }?.id
             jacketId = allClothesFromDb.find { it.type == Type.Jacket && it.selected }?.id
             skirtId = allClothesFromDb.find { it.type == Type.Skirt && it.selected }?.id
             dressId = allClothesFromDb.find { it.type == Type.Dress && it.selected }?.id
+            shoesId = allClothesFromDb.find { it.type == Type.Shoes && it.selected }?.id
         }
 
         if (allClothesFromDb.isNotEmpty() && topId == null && dressId == null) {
@@ -97,6 +99,7 @@ fun NavGraph(
             skirtId = outfit.skirt?.id
             jacketId = outfit.jacket?.id
             dressId = outfit.dress?.id
+            shoesId = outfit.shoes?.id
         }
     }
 
@@ -139,6 +142,7 @@ fun NavGraph(
                 jacket = getClothById(allClothesFromDb, jacketId ?: -1),
                 skirt = getClothById(allClothesFromDb, skirtId ?: -1),
                 dress = getClothById(allClothesFromDb, dressId ?: -1),
+                shoes = getClothById(allClothesFromDb, shoesId ?: -1),
                 weatherState = weatherState,
                 permissionState = permissionState,
                 isLocationEnabled = isLocationEnabled,
@@ -158,7 +162,8 @@ fun NavGraph(
                         dressId,
                         skirtId,
                         pantsId,
-                        jacketId
+                        jacketId,
+                        shoesId
                     )
                     /*
                     // 3. Neues Outfit generieren (aus den verbleibenden sauberen Sachen)
@@ -179,6 +184,7 @@ fun NavGraph(
                     jacketId = null
                     skirtId = null
                     dressId = null
+                    shoesId = null
                     val updatedDirtyClothesList = dirtyClothesList.map { it.copy(selected = false, clean = false) }
                     val updatedCleanClothesList = cleanClothesList.map { it.copy(selected = false, wornSince = null, daysWorn = calculateDaysWorn(it)) }
                     clothesViewModel.updateAll(updatedDirtyClothesList + updatedCleanClothesList)
@@ -192,6 +198,7 @@ fun NavGraph(
                     skirtId = outfit.skirt?.id
                     jacketId = outfit.jacket?.id
                     dressId = outfit.dress?.id
+                    shoesId = outfit.shoes?.id
                 },
                 onCamera = { navController.navigate(Routes.Scan.createRoute(-1)) },
                 onSave = {
@@ -201,6 +208,7 @@ fun NavGraph(
                         skirtId = skirtId,
                         pantsId = pantsId,
                         jacketId = jacketId,
+                        shoesId = shoesId,
                         isSynced = false,
                         isManuelSaved = true
                     )
@@ -269,7 +277,8 @@ fun NavGraph(
 
                 clothesData?.let { cloth ->
                     val isInOutfit = cloth.id == topId || cloth.id == pantsId ||
-                        cloth.id == jacketId || cloth.id == skirtId || cloth.id == dressId
+                        cloth.id == jacketId || cloth.id == skirtId || cloth.id == dressId ||
+                        cloth.id == shoesId
                     Scaffold(
                         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
                     ) { innerPadding ->
@@ -285,6 +294,7 @@ fun NavGraph(
                                 if(jacketId == cloth.id) jacketId = null
                                 if(skirtId == cloth.id) skirtId = null
                                 if(dressId == cloth.id) dressId = null
+                                if(shoesId == cloth.id) shoesId = null
                             },
                             onNavigateToDetails = { newId ->
                                 navController.navigate(Routes.Details.createRoute(newId)) {
@@ -302,7 +312,7 @@ fun NavGraph(
 
                                 selectedCloth?.let {
                                     when (it.type) {
-                                        Type.Tops -> topId = it.id
+                                        Type.TShirt, Type.Pullover -> topId = it.id
                                         Type.Pants -> pantsId = it.id
                                         Type.Jacket -> jacketId = it.id
                                         Type.Skirt -> {
@@ -313,6 +323,7 @@ fun NavGraph(
                                             dressId = it.id
                                             skirtId = null
                                         }
+                                        Type.Shoes -> shoesId = it.id
                                     }
                                 }
                                 navController.navigate(Routes.Home.route) {
@@ -332,11 +343,12 @@ fun NavGraph(
                                     }
                                 } else {
                                     when (cloth.type) {
-                                        Type.Tops -> topId = null
+                                        Type.TShirt, Type.Pullover -> topId = null
                                         Type.Pants -> pantsId = null
                                         Type.Jacket -> jacketId = null
                                         Type.Skirt -> skirtId = null
                                         Type.Dress -> dressId = null
+                                        Type.Shoes -> shoesId = null
                                     }
                                     if (cloth.selected) clothesViewModel.update(cloth.copy(selected = false, wornSince = null, daysWorn = calculateDaysWorn(cloth)))
                                     navController.popBackStack()
@@ -429,11 +441,12 @@ fun NavGraph(
                                 clothesViewModel.update(finalClothes)
                                 finalClothes.let {
                                     when (it.type) {
-                                        Type.Tops -> if (topId == it.id) topId = it.id
+                                        Type.TShirt, Type.Pullover -> if (topId == it.id) topId = it.id
                                         Type.Pants -> if (pantsId == it.id) pantsId = it.id
                                         Type.Jacket -> if (jacketId == it.id) jacketId = it.id
                                         Type.Skirt -> if (skirtId == it.id) skirtId = it.id
                                         Type.Dress -> if (dressId == it.id) dressId = it.id
+                                        Type.Shoes -> if (shoesId == it.id) shoesId = it.id
                                     }
                                 }
 
@@ -529,6 +542,7 @@ fun NavGraph(
                     val outfitDress = outfit.dressId?.let { id -> allClothesFromDb.find { it.id == id } }
                     val outfitJacket = outfit.jacketId?.let { id -> allClothesFromDb.find { it.id == id } }
                     val outfitSkirt = outfit.skirtId?.let { id -> allClothesFromDb.find { it.id == id } }
+                    val outfitShoes = outfit.shoesId?.let { id -> allClothesFromDb.find { it.id == id } }
 
                     OutfitDetailsScreen(
                         outfit = outfit,
@@ -537,6 +551,7 @@ fun NavGraph(
                         outfitDress = outfitDress,
                         outfitJacket = outfitJacket,
                         outfitSkirt = outfitSkirt,
+                        outfitShoes = outfitShoes,
                         // Button 1: Bearbeiten - Navigiert zu Edit Screen
                         onEdit = {
                             editingOutfitId = outfitId
@@ -554,6 +569,7 @@ fun NavGraph(
                             dressId = outfitDress?.id
                             jacketId = outfitJacket?.id
                             skirtId = outfitSkirt?.id
+                            shoesId = outfitShoes?.id
                             navController.navigate(Routes.Home.route) {
                                 popUpTo(Routes.SavedOutfits.route) { inclusive = false }
                             }

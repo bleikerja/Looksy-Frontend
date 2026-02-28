@@ -22,7 +22,7 @@ class FullOutfitScreenWeatherTest {
 
     private val testTop = Clothes(
         id = 1,
-        type = Type.Tops,
+        type = Type.TShirt,
         clean = true,
         size = Size._M,
         seasonUsage = Season.inBetween,

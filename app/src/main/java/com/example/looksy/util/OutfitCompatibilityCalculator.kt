@@ -13,7 +13,7 @@ object OutfitCompatibilityCalculator {
      * Calculates the compatibility score of an outfit (0-100 points)
      */
     fun calculateCompatibilityScore(outfit: OutfitResult): Int {
-        val items = listOfNotNull(outfit.top, outfit.pants, outfit.skirt, outfit.jacket, outfit.dress)
+        val items = listOfNotNull(outfit.top, outfit.pants, outfit.skirt, outfit.jacket, outfit.dress, outfit.shoes)
         
         // Empty outfit gets 0 points
         if (items.isEmpty()) return 0
@@ -49,7 +49,7 @@ object OutfitCompatibilityCalculator {
      * Used by generator to filter invalid outfits and by tests.
      */
     fun isOutfitColorCompatible(outfit: OutfitResult): Boolean {
-        val items = listOfNotNull(outfit.top, outfit.pants, outfit.skirt, outfit.jacket, outfit.dress)
+        val items = listOfNotNull(outfit.top, outfit.pants, outfit.skirt, outfit.jacket, outfit.dress, outfit.shoes)
         return calculateColorCompatibility(items) > 0.0
     }
 
@@ -232,6 +232,7 @@ object OutfitCompatibilityCalculator {
         val hasPants = outfit.pants != null
         val hasSkirt = outfit.skirt != null
         val hasJacket = outfit.jacket != null
+        // Shoes are optional and don't affect type compatibility
         
         // Dress alone or dress + jacket is perfect
         if (hasDress && !hasPants && !hasSkirt) {
@@ -261,9 +262,11 @@ object OutfitCompatibilityCalculator {
      * Calculates size consistency score (0-100 points)
      */
     private fun calculateSizeCompatibility(items: List<Clothes>): Double {
-        if (items.size < 2) return 100.0
+        // Exclude shoes from size compatibility since shoe sizes are different from clothing sizes
+        val clothingItems = items.filter { it.type != Type.Shoes }
+        if (clothingItems.size < 2) return 100.0
         
-        val sizes = items.map { it.size }
+        val sizes = clothingItems.map { it.size }
         
         // Convert size to number for comparison
         fun sizeToNumber(size: Size): Int {
@@ -275,10 +278,15 @@ object OutfitCompatibilityCalculator {
                 Size._XL -> 5
                 Size._34 -> 1
                 Size._36 -> 1
+                Size._37 -> 2
                 Size._38 -> 2
+                Size._39 -> 3
                 Size._40 -> 3
+                Size._41 -> 4
                 Size._42 -> 4
+                Size._43 -> 5
                 Size._44 -> 5
+                Size._45 -> 6
                 Size._46 -> 6
                 Size._48 -> 7
                 Size._50 -> 8

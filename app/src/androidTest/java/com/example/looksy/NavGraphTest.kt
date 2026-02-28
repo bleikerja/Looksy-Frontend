@@ -45,7 +45,7 @@ class NavGraphTest {
 
     private val testTop = Clothes(
         id = 1,
-        type = Type.Tops,
+        type = Type.TShirt,
         clean = true,
         size = Size._M,
         seasonUsage = Season.inBetween,
@@ -304,8 +304,8 @@ class NavGraphTest {
             navController.navigate(Routes.Details.createRoute(1))
         }
         composeTestRule.waitForIdle()
-        // Button-Text ist dynamisch: "${Type.Tops} auswählen" -> "Tops auswählen"
-        composeTestRule.onNodeWithText("${Type.Tops} auswählen", ignoreCase = true)
+        // Button-Text ist dynamisch: "${Type.TShirt} auswählen" -> "T-Shirt/Longsleeve auswählen"
+        composeTestRule.onNodeWithText("${Type.TShirt} auswählen", ignoreCase = true)
             .performClick()
 
         Assert.assertEquals(Routes.Home.route, navController.currentDestination?.route)
@@ -350,7 +350,7 @@ class NavGraphTest {
     fun navGraph_home_clickRandomize_triggersNoNavigationButLogic() {
         val testTop = Clothes(
             id = 1,
-            type = Type.Tops,
+            type = Type.TShirt,
             clean = true,
             size = Size._M,
             seasonUsage = Season.inBetween,

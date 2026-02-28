@@ -161,9 +161,10 @@ private fun OutfitCard(
     val jacket = outfit.jacketId?.let { id -> allClothes.find { it.id == id } }
     val pants = outfit.pantsId?.let { id -> allClothes.find { it.id == id } }
     val skirt = outfit.skirtId?.let { id -> allClothes.find { it.id == id } }
+    val shoes = outfit.shoesId?.let { id -> allClothes.find { it.id == id } }
 
     // Sammle alle vorhandenen Kleidungsstücke in der richtigen Reihenfolge
-    val clothesList = listOfNotNull(jacket, dress, top, skirt, pants)
+    val clothesList = listOfNotNull(jacket, dress, top, skirt, pants, shoes)
 
     Card(
         modifier = Modifier

@@ -78,6 +78,7 @@ fun FullOutfitScreen(
     dress: Clothes? = null,
     jacket: Clothes? = null,
     skirt: Clothes? = null,
+    shoes: Clothes? = null,
     onClick: (Int) -> Unit = {},
     onConfirm: (List<Clothes>) -> Unit = {},
     onMoveToWashingMachine: (List<Clothes>, List<Clothes>) -> Unit = { _, _ -> },
@@ -95,7 +96,7 @@ fun FullOutfitScreen(
         val scope = rememberCoroutineScope()
         Box(modifier = Modifier.fillMaxSize()) {
             val confirmedOutfit =
-                listOfNotNull(top, pants, dress, jacket, skirt).any { !it.selected }
+                listOfNotNull(top, pants, dress, jacket, skirt, shoes).any { !it.selected }
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -166,6 +167,13 @@ fun FullOutfitScreen(
                         modifier = Modifier.weight(1f)
                     )
                 }
+                shoes?.let {
+                    OutfitPart(
+                        imageResId = it.imagePath,
+                        onClick = { onClick(it.id) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
             }
             if (confirmedOutfit) {
                 IconButton(
@@ -210,7 +218,7 @@ fun FullOutfitScreen(
                 if (confirmedOutfit) {
                     IconButton(
                         onClick = {
-                            val wornClothes = listOfNotNull(top, pants, dress, jacket, skirt)
+                            val wornClothes = listOfNotNull(top, pants, dress, jacket, skirt, shoes)
                             onConfirm(wornClothes)
                             scope.launch {
                                 snackbarHostState.showSnackbar(
@@ -242,7 +250,7 @@ fun FullOutfitScreen(
                         )
                     }
                     if (showConfirmDialog) {
-                        val wornClothes = listOfNotNull(top, pants, dress, jacket, skirt)
+                        val wornClothes = listOfNotNull(top, pants, dress, jacket, skirt, shoes)
                         var selectedIds by remember {
                             mutableStateOf(wornClothes.map { it.id }.toSet())
                         }

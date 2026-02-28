@@ -84,7 +84,7 @@ var allClothes = listOf(
     Clothes(
         size = Size._M,
         seasonUsage = Season.inBetween,
-        type = Type.Tops,
+        type = Type.TShirt,
         material = Material.Wool,
         clean = true,
         washingNotes = listOf(WashingNotes.Temperature30),

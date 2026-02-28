@@ -37,14 +37,16 @@ class OutfitRepository(private val outfitDao: OutfitDao) {
         selectedDressId: Int?,
         selectedSkirtId: Int?,
         selectedPantsId: Int?,
-        selectedJacketId: Int?
+        selectedJacketId: Int?,
+        selectedShoesId: Int? = null
     ) {
         val existingOutfit = outfitDao.findMatchingOutfit(
             selectedTopId,
             selectedDressId,
             selectedSkirtId,
             selectedPantsId,
-            selectedJacketId
+            selectedJacketId,
+            selectedShoesId
         )
         if (existingOutfit != null) {
             // 2. Outfit existiert -> Count erhöhen
@@ -60,6 +62,7 @@ class OutfitRepository(private val outfitDao: OutfitDao) {
                 dressId = selectedDressId,
                 skirtId = selectedSkirtId,
                 jacketId = selectedJacketId,
+                shoesId = selectedShoesId,
                 preference = 1
             )
             outfitDao.insert(newOutfit)
