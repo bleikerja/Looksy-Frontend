@@ -265,6 +265,8 @@ fun NavGraph(
                 val message = stringResource(R.string.error_cannot_deselect_last_item)
 
                 clothesData?.let { cloth ->
+                    val isInOutfit = cloth.id == topId || cloth.id == pantsId ||
+                        cloth.id == jacketId || cloth.id == skirtId || cloth.id == dressId
                     Scaffold(
                         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
                     ) { innerPadding ->
@@ -287,6 +289,7 @@ fun NavGraph(
                                 }
                             },
                             onNavigateBack = { navController.popBackStack() },
+                            isInOutfit = isInOutfit,
                             onConfirmOutfit = { confirmedId ->
                                 val selectedCloth = getClothById(allClothesFromDb, confirmedId)
                                 val prevCloth = allClothesFromDb.find { it.type == selectedCloth?.type && it.selected }
@@ -314,68 +317,25 @@ fun NavGraph(
                                 }
                             },
                             onDeselectOutfit = {
-                                var canNavigateBack = false
-                                
-                                when (cloth.type) {
-                                    Type.Tops -> {
-                                        if (dressId == null) {
-                                            scope.launch {
-                                                snackbarHostState.showSnackbar(
-                                                    message = message,
-                                                    duration = SnackbarDuration.Long
-                                                )
-                                            }
-                                        } else {
-                                            topId = null
-                                            canNavigateBack = true
-                                        }
+                                val cleanOfSameType = allClothesFromDb.count { it.type == cloth.type && it.clean }
+                                val canDeselect = cleanOfSameType > 1
+
+                                if (!canDeselect) {
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            message = message,
+                                            duration = SnackbarDuration.Long
+                                        )
                                     }
-                                    Type.Pants -> {
-                                        if (skirtId == null) {
-                                            scope.launch {
-                                                snackbarHostState.showSnackbar(
-                                                    message = message,
-                                                    duration = SnackbarDuration.Long
-                                                )
-                                            }
-                                        } else {
-                                            pantsId = null
-                                            canNavigateBack = true
-                                        }
+                                } else {
+                                    when (cloth.type) {
+                                        Type.Tops -> topId = null
+                                        Type.Pants -> pantsId = null
+                                        Type.Jacket -> jacketId = null
+                                        Type.Skirt -> skirtId = null
+                                        Type.Dress -> dressId = null
                                     }
-                                    Type.Jacket -> {
-                                        jacketId = null
-                                        canNavigateBack = true
-                                    }
-                                    Type.Skirt -> {
-                                        if (pantsId == null) {
-                                            scope.launch {
-                                                snackbarHostState.showSnackbar(
-                                                    message = message,
-                                                    duration = SnackbarDuration.Long
-                                                )
-                                            }
-                                        } else {
-                                            skirtId = null
-                                            canNavigateBack = true
-                                        }
-                                    }
-                                    Type.Dress -> {
-                                        if (topId == null) {
-                                            scope.launch {
-                                                snackbarHostState.showSnackbar(
-                                                    message = message,
-                                                    duration = SnackbarDuration.Long
-                                                )
-                                            }
-                                        } else {
-                                            dressId = null
-                                            canNavigateBack = true
-                                        }
-                                    }
-                                }
-                                if (canNavigateBack) {
-                                    if(cloth.selected) clothesViewModel.update(cloth.copy(selected = false, wornSince = null, daysWorn = calculateDaysWorn(cloth)))
+                                    if (cloth.selected) clothesViewModel.update(cloth.copy(selected = false, wornSince = null, daysWorn = calculateDaysWorn(cloth)))
                                     navController.popBackStack()
                                 }
                             },
@@ -448,6 +408,11 @@ fun NavGraph(
                 onCropPhoto = {
                     activeUriString?.let { uri ->
                         navController.navigate(Routes.EditPicture.createRoute(uri))
+                onEditImage = {
+                    navController.navigate(Routes.Scan.createRoute(-1)) {
+                        popUpTo(Routes.AddNewClothes.route) {
+                            inclusive = true
+                        }
                     }
                 }
             )

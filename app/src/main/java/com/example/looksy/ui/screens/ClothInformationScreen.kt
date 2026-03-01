@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.LocalLaundryService
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -102,6 +103,7 @@ fun ClothInformationScreen(
     onNavigateToDetails: (Int) -> Unit,
     onNavigateBack: () -> Unit,
     onConfirmOutfit: (Int) -> Unit,
+    isInOutfit: Boolean,
     onDeselectOutfit: (Int) -> Unit,
     onNavigateToEdit: (Int) -> Unit
 ) {
@@ -186,7 +188,14 @@ fun ClothInformationScreen(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Button(onClick = {onDeselectOutfit(clothesData.id)}){
+            Button(
+                onClick = { onDeselectOutfit(clothesData.id) },
+                enabled = isInOutfit,
+                colors = ButtonDefaults.buttonColors(
+                    disabledContainerColor = Color.Black,
+                    disabledContentColor = Color.White
+                )
+            ) {
                 Text("Aus Outfit entfernen")
             }
             Button(onClick = { onConfirmOutfit(clothesData.id) }) {
