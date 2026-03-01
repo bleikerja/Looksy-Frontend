@@ -10,11 +10,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
@@ -23,8 +21,9 @@ import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Surface
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import com.example.looksy.ui.components.Header
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -168,11 +167,20 @@ fun EditPictureScreen(
     // ─────────────────────────────────────────────────────────────────────────
     // Root layout
     // ─────────────────────────────────────────────────────────────────────────
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = Color(249, 246, 242),
-        shape = RoundedCornerShape(20.dp)
-    ) {
+    Scaffold(
+        containerColor = Color(249, 246, 242),
+        topBar = {
+            Header(
+                onNavigateBack = onCancel,
+                onNavigateToRightIcon = {},
+                clothesData = null,
+                headerText = "Foto bearbeiten",
+                rightIconContentDescription = null,
+                rightIcon = null,
+                isFirstHeader = false
+            )
+        }
+    ) { padding ->
         val handleSizeDp = 24.dp
         val handleSizePx = with(density) { handleSizeDp.toPx() }
         val minCropSizePx = with(density) { 60.dp.toPx() }
@@ -180,8 +188,7 @@ fun EditPictureScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .statusBarsPadding()
-                .navigationBarsPadding()
+                .padding(padding)
         ) {
             // ── Canvas area (fills remaining space) ───────────────────────────
             Box(

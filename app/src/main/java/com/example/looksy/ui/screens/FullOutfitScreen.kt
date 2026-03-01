@@ -96,30 +96,15 @@ fun FullOutfitScreen(
         val scope = rememberCoroutineScope()
         Scaffold(
             topBar = {
-                Box(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    // Weather Icon Row on the left
-                    WeatherIconRow(
-                        weatherState = weatherState,
-                        permissionState = permissionState,
-                        isLocationEnabled = isLocationEnabled,
-                        onClick = onWeatherClick,
-                        modifier = Modifier.align(Alignment.CenterStart)
-                    )
-
-                    // Header stays centered
-                    Header(
-                        onNavigateBack = {},
-                        onNavigateToRightIcon = { onWashingMachine() },
-                        clothesData = null,
-                        headerText = "Heutiges Outfit",
-                        rightIconContentDescription = "Zur Waschmaschine",
-                        rightIcon = Icons.Default.LocalLaundryService,
-                        isFirstHeader = true,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
+                Header(
+                    onNavigateBack = {},
+                    onNavigateToRightIcon = { onWashingMachine() },
+                    clothesData = null,
+                    headerText = "Heutiges Outfit",
+                    rightIconContentDescription = "Zur Waschmaschine",
+                    rightIcon = Icons.Default.LocalLaundryService,
+                    isFirstHeader = true
+                )
             }
         ) { padding ->
             Box(modifier = Modifier.padding(padding).fillMaxSize()) {
@@ -132,6 +117,13 @@ fun FullOutfitScreen(
                         .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    WeatherIconRow(
+                        weatherState = weatherState,
+                        permissionState = permissionState,
+                        isLocationEnabled = isLocationEnabled,
+                        onClick = onWeatherClick,
+                        modifier = Modifier.align(Alignment.Start)
+                    )
                     Spacer(modifier = Modifier.height(16.dp))
 
                     jacket?.let {
@@ -315,7 +307,20 @@ fun FullOutfitScreen(
             }
         }
     } else {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Scaffold(
+            topBar = {
+                Header(
+                    onNavigateBack = {},
+                    onNavigateToRightIcon = {},
+                    clothesData = null,
+                    headerText = "Heutiges Outfit",
+                    rightIconContentDescription = null,
+                    rightIcon = null,
+                    isFirstHeader = true
+                )
+            }
+        ) { padding ->
+        Box(modifier = Modifier.padding(padding).fillMaxSize(), contentAlignment = Alignment.Center) {
             WeatherIconRow(
                 weatherState = weatherState,
                 permissionState = permissionState,
@@ -359,6 +364,7 @@ fun FullOutfitScreen(
                 }
             }
         }
+        } // closes Scaffold lambda
     }
 }
 
