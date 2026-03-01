@@ -445,7 +445,7 @@ fun NavGraph(
                     }
                 },
                 onNavigateBack = { navController.popBackStack() },
-                onEditPhoto = {
+                onCropPhoto = {
                     activeUriString?.let { uri ->
                         navController.navigate(Routes.EditPicture.createRoute(uri))
                     }
@@ -520,7 +520,7 @@ fun NavGraph(
                         }
                     },
                     onEditImage = { navController.navigate(Routes.Scan.createRoute(clothesId)) },
-                    onEditPhoto = {
+                    onCropPhoto = {
                         // activeUriString is null when editing an existing item that hasn't had
                         // a new photo taken yet → fall back to the stored image path from DB
                         val uriToEdit = if (!activeUriString.isNullOrEmpty()) {

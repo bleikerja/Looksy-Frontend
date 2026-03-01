@@ -66,7 +66,7 @@ fun AddNewClothesScreen(
     modifier: Modifier = Modifier,
     clothesIdToEdit: Int? = null,
     onEditImage: () -> Unit = {},
-    onEditPhoto: () -> Unit = {}
+    onCropPhoto: () -> Unit = {}
 ) {
     val clothesToEdit by if (clothesIdToEdit != null) {
         viewModel.getClothesById(clothesIdToEdit).collectAsState(initial = null)
@@ -191,7 +191,7 @@ fun AddNewClothesScreen(
                 //modifier = Modifier.padding(innerPadding),
                 imageUri = imageToShowUri,
                 onEditImage = { onEditImage(); edited = true },
-                onEditPhoto = { onEditPhoto(); edited = true },
+                onEditPhoto = { onCropPhoto(); edited = true },
                 size = size,
                 onSizeChange = { size = it; edited = true },
                 season = season,
