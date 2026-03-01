@@ -1340,6 +1340,52 @@ private fun WeatherIconRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         when {
+            // Always show weather data when it is available, regardless of permission state.
+            // The user may have entered a city manually without granting GPS permission.
+            weatherState is WeatherUiState.Success -> {
+                Text(
+                    text = getWeatherEmoji(weatherState.weather.iconUrl),
+                    fontSize = 28.sp
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "${weatherState.weather.temperature.roundToInt()}°C",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+            }
+
+            weatherState is WeatherUiState.Loading &&
+            permissionState != PermissionState.NOT_ASKED -> {
+                Spacer(modifier = Modifier.width(20.dp))
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .testTag("weather_loading"),
+                    strokeWidth = 2.dp,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            weatherState is WeatherUiState.Error &&
+            (permissionState == PermissionState.GRANTED_WHILE_IN_USE ||
+             permissionState == PermissionState.GRANTED_ONCE) -> {
+                Icon(
+                    imageVector = Icons.Default.CloudOff,
+                    contentDescription = "Weather unavailable",
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.error
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Wetter nicht verfügbar",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+
             permissionState == PermissionState.NOT_ASKED -> {
                 Spacer(modifier = Modifier.width(20.dp))
                 Icon(
@@ -1374,48 +1420,7 @@ private fun WeatherIconRow(
             }
 
             else -> {
-                when (weatherState) {
-                    is WeatherUiState.Loading -> {
-                        Spacer(modifier = Modifier.width(20.dp))
-                        CircularProgressIndicator(
-                            modifier = Modifier
-                                .size(24.dp)
-                                .testTag("weather_loading"),
-                            strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-
-                    is WeatherUiState.Success -> {
-                        Text(
-                            text = getWeatherEmoji(weatherState.weather.iconUrl),
-                            fontSize = 28.sp
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "${weatherState.weather.temperature.roundToInt()}°C",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                    }
-
-                    is WeatherUiState.Error -> {
-                        Icon(
-                            imageVector = Icons.Default.CloudOff,
-                            contentDescription = "Weather unavailable",
-                            modifier = Modifier.size(20.dp),
-                            tint = MaterialTheme.colorScheme.error
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Wetter nicht verfügbar",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                }
+                // Loading with no permission and no GPS — show nothing
             }
         }
 

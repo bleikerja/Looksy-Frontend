@@ -62,7 +62,7 @@ fun ScreenBlueprint(navController: NavHostController) {
         factory = OutfitViewModelFactory(application.outfitRepository)
     )
     val viewModelWeather: WeatherViewModel = viewModel(
-        factory = WeatherViewModelFactory(application.weatherRepository)
+        factory = WeatherViewModelFactory(application.weatherRepository, application.userPreferencesRepository)
     )
     var nextRoute by remember { mutableStateOf(Routes.Home.route) }
     var showBackDialog by remember { mutableStateOf(false) }

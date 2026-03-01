@@ -130,15 +130,21 @@ fun NavGraph(
                 }
             }
 
-            // Fetch weather on launch if location permission is granted and location is on
+            // Fetch weather on launch: use GPS if available, otherwise restore saved city
             LaunchedEffect(Unit) {
                 if (application.locationProvider.hasLocationPermission()) {
                     isLocationEnabled = application.locationProvider.isLocationEnabled()
                     if (isLocationEnabled) {
                         application.locationProvider.getCurrentLocation().onSuccess { location ->
                             weatherViewModel.fetchWeather(location.latitude, location.longitude)
+                        }.onFailure {
+                            weatherViewModel.fetchWeatherForSavedCity()
                         }
+                    } else {
+                        weatherViewModel.fetchWeatherForSavedCity()
                     }
+                } else {
+                    weatherViewModel.fetchWeatherForSavedCity()
                 }
             }
 

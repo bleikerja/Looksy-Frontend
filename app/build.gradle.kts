@@ -36,6 +36,7 @@ android {
         create("production") {
             dimension = "version"
             applicationId = "com.example.looksy"
+            isDefault = true 
         }
         create("dev") {
             dimension = "version"
@@ -113,6 +114,7 @@ dependencies {
     implementation(libs.androidx.compose.foundation.layout)
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.datastore.preferences)
 
     // Test dependencies
     testImplementation(libs.junit)

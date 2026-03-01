@@ -69,9 +69,9 @@ fun WeatherScreen(
     // Holds the error message to show in a snackbar, decoupled from geocodingState
     // so the LaunchedEffect key change doesn't cancel the running snackbar coroutine.
     var lastGeocodingError by remember { mutableStateOf<String?>(null) }
-    // Persists the last city the user searched, so a pull-to-refresh re-fetches
-    // weather for that city instead of reverting back to the permission/GPS flow.
-    var lastSearchedCity by remember { mutableStateOf("") }
+    // Last searched city is persisted via WeatherViewModel → DataStore so it survives
+    // both back-navigation and app restarts.
+    val lastSearchedCity by weatherViewModel.lastSearchedCity.collectAsState()
 
     fun refreshWeatherState() {
         if (isRefreshing) return
@@ -79,29 +79,39 @@ fun WeatherScreen(
         scope.launch {
             isRefreshing = true
 
+            val hasPermission = locationProvider.hasLocationPermission()
+            isLocationEnabled = locationProvider.isLocationEnabled()
+            val activity = context as? android.app.Activity
+            val wasDeniedBefore = (activity != null &&
+                ActivityCompat.shouldShowRequestPermissionRationale(
+                    activity, Manifest.permission.ACCESS_FINE_LOCATION
+                )) || permissionState == PermissionState.DENIED
+
+            // Resolve permission state up-front so the UI is never stuck on
+            // LocationAccessCard when a saved city is available.
+            if (hasPermission) {
+                permissionState = PermissionState.GRANTED_WHILE_IN_USE
+            } else {
+                permissionState = if (wasDeniedBefore) PermissionState.DENIED else PermissionState.NOT_ASKED
+            }
+
             // If the user previously entered a city manually, keep fetching for
             // that city on every refresh — unless location permission and services
             // are both available again, in which case switch back to GPS.
-            if (lastSearchedCity.isNotBlank()) {
-                val hasPermissionNow = locationProvider.hasLocationPermission()
-                val locationOnNow = locationProvider.isLocationEnabled()
-                if (hasPermissionNow && locationOnNow) {
+            val savedCity = weatherViewModel.lastSearchedCity.value
+            if (savedCity.isNotBlank()) {
+                if (hasPermission && isLocationEnabled) {
                     // Location is back — clear the city override and fall through
                     // to the GPS branch below.
-                    lastSearchedCity = ""
+                    weatherViewModel.clearLastSearchedCity()
                 } else {
-                    geocodingViewModel.getCityCoordinates(lastSearchedCity)
+                    weatherViewModel.fetchWeatherForSavedCity()
                     isRefreshing = false
                     return@launch
                 }
             }
 
-            val hasPermission = locationProvider.hasLocationPermission()
-            isLocationEnabled = locationProvider.isLocationEnabled()
-
             if (hasPermission) {
-                permissionState = PermissionState.GRANTED_WHILE_IN_USE
-
                 if (isLocationEnabled) {
                     locationInputMode = LocationInputMode.GPS
                     showCityInput = false
@@ -117,16 +127,6 @@ fun WeatherScreen(
                     showCityInput = false
                 }
             } else {
-                // shouldShowRequestPermissionRationale returns true when the user
-                // denied once in the current install, so we can differentiate
-                // "never asked" from "already denied" on a fresh screen load.
-                val activity = context as? android.app.Activity
-                val wasDeniedBefore = (activity != null &&
-                    ActivityCompat.shouldShowRequestPermissionRationale(
-                        activity, Manifest.permission.ACCESS_FINE_LOCATION
-                    )) || permissionState == PermissionState.DENIED
-
-                permissionState = if (wasDeniedBefore) PermissionState.DENIED else PermissionState.NOT_ASKED
                 locationInputMode = LocationInputMode.MANUAL_CITY
                 // Jump straight to city input when permission was already denied,
                 // so the user lands on the city card rather than the prompt card.
@@ -144,7 +144,7 @@ fun WeatherScreen(
         if (permissions.values.any { it }) {
             permissionState = PermissionState.GRANTED_WHILE_IN_USE
             // Drop the saved city so the newly granted GPS location is used.
-            lastSearchedCity = ""
+            weatherViewModel.clearLastSearchedCity()
             refreshWeatherState()
 
             if (!locationProvider.isLocationEnabled()) {
@@ -178,8 +178,13 @@ fun WeatherScreen(
         when (geocodingState) {
             is GeocodingUiState.Success -> {
                 val success = geocodingState as GeocodingUiState.Success
-                // Persist city so pull-to-refresh re-fetches the same city.
-                lastSearchedCity = success.cityName
+                // Persist city + coords via ViewModel → DataStore so they survive
+                // back-navigation and app restarts.
+                weatherViewModel.saveLastSearchedCity(
+                    success.cityName,
+                    success.location.latitude,
+                    success.location.longitude
+                )
                 weatherViewModel.fetchWeather(success.location.latitude, success.location.longitude)
                 showCityInput = false
                 cityName = ""
@@ -396,7 +401,7 @@ fun WeatherScreen(
                                     OutlinedButton(
                                         onClick = {
                                             showCityInput = true
-                                            lastSearchedCity = ""
+                                            weatherViewModel.clearLastSearchedCity()
                                             cityName = ""
                                         },
                                         shape = RoundedCornerShape(12.dp),
