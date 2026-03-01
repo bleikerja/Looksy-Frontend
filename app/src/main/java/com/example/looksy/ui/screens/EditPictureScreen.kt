@@ -297,15 +297,15 @@ fun EditPictureScreen(
                         modifier = Modifier
                             .offset(x = leftDp, y = topDp)
                             .size(widthDp, heightDp)
-                            .pointerInput(cropRect) {
+                            .pointerInput(Unit) {
                                 detectDragGestures { change, dragAmount ->
                                     change.consume()
                                     val canvasW = canvasSize.width.toFloat()
                                     val canvasH = canvasSize.height.toFloat()
                                     val newLeft = (cropRect.left + dragAmount.x)
-                                        .coerceIn(framePaddingPx, canvasW - cropRect.width - framePaddingPx)
+                                        .coerceIn(framePaddingPx, maxOf(framePaddingPx, canvasW - cropRect.width - framePaddingPx))
                                     val newTop  = (cropRect.top + dragAmount.y)
-                                        .coerceIn(framePaddingPx, canvasH - cropRect.height - framePaddingPx)
+                                        .coerceIn(framePaddingPx, maxOf(framePaddingPx, canvasH - cropRect.height - framePaddingPx))
                                     cropRect = Rect(
                                         left   = newLeft,
                                         top    = newTop,
