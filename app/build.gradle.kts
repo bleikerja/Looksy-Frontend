@@ -20,7 +20,7 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
-
+        
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // Read from local.properties
@@ -28,6 +28,25 @@ android {
         properties.load(project.rootProject.file("local.properties").inputStream())
         buildConfigField("String", "WEATHER_API_KEY", "\"${properties.getProperty("WEATHER_API_KEY")}\"")
     }
+
+    
+    flavorDimensions.add("version")
+
+    productFlavors {
+        create("production") {
+            dimension = "version"
+            applicationId = "com.example.looksy"
+        }
+        create("dev") {
+            dimension = "version"
+            applicationId = "com.example.looksy.dev"
+        }
+        create("staging") {
+            dimension = "version"
+            applicationId = "com.example.looksy.staging"
+        }
+    }
+
 
     buildTypes {
         release {

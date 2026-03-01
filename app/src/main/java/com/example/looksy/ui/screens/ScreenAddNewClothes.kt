@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
@@ -64,7 +65,8 @@ fun AddNewClothesScreen(
     onDelete: () -> Unit = {},
     modifier: Modifier = Modifier,
     clothesIdToEdit: Int? = null,
-    onEditImage: () -> Unit = {}
+    onEditImage: () -> Unit = {},
+    onCropPhoto: () -> Unit = {}
 ) {
     val clothesToEdit by if (clothesIdToEdit != null) {
         viewModel.getClothesById(clothesIdToEdit).collectAsState(initial = null)
@@ -189,6 +191,7 @@ fun AddNewClothesScreen(
                 //modifier = Modifier.padding(innerPadding),
                 imageUri = imageToShowUri,
                 onEditImage = { onEditImage(); edited = true },
+                onEditPhoto = { onCropPhoto(); edited = true },
                 size = size,
                 onSizeChange = { size = it; edited = true },
                 season = season,
@@ -223,6 +226,7 @@ fun AddNewClothesScreen(
 private fun AddNewClothesForm(
     imageUri: Uri?,
     onEditImage: () -> Unit,
+    onEditPhoto: () -> Unit = {},
     size: Size?,
     onSizeChange: (Size) -> Unit,
     season: Season?,
@@ -261,6 +265,7 @@ private fun AddNewClothesForm(
                     error = painterResource(id = R.drawable.wardrobe2icon),
                 )
 
+                // Camera button (always shown)
                 IconButton(
                     onClick = { onEditImage() },
                     modifier = Modifier
@@ -278,6 +283,28 @@ private fun AddNewClothesForm(
                         imageVector = Icons.Default.PhotoCamera,
                         contentDescription = "Zur Kamera"
                     )
+                }
+
+                // Edit / crop button (only when a photo exists)
+                if (imageUri != null) {
+                    IconButton(
+                        onClick = { onEditPhoto() },
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(8.dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.surface,
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                    ) {
+                        Icon(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(5.dp),
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Bearbeiten"
+                        )
+                    }
                 }
             }
         }
