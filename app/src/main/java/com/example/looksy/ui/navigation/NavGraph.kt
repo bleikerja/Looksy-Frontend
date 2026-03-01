@@ -252,16 +252,7 @@ fun NavGraph(
         }
 
         composable(Routes.ChoseClothes.route) {
-            val sampleCategories = listOf(
-                Category("Shirt", R.drawable.shirt_category),
-                Category("Pants", R.drawable.pants_category),
-                Category("Glasses", R.drawable.glasses_category),
-                Category("Shoes", R.drawable.shoes_category),
-                Category("Watch", R.drawable.watch_category)
-            )
-            
             CategoriesScreen(
-                categories = sampleCategories,
                 categoryItems = categoryItems,
                 onClick = { type ->
                     val finalRoute = Routes.SpecificCategory.createRoute(type)
@@ -711,16 +702,8 @@ fun NavGraph(
         ) { backStackEntry ->
             val outfitId = backStackEntry.arguments?.getInt(RouteArgs.ID)
             if (outfitId != null) {
-                val sampleCategories = listOf(
-                    Category("Shirt", R.drawable.shirt_category),
-                    Category("Pants", R.drawable.pants_category),
-                    Category("Glasses", R.drawable.glasses_category),
-                    Category("Shoes", R.drawable.shoes_category),
-                    Category("Watch", R.drawable.watch_category)
-                )
 
                 CategoriesScreen(
-                    categories = sampleCategories,
                     categoryItems = categoryItems,
                     onClick = { type ->
                         val finalRoute = Routes.SpecificCategory.createRoute(type)
