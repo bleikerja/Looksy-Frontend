@@ -38,6 +38,7 @@ import com.example.looksy.ui.viewmodel.GeocodingViewModel
 import com.example.looksy.ui.viewmodel.GeocodingViewModelFactory
 import com.example.looksy.ui.viewmodel.WeatherViewModel
 import com.example.looksy.ui.screens.AddNewClothesScreen
+import com.example.looksy.ui.screens.EditPictureScreen
 import com.example.looksy.ui.screens.CameraScreen
 import com.example.looksy.ui.screens.Category
 import com.example.looksy.ui.screens.CategoryItems
@@ -304,14 +305,12 @@ fun NavGraph(
                 val message = stringResource(R.string.error_cannot_deselect_last_item)
 
                 clothesData?.let { cloth ->
-                    val isInOutfit = cloth.id == topId || cloth.id == pulloverId || cloth.id == pantsId ||
-                        cloth.id == jacketId || cloth.id == skirtId || cloth.id == dressId ||
-                        cloth.id == shoesId
+                    val isInOutfit = cloth.id == topId || cloth.id == pantsId ||
+                        cloth.id == jacketId || cloth.id == skirtId || cloth.id == dressId
                     Scaffold(
                         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
                     ) { innerPadding ->
                         ClothInformationScreen(
-                            modifier = Modifier.padding(innerPadding),
                             clothesData = cloth,
                             viewModel = clothesViewModel,
                             onMoveToWashingMachine = {
@@ -396,7 +395,6 @@ fun NavGraph(
                                 navController.navigate(Routes.EditClothes.createRoute(editId, ""))
                             }
                         )
-                    }
                 }
             }
         }
@@ -428,12 +426,26 @@ fun NavGraph(
         ) { backStackEntry ->
             val encodedUriString = backStackEntry.arguments?.getString(RouteArgs.IMAGE_URI)
             val context = LocalContext.current
+
+            // Read cropped URI returned by BearbeitenScreen via SavedStateHandle
+            val croppedUriFromEditor by backStackEntry.savedStateHandle
+                .getStateFlow(RouteArgs.CROPPED_URI, "")
+                .collectAsState()
+
+            // Active URI: start with the route arg; override when BearbeitenScreen delivers a crop
+            var activeUriString by remember { mutableStateOf(encodedUriString) }
+            LaunchedEffect(croppedUriFromEditor) {
+                if (croppedUriFromEditor.isNotEmpty()) {
+                    activeUriString = croppedUriFromEditor
+                }
+            }
+
             AddNewClothesScreen(
-                imageUriString = encodedUriString,
+                imageUriString = activeUriString,
                 viewModel = clothesViewModel,
                 clothesIdToEdit = null,
                 onSave = { newClothesData ->
-                    val uriToSave = encodedUriString?.toUri()
+                    val uriToSave = activeUriString?.toUri()
                     if (uriToSave != null) {
                         val permanentPath = saveImagePermanently(context, uriToSave)
                         if (permanentPath != null) {
@@ -444,6 +456,11 @@ fun NavGraph(
                     }
                 },
                 onNavigateBack = { navController.popBackStack() },
+                onCropPhoto = {
+                    activeUriString?.let { uri ->
+                        navController.navigate(Routes.EditPicture.createRoute(uri))
+                    }
+                },
                 onEditImage = {
                     navController.navigate(Routes.Scan.createRoute(-1)) {
                         popUpTo(Routes.AddNewClothes.route) {
@@ -466,13 +483,29 @@ fun NavGraph(
             val scope = rememberCoroutineScope()
             if (clothesId != null) {
                 val context = LocalContext.current
+
+                // Read cropped URI returned by EditPictureScreen via SavedStateHandle
+                val croppedUriFromEditor by backStackEntry.savedStateHandle
+                    .getStateFlow(RouteArgs.CROPPED_URI, "")
+                    .collectAsState()
+
+                // Active URI: start with the route arg; override when EditPictureScreen delivers a crop
+                var activeUriString by remember {
+                    mutableStateOf(if (encodedUriString.isNullOrEmpty()) null else encodedUriString)
+                }
+                LaunchedEffect(croppedUriFromEditor) {
+                    if (croppedUriFromEditor.isNotEmpty()) {
+                        activeUriString = croppedUriFromEditor
+                    }
+                }
+
                 AddNewClothesScreen(
-                    imageUriString = if(encodedUriString.isNullOrEmpty()) null else encodedUriString,
+                    imageUriString = activeUriString,
                     viewModel = clothesViewModel,
                     clothesIdToEdit = clothesId,
                     onSave = { updatedClothesData ->
-                        if(!encodedUriString.isNullOrEmpty()){
-                            val uriToSave = encodedUriString.toUri()
+                        if (!activeUriString.isNullOrEmpty()) {
+                            val uriToSave = activeUriString!!.toUri()
                             val permanentPath = saveImagePermanently(context, uriToSave)
                             if (permanentPath != null) {
                                 val finalClothes = updatedClothesData.copy(imagePath = permanentPath)
@@ -488,9 +521,8 @@ fun NavGraph(
                                         Type.Shoes -> if (shoesId == it.id) shoesId = it.id
                                     }
                                 }
-
                             }
-                        } else{
+                        } else {
                             clothesViewModel.update(updatedClothesData)
                         }
                         navController.popBackStack()
@@ -507,9 +539,40 @@ fun NavGraph(
                             }
                         }
                     },
-                    onEditImage = { navController.navigate(Routes.Scan.createRoute(clothesId)) }
+                    onEditImage = { navController.navigate(Routes.Scan.createRoute(clothesId)) },
+                    onCropPhoto = {
+                        // activeUriString is null when editing an existing item that hasn't had
+                        // a new photo taken yet → fall back to the stored image path from DB
+                        val uriToEdit = if (!activeUriString.isNullOrEmpty()) {
+                            activeUriString
+                        } else {
+                            allClothesFromDb.find { it.id == clothesId }
+                                ?.imagePath?.takeIf { it.isNotEmpty() }
+                                ?.let { java.io.File(it).toUri().toString() }
+                        }
+                        uriToEdit?.let { uri ->
+                            navController.navigate(Routes.EditPicture.createRoute(uri))
+                        }
+                    }
                 )
             }
+        }
+
+        composable(
+            route = Routes.EditPicture.route,
+            arguments = listOf(navArgument(RouteArgs.IMAGE_URI) { type = NavType.StringType })
+        ) { backStackEntry ->
+            val imageUriString = backStackEntry.arguments?.getString(RouteArgs.IMAGE_URI) ?: ""
+            EditPictureScreen(
+                imageUriString = imageUriString,
+                onSave = { croppedUriString ->
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set(RouteArgs.CROPPED_URI, croppedUriString)
+                    navController.popBackStack()
+                },
+                onCancel = { navController.popBackStack() }
+            )
         }
 
         composable(route = Routes.WashingMachine.route) {

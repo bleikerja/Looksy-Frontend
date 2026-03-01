@@ -77,6 +77,42 @@ fun ScreenName(
 - Always include `modifier: Modifier = Modifier` as last parameter
 - Apply to root composable: `.then(modifier)` or directly
 
+### Screen Structure
+
+Every screen composable must be wrapped in `Scaffold` with a `topBar` using the shared `Header` component. This ensures consistent inset handling, back-navigation affordance, and visual uniformity across the app.
+
+```kotlin
+Scaffold(
+    topBar = {
+        Header(
+            onNavigateBack = onNavigateBack,
+            onNavigateToRightIcon = { id -> /* optional */ },
+            clothesData = null,
+            headerText = "Titel",
+            rightIconContentDescription = null, // null hides the right icon button
+            rightIcon = null,
+            isFirstHeader = false   // true for bottom-nav root screens (no back arrow)
+        )
+    },
+    snackbarHost = { SnackbarHost(snackbarHostState) }, // include only when needed
+    floatingActionButton = { /* ... */ }                // include only when needed
+) { padding ->
+    Column(
+        modifier = Modifier
+            .padding(padding)
+            .fillMaxSize()
+    ) {
+        /* screen content */
+    }
+}
+```
+
+**Rules:**
+- `isFirstHeader = true` suppresses the back arrow; use it for bottom-nav root destinations (`Home`, `ChoseClothes`, `SavedOutfits`).
+- Never place extra composables (e.g. `WeatherIconRow`) inside the `topBar` lambda; add them as the first item in the body instead.
+- The only intentional exception is `Kamera.kt` — a live camera full-screen UI with no header.
+- Do **not** use `statusBarsPadding()`/`navigationBarsPadding()` manually; `Scaffold` handles window insets.
+
 ### State Management
 
 **Local State:**

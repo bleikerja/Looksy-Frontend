@@ -21,6 +21,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -51,31 +52,38 @@ fun SavedOutfitsScreen(
     allClothes: List<Clothes>,
     onOutfitClick: (Int) -> Unit = {}
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(249, 246, 242))
-            .padding(horizontal = 20.dp)
-            .padding(top = 10.dp)
-    ) {
-        Header(
-            onNavigateBack = { },
-            onNavigateToRightIcon = { },
-            clothesData = null,
-            headerText = "Gespeicherte Outfits",
-            rightIconContentDescription = null,
-            rightIcon = null,
-            isFirstHeader = true
-        )
-
-        if (outfits.isEmpty()) {
-            EmptyOutfitsState()
-        } else {
-            OutfitsGrid(
-                outfits = outfits,
-                allClothes = allClothes,
-                onOutfitClick = onOutfitClick
+    Scaffold(
+        topBar = {
+            Header(
+                onNavigateBack = { },
+                onNavigateToRightIcon = { },
+                clothesData = null,
+                headerText = "Gespeicherte Outfits",
+                rightIconContentDescription = null,
+                rightIcon = null,
+                isFirstHeader = true
             )
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+                .background(Color(249, 246, 242))
+                .padding(horizontal = 20.dp)
+                .padding(top = 10.dp)
+        ) {
+
+
+            if (outfits.isEmpty()) {
+                EmptyOutfitsState()
+            } else {
+                OutfitsGrid(
+                    outfits = outfits,
+                    allClothes = allClothes,
+                    onOutfitClick = onOutfitClick
+                )
+            }
         }
     }
 }

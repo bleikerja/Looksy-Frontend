@@ -10,6 +10,7 @@ object RouteArgs {
     const val TYPE = "imageType"
     const val IMAGE_URI = "imageUri"
     const val ID = "id"
+    const val CROPPED_URI = "cropped_uri"
 }
 
 sealed class Routes(override val route: String) : NavigationDestination {
@@ -60,5 +61,11 @@ sealed class Routes(override val route: String) : NavigationDestination {
 
     data object Scan : Routes("scan/{${RouteArgs.ID}}") {
         fun createRoute(id: Int? = -1) = "scan/$id"
+    }
+
+    data object EditPicture : Routes("edit_picture/{${RouteArgs.IMAGE_URI}}") {
+        fun createRoute(imageUri: String): String {
+            return "edit_picture/${Uri.encode(imageUri)}"
+        }
     }
 }
