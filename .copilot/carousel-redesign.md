@@ -126,3 +126,37 @@ Replaced the text toggle buttons with **3 brick-icon state-selector buttons** re
 
 - `assembleDebug`: **PASS**
 - `test` (JVM unit tests): **PASS**
+
+---
+
+## Phase 3 — Jacket Toggle Button
+
+### Overview
+
+Added a **jacket toggle button** to the bottom action row that controls visibility of the left-side jacket vertical carousel. When active, the jacket column is shown and the jacket slot participates in the outfit. When deactivated, the jacket carousel is hidden and the jacket slot is cleared.
+
+### New Layout (bottom action row)
+
+```
+[ J ] | [ ▤ ][ ▦ ][ ▩ ]        Spacer        [ 🔀 ] [ 🔖 ] [ ✓ / ⟳ ]
+ └─ jacket toggle + vertical divider + layer-state buttons ─┘
+```
+
+### Files Changed
+
+| File                             | Change                                                                                                                                                                                                                                                                                                                                         |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ui/screens/FullOutfitScreen.kt` | Added `showJacket` state var; added `LaunchedEffect(jacketItems)` to auto-disable when wardrobe has no jackets; gated jacket `VerticalClothesCarousel` and `centerWeight` on `showJacket`; added `JacketBrickButton` composable; restructured bottom action row to wrap jacket button + divider + `StateButton` row in a single grouped `Row`. |
+
+### Key Design Decisions
+
+1. **Visual language consistency** — `JacketBrickButton` uses the same `Canvas`-drawn approach as `BrickIcon`/`StateButton`: a single tall portrait-oriented rounded rect (42 % of button width, full height) that mirrors the "vertical brick" metaphor of the jacket column.
+2. **Grouped with vertical divider** — the jacket button sits immediately left of the layer-state buttons, separated by a 1 dp `outlineVariant`-coloured vertical line. Both groups are wrapped in one `Row` and treated as a visual unit.
+3. **Auto-disable when no jackets** — a `LaunchedEffect` watches `jacketItems`; if it becomes empty the toggle is set to `false` and `onSlotChanged(Type.Jacket, null)` is called so `NavGraph` stays consistent.
+4. **Initial state follows wardrobe** — `showJacket` initialises to `jacketItems.isNotEmpty()`, matching the previous implicit behaviour where the column was shown whenever jackets existed.
+5. **`centerWeight` respects toggle** — the center column expands to full width (`1f`) whenever `!showJacket || jacketItems.isEmpty()`, exactly as before when there were no jacket items.
+6. **No model/DB/NavGraph changes** — only `FullOutfitScreen.kt` was modified.
+
+### Build Status
+
+- `assembleDebug`: **PASS**

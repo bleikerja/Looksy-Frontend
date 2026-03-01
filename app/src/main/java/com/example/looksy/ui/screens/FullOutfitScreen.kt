@@ -153,6 +153,17 @@ fun FullOutfitScreen(
         )
     }
 
+    // Jacket toggle state: on by default when jacket items exist
+    var showJacket by remember { mutableStateOf(jacketItems.isNotEmpty()) }
+
+    // Auto-disable jacket toggle when all jackets are removed from wardrobe
+    LaunchedEffect(jacketItems) {
+        if (jacketItems.isEmpty() && showJacket) {
+            showJacket = false
+            onSlotChanged(Type.Jacket, null)
+        }
+    }
+
     // Sync layout state from external changes (e.g. random generation)
     LaunchedEffect(selectedDressId) {
         if (selectedDressId != null) layoutState = LayoutState.TWO_LAYERS
@@ -215,7 +226,7 @@ fun FullOutfitScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     // LEFT column: Jacket (vertical carousel)
-                    if (jacketItems.isNotEmpty()) {
+                    if (showJacket && jacketItems.isNotEmpty()) {
                         VerticalClothesCarousel(
                             items = jacketItems,
                             selectedId = selectedJacketId,
@@ -230,7 +241,7 @@ fun FullOutfitScreen(
                     }
 
                     // CENTER column: carousels based on layout state
-                    val centerWeight = if (jacketItems.isEmpty()) 1f else 0.75f
+                    val centerWeight = if (!showJacket || jacketItems.isEmpty()) 1f else 0.75f
                     Column(
                         modifier = Modifier
                             .weight(centerWeight)
@@ -405,50 +416,72 @@ fun FullOutfitScreen(
                         )
                     }
 
-                    // 2. State selector buttons (center)
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        StateButton(
-                            brickCount = 2,
-                            selected = layoutState == LayoutState.TWO_LAYERS,
+                    // 2. Jacket toggle + State selector buttons (grouped)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(0.dp)
+                    ) {
+                        // Jacket vertical-brick toggle
+                        JacketBrickButton(
+                            selected = showJacket,
+                            enabled = jacketItems.isNotEmpty(),
                             onClick = {
-                                if (layoutState != LayoutState.TWO_LAYERS) {
-                                    onSlotChanged(Type.TShirt, null)
-                                    onSlotChanged(Type.Pullover, null)
-                                    onSlotChanged(Type.Pants, null)
-                                    onSlotChanged(Type.Skirt, null)
-                                    layoutState = LayoutState.TWO_LAYERS
-                                }
+                                if (showJacket) onSlotChanged(Type.Jacket, null)
+                                showJacket = !showJacket
                             }
                         )
-                        StateButton(
-                            brickCount = 3,
-                            selected = layoutState == LayoutState.THREE_LAYERS,
-                            onClick = {
-                                if (layoutState != LayoutState.THREE_LAYERS) {
-                                    if (layoutState == LayoutState.TWO_LAYERS) {
-                                        onSlotChanged(Type.Dress, null)
-                                    }
-                                    if (layoutState == LayoutState.FOUR_LAYERS &&
-                                        selectedTshirtId != null && selectedPulloverId != null
-                                    ) {
+                        // Thin vertical divider
+                        Box(
+                            modifier = Modifier
+                                .width(1.dp)
+                                .height(28.dp)
+                                .background(MaterialTheme.colorScheme.outlineVariant)
+                        )
+                        // Layer-count state buttons
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            StateButton(
+                                brickCount = 2,
+                                selected = layoutState == LayoutState.TWO_LAYERS,
+                                onClick = {
+                                    if (layoutState != LayoutState.TWO_LAYERS) {
+                                        onSlotChanged(Type.TShirt, null)
                                         onSlotChanged(Type.Pullover, null)
+                                        onSlotChanged(Type.Pants, null)
+                                        onSlotChanged(Type.Skirt, null)
+                                        layoutState = LayoutState.TWO_LAYERS
                                     }
-                                    layoutState = LayoutState.THREE_LAYERS
                                 }
-                            }
-                        )
-                        StateButton(
-                            brickCount = 4,
-                            selected = layoutState == LayoutState.FOUR_LAYERS,
-                            onClick = {
-                                if (layoutState != LayoutState.FOUR_LAYERS) {
-                                    if (layoutState == LayoutState.TWO_LAYERS) {
-                                        onSlotChanged(Type.Dress, null)
+                            )
+                            StateButton(
+                                brickCount = 3,
+                                selected = layoutState == LayoutState.THREE_LAYERS,
+                                onClick = {
+                                    if (layoutState != LayoutState.THREE_LAYERS) {
+                                        if (layoutState == LayoutState.TWO_LAYERS) {
+                                            onSlotChanged(Type.Dress, null)
+                                        }
+                                        if (layoutState == LayoutState.FOUR_LAYERS &&
+                                            selectedTshirtId != null && selectedPulloverId != null
+                                        ) {
+                                            onSlotChanged(Type.Pullover, null)
+                                        }
+                                        layoutState = LayoutState.THREE_LAYERS
                                     }
-                                    layoutState = LayoutState.FOUR_LAYERS
                                 }
-                            }
-                        )
+                            )
+                            StateButton(
+                                brickCount = 4,
+                                selected = layoutState == LayoutState.FOUR_LAYERS,
+                                onClick = {
+                                    if (layoutState != LayoutState.FOUR_LAYERS) {
+                                        if (layoutState == LayoutState.TWO_LAYERS) {
+                                            onSlotChanged(Type.Dress, null)
+                                        }
+                                        layoutState = LayoutState.FOUR_LAYERS
+                                    }
+                                }
+                            )
+                        }
                     }
 
                     // 3. Save + confirm/refresh buttons (right)
@@ -921,6 +954,41 @@ private fun BrickIcon(
                 color = color,
                 topLeft = Offset(0f, top),
                 size = Size(totalWidth, brickHeight),
+                cornerRadius = CornerRadius(cornerRadius, cornerRadius)
+            )
+        }
+    }
+}
+
+// ─────────────────────── Jacket Brick Button ───────────────────────
+
+@Composable
+private fun JacketBrickButton(
+    selected: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val bgColor = if (selected) MaterialTheme.colorScheme.primaryContainer
+                  else Color.Transparent
+    val iconColor = if (!enabled) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                    else if (selected) MaterialTheme.colorScheme.onPrimaryContainer
+                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+
+    IconButton(
+        onClick = { if (enabled) onClick() },
+        modifier = modifier
+            .size(40.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(bgColor)
+    ) {
+        Canvas(modifier = Modifier.size(24.dp)) {
+            val cornerRadius = 3.dp.toPx()
+            val brickWidth = size.width * 0.42f
+            drawRoundRect(
+                color = iconColor,
+                topLeft = Offset((size.width - brickWidth) / 2f, 0f),
+                size = Size(brickWidth, size.height),
                 cornerRadius = CornerRadius(cornerRadius, cornerRadius)
             )
         }
