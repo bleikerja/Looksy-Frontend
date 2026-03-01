@@ -267,11 +267,7 @@ fun NavGraph(
                 clothesData?.let { cloth ->
                     val isInOutfit = cloth.id == topId || cloth.id == pantsId ||
                         cloth.id == jacketId || cloth.id == skirtId || cloth.id == dressId
-                    Scaffold(
-                        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
-                    ) { innerPadding ->
                         ClothInformationScreen(
-                            modifier = Modifier.padding(innerPadding),
                             clothesData = cloth,
                             viewModel = clothesViewModel,
                             onMoveToWashingMachine = {
@@ -343,7 +339,6 @@ fun NavGraph(
                                 navController.navigate(Routes.EditClothes.createRoute(editId, ""))
                             }
                         )
-                    }
                 }
             }
         }
