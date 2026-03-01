@@ -200,14 +200,12 @@ fun FullOutfitScreen(
 
         Scaffold(
             topBar = {
-                Header(
-                    onNavigateBack = {},
-                    onNavigateToRightIcon = { onWashingMachine() },
-                    clothesData = null,
-                    headerText = "Heutiges Outfit",
-                    rightIconContentDescription = "Zur Waschmaschine",
-                    rightIcon = Icons.Default.LocalLaundryService,
-                    isFirstHeader = true
+                FullOutfitTopBar(
+                    weatherState = weatherState,
+                    permissionState = permissionState,
+                    isLocationEnabled = isLocationEnabled,
+                    onWeatherClick = onWeatherClick,
+                    onWashingMachine = onWashingMachine
                 )
             },
             snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -220,15 +218,9 @@ fun FullOutfitScreen(
                         .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    WeatherIconRow(
-                        weatherState = weatherState,
-                        permissionState = permissionState,
-                        isLocationEnabled = isLocationEnabled,
-                        onClick = onWeatherClick,
-                        modifier = Modifier.fillMaxWidth()
-                    )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+
+
 
                     // ──── Outfit area: jacket column + center carousels ────
                 if (layoutState == LayoutState.GRID) {
@@ -969,7 +961,7 @@ fun HorizontalClothesCarousel(
 // ───────────────────── Vertical Clothes Carousel ─────────────────────
 
 @Composable
-fun VerticalClothesCarousel(
+private fun VerticalClothesCarousel(
     items: List<Clothes>,
     selectedId: Int?,
     onItemSelected: (Int?) -> Unit,
@@ -1332,7 +1324,7 @@ private fun GridModeButton(
 // ─────────────────────── Weather Icon Row ───────────────────────
 
 @Composable
- fun WeatherIconRow(
+private fun WeatherIconRow(
     weatherState: WeatherUiState,
     permissionState: PermissionState,
     isLocationEnabled: Boolean,
@@ -1437,21 +1429,33 @@ private fun GridModeButton(
     }
 }
 
-//fun getWeatherEmoji(iconUrl: String): String {
-//    val code = iconUrl.substringAfterLast("/").removeSuffix(".png").take(2)
-//    return when (code) {
-//        "01" -> "☀️"
-//        "02" -> "🌤️"
-//        "03" -> "🌥️"
-//        "04" -> "☁️"
-//        "09" -> "🌦️"
-//        "10" -> "🌧️"
-//        "11" -> "⛈️"
-//        "13" -> "❄️"
-//        "50" -> "🌫️"
-//        else -> "🌤️"
-//    }
-//}
+@Composable
+private fun FullOutfitTopBar(
+    weatherState: WeatherUiState,
+    permissionState: PermissionState,
+    isLocationEnabled: Boolean,
+    onWeatherClick: () -> Unit,
+    onWashingMachine: () -> Unit
+) {
+    Box(modifier = Modifier.fillMaxWidth()) {
+        Header(
+            onNavigateBack = {},
+            onNavigateToRightIcon = { onWashingMachine() },
+            clothesData = null,
+            headerText = "Heutiges Outfit",
+            rightIconContentDescription = "Zur Waschmaschine",
+            rightIcon = Icons.Default.LocalLaundryService,
+            isFirstHeader = true
+        )
+        WeatherIconRow(
+            weatherState = weatherState,
+            permissionState = permissionState,
+            isLocationEnabled = isLocationEnabled,
+            onClick = onWeatherClick,
+            modifier = Modifier.align(Alignment.CenterStart)
+        )
+    }
+}
 
 @Preview(showBackground = true)
 @Composable
