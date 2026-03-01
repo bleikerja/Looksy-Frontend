@@ -832,7 +832,7 @@ private fun CityInputCard(
 // Helper functions
 // Maps OWM icon codes to emojis (language-independent)
 // Icon codes: https://openweathermap.org/weather-conditions
-private fun getWeatherEmoji(iconUrl: String): String {
+ fun getWeatherEmoji(iconUrl: String): String {
     val code = iconUrl.substringAfterLast("/").removeSuffix(".png").take(2)
     return when (code) {
         "01" -> "☀️"

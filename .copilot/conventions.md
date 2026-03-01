@@ -105,7 +105,7 @@ Scaffold(
         /* screen content */
     }
 }
-```
+```e
 
 **Rules:**
 - `isFirstHeader = true` suppresses the back arrow; use it for bottom-nav root destinations (`Home`, `ChoseClothes`, `SavedOutfits`).

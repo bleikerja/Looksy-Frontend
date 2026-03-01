@@ -45,7 +45,6 @@ import com.example.looksy.ui.screens.CategoryItems
 import com.example.looksy.ui.screens.OutfitDetailsScreen
 import com.example.looksy.ui.screens.DiscardScreen
 import com.example.looksy.ui.screens.SavedOutfitsScreen
-import com.example.looksy.ui.screens.OutfitDetailsScreen
 import com.example.looksy.ui.screens.SpecificCategoryScreen
 import com.example.looksy.ui.screens.WashingMachineScreen
 import com.example.looksy.ui.viewmodel.OutfitViewModel
@@ -396,6 +395,7 @@ fun NavGraph(
                             }
                         )
                 }
+                }
             }
         }
 
@@ -709,8 +709,8 @@ fun NavGraph(
                 )
             }
         }
-        }
     }
+}
 
 
 fun getClothById(clothes: List<Clothes>, id: Int): Clothes? {

@@ -190,7 +190,6 @@ fun FullOutfitScreen(
     if (hasAnyClothes) {
         val snackbarHostState = remember { SnackbarHostState() }
         val scope = rememberCoroutineScope()
-<<<<<<< HEAD
         val allWornItems = listOfNotNull(currentTop, currentPullover, currentPants, currentSkirt, currentDress, currentJacket, currentShoes)
         val confirmedOutfit = allWornItems.isNotEmpty() && allWornItems.any { !it.selected }
 
@@ -199,17 +198,6 @@ fun FullOutfitScreen(
                 ((currentTop != null || currentPullover != null) &&
                  (currentPants != null || currentSkirt != null))
 
-        Box(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color(249, 246, 242))
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // ──── Header with weather ────
-                Box(modifier = Modifier.fillMaxWidth()) {
-=======
         Scaffold(
             topBar = {
                 Header(
@@ -221,11 +209,10 @@ fun FullOutfitScreen(
                     rightIcon = Icons.Default.LocalLaundryService,
                     isFirstHeader = true
                 )
-            }
+            },
+            snackbarHost = { SnackbarHost(snackbarHostState) }
         ) { padding ->
             Box(modifier = Modifier.padding(padding).fillMaxSize()) {
-                val confirmedOutfit =
-                    listOfNotNull(top, pants, dress, jacket, skirt).any { !it.selected }
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -233,30 +220,17 @@ fun FullOutfitScreen(
                         .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
->>>>>>> 76-bilder-von-kleidungsstücken-vor-dem-speichern-bearbeiten
                     WeatherIconRow(
                         weatherState = weatherState,
                         permissionState = permissionState,
                         isLocationEnabled = isLocationEnabled,
                         onClick = onWeatherClick,
-                        modifier = Modifier.align(Alignment.Start)
+                        modifier = Modifier.fillMaxWidth()
                     )
-<<<<<<< HEAD
-                    Header(
-                        onNavigateBack = {},
-                        onNavigateToRightIcon = { onWashingMachine() },
-                        clothesData = null,
-                        headerText = "Heutiges Outfit",
-                        rightIconContentDescription = "Zur Waschmaschine",
-                        rightIcon = Icons.Default.LocalLaundryService,
-                        isFirstHeader = true,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                // ──── Outfit area: jacket column + center carousels ────
+                    // ──── Outfit area: jacket column + center carousels ────
                 if (layoutState == LayoutState.GRID) {
                     // ──── GRID mode: 4×2 grid of independent carousels ────
                     Row(
@@ -751,166 +725,10 @@ fun FullOutfitScreen(
                                     },
                                     confirmButton = {
                                         Button(onClick = {
-=======
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    jacket?.let {
-                        OutfitPart(
-                            imageResId = it.imagePath,
-                            onClick = { onClick(it.id) },
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                    dress?.let {
-                        OutfitPart(
-                            imageResId = it.imagePath,
-                            onClick = { onClick(it.id) },
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                    top?.let {
-                        OutfitPart(
-                            imageResId = it.imagePath,
-                            onClick = { onClick(it.id) },
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                    skirt?.let {
-                        OutfitPart(
-                            imageResId = it.imagePath,
-                            onClick = { onClick(it.id) },
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                    pants?.let {
-                        OutfitPart(
-                            imageResId = it.imagePath,
-                            onClick = { onClick(it.id) },
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
-                if (confirmedOutfit) {
-                    IconButton(
-                        onClick = onGenerateRandom,
-                        modifier = Modifier
-                            .align(Alignment.BottomStart)
-                            .padding(bottom = 16.dp)
-                            .size(50.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Shuffle,
-                            contentDescription = "Zufälliges Outfit generieren",
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
-                }
-
-                Column(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    IconButton(
-                        onClick = {
-                            onSave()
-                            scope.launch {
-                                snackbarHostState.showSnackbar(
-                                    "Outfit gespeichert",
-                                    duration = SnackbarDuration.Short
-                                )
-                            }
-                        },
-                        modifier = Modifier.size(50.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Bookmark,
-                            contentDescription = "Outfit speichern",
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
-                    if (confirmedOutfit) {
-                        IconButton(
-                            onClick = {
-                                val wornClothes = listOfNotNull(top, pants, dress, jacket, skirt)
-                                onConfirm(wornClothes)
-                                scope.launch {
-                                    snackbarHostState.showSnackbar(
-                                        "Schön, dass dir das Outfit gefällt und du es anziehst",
-                                        duration = SnackbarDuration.Short
-                                    )
-                                }
-                            },
-                            modifier = Modifier.size(50.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Check,
-                                contentDescription = "Outfit anziehen",
-                                modifier = Modifier.fillMaxSize()
-                            )
-                        }
-                    } else {
-                        var showConfirmDialog by remember { mutableStateOf(false) }
-                        IconButton(
-                            onClick = {
-                                showConfirmDialog = true
-                            },
-                            modifier = Modifier.size(50.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Refresh,
-                                contentDescription = "Neues Outfit",
-                                modifier = Modifier.fillMaxSize()
-                            )
-                        }
-                        if (showConfirmDialog) {
-                            val wornClothes = listOfNotNull(top, pants, dress, jacket, skirt)
-                            var selectedIds by remember {
-                                mutableStateOf(wornClothes.map { it.id }.toSet())
-                            }
-                            AlertDialog(
-                                onDismissRequest = { showConfirmDialog = false },
-                                title = {
-                                    Text(text = "Neues Outfit")
-                                },
-                                text = {
-                                    Column {
-                                        Text(
-                                            text = "Welche Kleider sollen als schmutzig markiert werden?",
-                                            modifier = Modifier.padding(bottom = 12.dp)
-                                        )
-
-                                        LazyVerticalGrid(
-                                            columns = GridCells.Fixed(2),
-                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                                        ) {
-                                            items(wornClothes) { clothItem ->
-                                                val isSelected = clothItem.id in selectedIds
-
-                                                WashingItemContainer(
-                                                    item = clothItem,
-                                                    isSelected = isSelected,
-                                                    onClick = {
-                                                        selectedIds =
-                                                            if (isSelected) selectedIds - clothItem.id
-                                                            else selectedIds + clothItem.id
-                                                    }
-                                                )
-                                            }
-                                        }
-                                    }
-                                },
-                                confirmButton = {
-                                    Button(
-                                        onClick = {
->>>>>>> 76-bilder-von-kleidungsstücken-vor-dem-speichern-bearbeiten
                                             onMoveToWashingMachine(
                                                 wornClothes.filter { it.id in selectedIds },
                                                 wornClothes.filter { it.id !in selectedIds }
                                             )
-<<<<<<< HEAD
                                             showConfirmDialog = false
                                         }) { Text("Weiter") }
                                     },
@@ -922,45 +740,12 @@ fun FullOutfitScreen(
                                     shape = RoundedCornerShape(16.dp)
                                 )
                             }
-=======
-
-                                            showConfirmDialog = false
-                                        }
-                                    ) {
-                                        Text("Weiter")
-                                    }
-                                },
-                                dismissButton = {
-                                    Button(
-                                        onClick = { showConfirmDialog = false }
-                                    ) {
-                                        Text("Abbrechen")
-                                    }
-                                },
-                                shape = RoundedCornerShape(16.dp)
-                            )
->>>>>>> 76-bilder-von-kleidungsstücken-vor-dem-speichern-bearbeiten
                         }
                     }
                 }
-                SnackbarHost(
-                    hostState = snackbarHostState,
-                    modifier = Modifier.align(Alignment.BottomCenter)
-                )
             }
-<<<<<<< HEAD
-
-            SnackbarHost(
-                hostState = snackbarHostState,
-                modifier = Modifier.align(Alignment.BottomCenter)
-            )
         }
-    } else {
-        // ──── Empty state: no clothes at all ────
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-=======
-        }
-    } else {
+    } }else {
         Scaffold(
             topBar = {
                 Header(
@@ -975,7 +760,6 @@ fun FullOutfitScreen(
             }
         ) { padding ->
         Box(modifier = Modifier.padding(padding).fillMaxSize(), contentAlignment = Alignment.Center) {
->>>>>>> 76-bilder-von-kleidungsstücken-vor-dem-speichern-bearbeiten
             WeatherIconRow(
                 weatherState = weatherState,
                 permissionState = permissionState,
@@ -1548,7 +1332,7 @@ private fun GridModeButton(
 // ─────────────────────── Weather Icon Row ───────────────────────
 
 @Composable
-private fun WeatherIconRow(
+ fun WeatherIconRow(
     weatherState: WeatherUiState,
     permissionState: PermissionState,
     isLocationEnabled: Boolean,
@@ -1615,7 +1399,6 @@ private fun WeatherIconRow(
                             text = getWeatherEmoji(weatherState.weather.iconUrl),
                             fontSize = 28.sp
                         )
-<<<<<<< HEAD
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "${weatherState.weather.temperature.roundToInt()}°C",
@@ -1624,18 +1407,6 @@ private fun WeatherIconRow(
                             color = MaterialTheme.colorScheme.primary
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-=======
-//                        Spacer(modifier = Modifier.width(8.dp))
-//
-//                        // Temperature
-//                        Text(
-//                            text = "${weatherState.weather.temperature.roundToInt()}°C",
-//                            style = MaterialTheme.typography.titleLarge,
-//                            fontWeight = FontWeight.Bold,
-//                            color = MaterialTheme.colorScheme.primary
-//                        )
-//                        Spacer(modifier = Modifier.width(4.dp))
->>>>>>> 76-bilder-von-kleidungsstücken-vor-dem-speichern-bearbeiten
                     }
 
                     is WeatherUiState.Error -> {
@@ -1666,21 +1437,21 @@ private fun WeatherIconRow(
     }
 }
 
-private fun getWeatherEmoji(iconUrl: String): String {
-    val code = iconUrl.substringAfterLast("/").removeSuffix(".png").take(2)
-    return when (code) {
-        "01" -> "☀️"
-        "02" -> "🌤️"
-        "03" -> "🌥️"
-        "04" -> "☁️"
-        "09" -> "🌦️"
-        "10" -> "🌧️"
-        "11" -> "⛈️"
-        "13" -> "❄️"
-        "50" -> "🌫️"
-        else -> "🌤️"
-    }
-}
+//fun getWeatherEmoji(iconUrl: String): String {
+//    val code = iconUrl.substringAfterLast("/").removeSuffix(".png").take(2)
+//    return when (code) {
+//        "01" -> "☀️"
+//        "02" -> "🌤️"
+//        "03" -> "🌥️"
+//        "04" -> "☁️"
+//        "09" -> "🌦️"
+//        "10" -> "🌧️"
+//        "11" -> "⛈️"
+//        "13" -> "❄️"
+//        "50" -> "🌫️"
+//        else -> "🌤️"
+//    }
+//}
 
 @Preview(showBackground = true)
 @Composable
@@ -1692,3 +1463,4 @@ fun FullOutfitPreview() {
         )
     }
 }
+
