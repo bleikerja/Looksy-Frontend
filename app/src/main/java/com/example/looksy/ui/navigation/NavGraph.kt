@@ -408,6 +408,8 @@ fun NavGraph(
                 onCropPhoto = {
                     activeUriString?.let { uri ->
                         navController.navigate(Routes.EditPicture.createRoute(uri))
+                    }
+                },
                 onEditImage = {
                     navController.navigate(Routes.Scan.createRoute(-1)) {
                         popUpTo(Routes.AddNewClothes.route) {
