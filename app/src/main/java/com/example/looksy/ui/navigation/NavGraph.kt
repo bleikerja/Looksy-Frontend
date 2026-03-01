@@ -575,6 +575,20 @@ fun NavGraph(
             )
         }
 
+        composable(route = Routes.Weather.route) {
+            val application = LocalContext.current.applicationContext as LooksyApplication
+            val geocodingViewModel: GeocodingViewModel = viewModel(
+                factory = GeocodingViewModelFactory(application.geocodingRepository)
+            )
+
+            WeatherScreen(
+                weatherViewModel = weatherViewModel,
+                geocodingViewModel = geocodingViewModel,
+                locationProvider = application.locationProvider,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
         composable(route = Routes.WashingMachine.route) {
             val dirtyClothes = allClothesFromDb.filter { !it.clean }
 
