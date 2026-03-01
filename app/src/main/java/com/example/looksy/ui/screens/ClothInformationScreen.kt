@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -27,6 +28,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -107,124 +109,137 @@ fun ClothInformationScreen(
     onDeselectOutfit: (Int) -> Unit,
     onNavigateToEdit: (Int) -> Unit
 ) {
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-        modifier = modifier
-            .fillMaxSize()
-            .background(Color(249, 246, 242))
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp)
-    ) {
-        Header(
-            onNavigateBack= onNavigateBack,
-            onNavigateToRightIcon = { id ->
-                if (id != null) {
-                    onNavigateToEdit(id)
-                }
-            },
-            clothesData = clothesData,
-            headerText = "Details",
-            rightIconContentDescription = "Bearbeiten",
-            rightIcon = Icons.Default.Edit,
-            rightIconSize = 0.7F
-        )
-
-        ClothImage(
-            clothesData.imagePath, modifier = Modifier
-                .height(300.dp)
-                .fillMaxWidth()
-                .padding(bottom = 20.dp)
-        )
-
-        Text("Informationen", fontSize = 30.sp, modifier = Modifier.align(Alignment.Start))
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.padding(bottom = 20.dp)
-        ) {
-            WaschingInformation("Waschhinweise", clothesData.washingNotes)
-            Information("Typ", clothesData.type.displayName)
-            Information("Material", clothesData.material.displayName)
-            Information("Farbe", clothesData.color?.displayName ?: "—")
-            Information("Größe", clothesData.size.displayName)
-            Information("Saison", clothesData.seasonUsage.displayName)
-            Information("Status",
-                if (clothesData.clean){
-                    if(clothesData.wornSince == null && clothesData.daysWorn == 0) {
-                        "sauber"
-                    }else {
-                        var daysWorn = clothesData.daysWorn
-                        if(clothesData.wornSince != null) daysWorn += floor(((System.currentTimeMillis() - clothesData.wornSince) / (1000 * 60 * 60 * 24)).toDouble()).toInt() + 1
-                        "$daysWorn Tag" + if (daysWorn < 2) "" else "e"
+    Scaffold(
+        topBar = {
+            Header(
+                onNavigateBack= onNavigateBack,
+                onNavigateToRightIcon = { id ->
+                    if (id != null) {
+                        onNavigateToEdit(id)
                     }
-                } else "schmutzig",
-                modifier = if(clothesData.clean && clothesData.daysWorn != 0 && !clothesData.selected) Modifier.fillMaxWidth(0.3f) else Modifier
+                },
+                clothesData = clothesData,
+                headerText = "Details",
+                rightIconContentDescription = "Bearbeiten",
+                rightIcon = Icons.Default.Edit,
+                rightIconSize = 0.7F
             )
-
-            if(clothesData.clean && clothesData.daysWorn != 0 && !clothesData.selected) {
-                IconButton(
-                    onClick = {
-                        onMoveToWashingMachine()
-                        if(clothesData.selected) {
-                            onDeselectOutfit(clothesData.id)
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth(0.15f)
-                        .fillMaxHeight()
-                        .align(Alignment.CenterVertically)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.LocalLaundryService,
-                        contentDescription = "zu Waschmaschine hinzufügen",
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
-            }
         }
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.fillMaxWidth()
+    ) { innerPadding ->
+        Box(
+            modifier = modifier
+                .padding(innerPadding)
+                .fillMaxSize(),
+            contentAlignment = Alignment.Center
         ) {
-            Button(
-                onClick = { onDeselectOutfit(clothesData.id) },
-                enabled = isInOutfit,
-                colors = ButtonDefaults.buttonColors(
-                    disabledContainerColor = Color.Black,
-                    disabledContentColor = Color.White
-                )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier
+                    .background(Color(249, 246, 242))
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp)
             ) {
-                Text("Aus Outfit entfernen")
-            }
-            Button(onClick = { onConfirmOutfit(clothesData.id) }) {
-                Text("${clothesData.type} auswählen")
-            }
-        }
-        Text(
-            "siehe auch",
-            fontSize = 30.sp,
-            modifier = Modifier.align(Alignment.Start)
-        )
-        val similarClothes by viewModel
-            .getClothesByType(clothesData.type)
-            .collectAsState(initial = emptyList())
-
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier
-                .horizontalScroll(rememberScrollState())
-                .height(200.dp)
-        ) {
-            similarClothes.filter { it.clean && it.id != clothesData.id }.forEach { item ->
-                SimilarClothCard(
-                    clothes = item,
-                    onClick = { onNavigateToDetails(item.id) }
+                ClothImage(
+                    clothesData.imagePath, modifier = Modifier
+                        .height(300.dp)
+                        .fillMaxWidth()
+                        .padding(bottom = 20.dp)
                 )
+
+                Text("Informationen", fontSize = 30.sp, modifier = Modifier.align(Alignment.Start))
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.padding(bottom = 20.dp)
+                ) {
+                    WaschingInformation("Waschhinweise", clothesData.washingNotes)
+                    Information("Typ", clothesData.type.displayName)
+                    Information("Material", clothesData.material.displayName)
+                    Information("Farbe", clothesData.color?.displayName ?: "—")
+                    Information("Größe", clothesData.size.displayName)
+                    Information("Saison", clothesData.seasonUsage.displayName)
+                    Information(
+                        "Status",
+                        if (clothesData.clean) {
+                            if (clothesData.wornSince == null && clothesData.daysWorn == 0) {
+                                "sauber"
+                            } else {
+                                var daysWorn = clothesData.daysWorn
+                                if (clothesData.wornSince != null) daysWorn += floor(((System.currentTimeMillis() - clothesData.wornSince) / (1000 * 60 * 60 * 24)).toDouble()).toInt() + 1
+                                "$daysWorn Tag" + if (daysWorn < 2) "" else "e"
+                            }
+                        } else "schmutzig",
+                        modifier = if (clothesData.clean && clothesData.daysWorn != 0 && !clothesData.selected) Modifier.fillMaxWidth(
+                            0.3f
+                        ) else Modifier
+                    )
+
+                    if (clothesData.clean && clothesData.daysWorn != 0 && !clothesData.selected) {
+                        IconButton(
+                            onClick = {
+                                onMoveToWashingMachine()
+                                if (clothesData.selected) {
+                                    onDeselectOutfit(clothesData.id)
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth(0.15f)
+                                .fillMaxHeight()
+                                .align(Alignment.CenterVertically)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.LocalLaundryService,
+                                contentDescription = "zu Waschmaschine hinzufügen",
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                    }
+                }
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Button(
+                        onClick = { onDeselectOutfit(clothesData.id) },
+                        enabled = isInOutfit,
+                        colors = ButtonDefaults.buttonColors(
+                            disabledContainerColor = Color.Black,
+                            disabledContentColor = Color.White
+                        )
+                    ) {
+                        Text("Aus Outfit entfernen")
+                    }
+                    Button(onClick = { onConfirmOutfit(clothesData.id) }) {
+                        Text("${clothesData.type} auswählen")
+                    }
+                }
+                Text(
+                    "siehe auch",
+                    fontSize = 30.sp,
+                    modifier = Modifier.align(Alignment.Start)
+                )
+                val similarClothes by viewModel
+                    .getClothesByType(clothesData.type)
+                    .collectAsState(initial = emptyList())
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier
+                        .horizontalScroll(rememberScrollState())
+                        .height(200.dp)
+                ) {
+                    similarClothes.filter { it.clean && it.id != clothesData.id }.forEach { item ->
+                        SimilarClothCard(
+                            clothes = item,
+                            onClick = { onNavigateToDetails(item.id) }
+                        )
+                    }
+                }
             }
         }
     }
+
 }
 
 @Composable

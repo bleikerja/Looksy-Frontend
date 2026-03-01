@@ -57,13 +57,7 @@ fun CategoriesScreen(
     onNavigateToDiscard: () -> Unit = {}
 ) {
     Scaffold(
-    ) { padding ->
-        Column(modifier = Modifier
-            .padding(padding)
-            .padding(horizontal = 20.dp)
-            .padding(top = 10.dp)
-            .fillMaxSize()
-        ) {
+        topBar = {
             Header(
                 onNavigateBack = { },
                 onNavigateToRightIcon = { onNavigateToDiscard() },
@@ -73,8 +67,14 @@ fun CategoriesScreen(
                 rightIcon = Icons.Default.DeleteSweep,
                 isFirstHeader = true
             )
-            //CategoriesBlock(categories = categories)
-            Spacer(modifier = Modifier.height(25.dp))
+        }
+    ) { padding ->
+        Column(modifier = Modifier
+            .padding(padding)
+            .padding(horizontal = 20.dp)
+            .padding(top = 10.dp)
+            .fillMaxSize()
+        ) {
             ItemsContainer(
                 categoryItems = categoryItems,
                 modifier = Modifier.weight(1f),
