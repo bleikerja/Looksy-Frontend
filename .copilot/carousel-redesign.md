@@ -1,10 +1,14 @@
 # FullOutfitScreen Carousel Redesign
 
-## Overview
+---
+
+## Phase 1 — Initial Carousel Layout
+
+### Overview
 
 Redesigned the `FullOutfitScreen` (Home screen) from a simple vertical list of outfit parts to a **three-column carousel-based layout** with horizontal and vertical pagers, mode toggles, and separated TShirt/Pullover slots.
 
-## Layout
+### Layout
 
 ```
 ┌──────────┬──────────────────────┬──────────┐
@@ -25,9 +29,9 @@ Redesigned the `FullOutfitScreen` (Home screen) from a simple vertical list of o
 
 Each carousel shows the selected item centered with **dimmed quarter-peek previews** of adjacent items and **arrow buttons** for navigation.
 
-## Files Changed
+### Files Changed
 
-### Model & Database
+#### Model & Database
 
 | File                                     | Change                                                              |
 | ---------------------------------------- | ------------------------------------------------------------------- |
@@ -37,14 +41,14 @@ Each carousel shows the selected item centered with **dimmed quarter-peek previe
 | `data/repository/OutfitRepository.kt`    | Added `selectedPulloverId` parameter to `incrementOutfitPreference` |
 | `ui/viewmodel/OutfitViewModel.kt`        | Added `selectedPulloverId` parameter forwarding                     |
 
-### Outfit Generation & Scoring
+#### Outfit Generation & Scoring
 
 | File                                    | Change                                                                                                     |
 | --------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | `util/OutfitGenerator.kt`               | `OutfitResult` gets `pullover` field; generation separates TShirt vs Pullover selection; dress clears both |
 | `util/OutfitCompatibilityCalculator.kt` | All item lists and validation rules include `outfit.pullover`                                              |
 
-### UI
+#### UI
 
 | File                                | Change                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -52,7 +56,7 @@ Each carousel shows the selected item centered with **dimmed quarter-peek previe
 | `ui/screens/OutfitDetailsScreen.kt` | Added `outfitPullover` parameter; added private `OutfitPart` composable (moved from FullOutfitScreen)                                                                                                                                                                                                                                                                                                                                 |
 | `ui/navigation/NavGraph.kt`         | Added `pulloverId` state var; updated `LaunchedEffect` initialization; rewired `FullOutfitScreen` call with new API and `onSlotChanged` callback; split `TShirt/Pullover` handling in `onConfirmOutfit`, `onDeselectOutfit`, `EditClothes`, `onWear` handlers; mutual exclusion logic for Dress↔Top/Bottom                                                                                                                            |
 
-### Tests
+#### Tests
 
 | File                                   | Change                                                                                                  |
 | -------------------------------------- | ------------------------------------------------------------------------------------------------------- |
@@ -61,7 +65,7 @@ Each carousel shows the selected item centered with **dimmed quarter-peek previe
 | `OutfitGeneratorTest.kt`               | Updated pullover assertion to check `result.pullover`; broadened top-or-dress check                     |
 | `OutfitRepositoryTest.kt`              | Fixed `findMatchingOutfit` mock to 7 args                                                               |
 
-## Key Design Decisions
+### Key Design Decisions
 
 1. **Pullover as separate slot** — TShirt and Pullover are independent clothing categories with their own carousel columns, not merged under a single "top" slot.
 2. **Mutual exclusion** — Dress selection clears TShirt, Pullover, Pants, and Skirt. Pants/Skirt are toggleable alternatives.
@@ -69,7 +73,56 @@ Each carousel shows the selected item centered with **dimmed quarter-peek previe
 4. **DB migration** — Uses `fallbackToDestructiveMigration()` (version 6 → 7), no migration code needed.
 5. **No new dependencies** — `HorizontalPager`/`VerticalPager` come from `androidx.compose.foundation.pager`, already available via the Compose BOM.
 
-## Build Status
+### Build Status
+
+- `assembleDebug`: **PASS**
+- `test` (JVM unit tests): **PASS**
+
+---
+
+## Phase 2 — State-Based Layout, Merged Carousels & Image Sizing
+
+### Overview
+
+Replaced the text toggle buttons with **3 brick-icon state-selector buttons** representing 2, 3, or 4 outfit layers. Each state shows a different combination of carousels in the center column. The separate Pullover vertical side column was removed; pullovers now appear inside the center-column carousels. All action buttons were moved from overlay-positioned floating icons into a single in-flow `Row` at the bottom. Image whitespace was reduced.
+
+### New Layout (state 3 — default)
+
+```
+┌──────────┬───────────────────────────────────┐
+│ Jacket   │  Merged Top (TShirt+Pullover)      │
+│ (vertical│  ─────────────────────────────     │
+│ carousel)│  Merged Bottom (Pants+Skirt)        │
+│          │  ─────────────────────────────     │
+│          │  Shoes                             │
+│          ├───────────────────────────────────┤
+│          │ [▤][▦][▩]  Spacer  [⟳][🔖][✓]    │
+└──────────┴───────────────────────────────────┘
+```
+
+- **State 2 (2 bricks)**: Dress + Shoes — full-body outfit mode
+- **State 3 (3 bricks)** _(default)_: Merged Top (TShirts+Pullovers shuffled) + Merged Bottom (Pants+Skirts shuffled) + Shoes
+- **State 4 (4 bricks)**: TShirt carousel + Pullover carousel + Merged Bottom + Shoes
+- **Left column**: Jacket vertical carousel — preserved across all states
+
+### Files Changed
+
+| File                             | Change                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ui/screens/FullOutfitScreen.kt` | Removed `ModeToggleButton`, `isDressMode`, `showPants`. Added `LayoutState` enum (`TWO_LAYERS` / `THREE_LAYERS` / `FOUR_LAYERS`). Added `mergedTopItems` and `mergedBottomItems` (shuffled on `cleanClothes` key). Added `BrickIcon` (Canvas-drawn stacked rects) and `StateButton` composables. Removed right pullover vertical column. Restructured center column as `when (layoutState)`. Moved all action buttons into a single in-flow `Row`. Fixed `CarouselItemCard` to remove excess whitespace. |
+
+### Key Design Decisions
+
+1. **`LayoutState` enum drives the center column** — a single `when` block replaces the previous `isDressMode` boolean and `showPants` toggle. Default is `THREE_LAYERS`.
+2. **Merged carousel virtual slot** — when swiping through the merged-top or merged-bottom carousel, `onSlotChanged` fires with the item's actual `Type` and simultaneously clears the sibling type's slot (e.g. selecting a Pullover clears TShirt). `NavGraph` is unchanged.
+3. **Merged lists are shuffled once per `cleanClothes` change** — `remember(cleanClothes) { (a + b).shuffled() }` keeps the order stable during recomposition but refreshes when the wardrobe changes.
+4. **Pullover column removed** — Pullovers appear in center-column carousels (merged in state 3, separate in state 4); no right-side vertical carousel.
+5. **State transition slot clearing** — switching to `TWO_LAYERS` clears all top/bottom slots; switching away from `TWO_LAYERS` clears the dress slot; switching `FOUR_LAYERS → THREE_LAYERS` with both TShirt and Pullover selected drops Pullover (TShirt priority).
+6. **Brick icons via Canvas** — `BrickIcon(n)` draws `n` stacked rounded rectangles with a 2 dp gap using `drawRoundRect`. No external assets needed.
+7. **Image whitespace fix** — `CarouselItemCard` outer `Box` is now transparent; the white rounded-rect background is applied directly to `AsyncImage`. This eliminates the visible white space above/below images that don't fill the container height.
+8. **No model/DB/NavGraph changes** — only `FullOutfitScreen.kt` was modified.
+
+### Build Status
 
 - `assembleDebug`: **PASS**
 - `test` (JVM unit tests): **PASS**

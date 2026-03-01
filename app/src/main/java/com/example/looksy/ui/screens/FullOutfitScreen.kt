@@ -1,5 +1,6 @@
 package com.example.looksy.ui.screens
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,10 +37,9 @@ import androidx.compose.material.icons.filled.LocationOff
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Shuffle
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -61,16 +60,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -85,6 +86,14 @@ import com.example.looksy.ui.viewmodel.WeatherUiState
 import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
+
+// ───────────────────────────────── Layout State ─────────────────────────────────
+
+private enum class LayoutState {
+    TWO_LAYERS,    // Dress + Shoes (2 bricks)
+    THREE_LAYERS,  // Merged Top + Merged Bottom + Shoes (3 bricks)
+    FOUR_LAYERS    // TShirt + Pullover + Merged Bottom + Shoes (4 bricks)
+}
 
 // ───────────────────────────────── Main Screen ─────────────────────────────────
 
@@ -123,20 +132,24 @@ fun FullOutfitScreen(
     val jacketItems = remember(cleanClothes) { cleanClothes.filter { it.type == Type.Jacket } }
     val shoesItems = remember(cleanClothes) { cleanClothes.filter { it.type == Type.Shoes } }
 
-    // Dress mode toggle
-    var isDressMode by remember { mutableStateOf(selectedDressId != null) }
-    // Pants/Skirt toggle: true = Hose (Pants), false = Rock (Skirt)
-    var showPants by remember { mutableStateOf(selectedSkirtId == null || selectedPantsId != null) }
+    // Merged lists for combined carousels
+    val mergedTopItems = remember(cleanClothes) { (tshirtItems + pulloverItems).shuffled() }
+    val mergedBottomItems = remember(cleanClothes) { (pantsItems + skirtItems).shuffled() }
 
-    // Sync dress mode from external changes (e.g. random generation)
-    LaunchedEffect(selectedDressId) {
-        if (selectedDressId != null) isDressMode = true
+    // Layout state: 2/3/4 layers
+    var layoutState by remember {
+        mutableStateOf(
+            when {
+                selectedDressId != null -> LayoutState.TWO_LAYERS
+                selectedTshirtId != null && selectedPulloverId != null -> LayoutState.FOUR_LAYERS
+                else -> LayoutState.THREE_LAYERS
+            }
+        )
     }
-    LaunchedEffect(selectedPantsId, selectedSkirtId) {
-        if (!isDressMode) {
-            if (selectedSkirtId != null && selectedPantsId == null) showPants = false
-            else if (selectedPantsId != null) showPants = true
-        }
+
+    // Sync layout state from external changes (e.g. random generation)
+    LaunchedEffect(selectedDressId) {
+        if (selectedDressId != null) layoutState = LayoutState.TWO_LAYERS
     }
 
     // Resolve selected clothes
@@ -187,41 +200,7 @@ fun FullOutfitScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // ──── Mode toggle: Oberteil+Unterteil vs Kleid ────
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    ModeToggleButton(
-                        text = "Oberteil + Unterteil",
-                        selected = !isDressMode,
-                        onClick = {
-                            if (isDressMode) {
-                                isDressMode = false
-                                // Clear dress slot
-                                onSlotChanged(Type.Dress, null)
-                            }
-                        }
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    ModeToggleButton(
-                        text = "Kleid",
-                        selected = isDressMode,
-                        onClick = {
-                            if (!isDressMode) {
-                                isDressMode = true
-                                // Clear top + bottom slots
-                                onSlotChanged(Type.TShirt, null)
-                                onSlotChanged(Type.Pants, null)
-                                onSlotChanged(Type.Skirt, null)
-                            }
-                        }
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // ──── 3-column outfit layout ────
+                // ──── Outfit area: jacket column + center carousels ────
                 Row(
                     modifier = Modifier
                         .weight(1f)
@@ -244,249 +223,331 @@ fun FullOutfitScreen(
                         )
                     }
 
-                    // CENTER column
+                    // CENTER column: carousels based on layout state
+                    val centerWeight = if (jacketItems.isEmpty()) 1f else 0.75f
                     Column(
                         modifier = Modifier
-                            .weight(if (jacketItems.isEmpty() && pulloverItems.isEmpty()) 1f
-                                    else if (jacketItems.isEmpty() || pulloverItems.isEmpty()) 0.75f
-                                    else 0.5f)
+                            .weight(centerWeight)
                             .fillMaxHeight(),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.SpaceEvenly
+                        verticalArrangement = Arrangement.SpaceAround
                     ) {
-                        if (isDressMode) {
-                            // Dress mode: 2 rows
-                            HorizontalClothesCarousel(
-                                items = dressItems,
-                                selectedId = selectedDressId,
-                                onItemSelected = { id -> onSlotChanged(Type.Dress, id) },
-                                onItemClick = onClick,
-                                categoryName = "Kleid",
-                                modifier = Modifier.weight(1f).fillMaxWidth()
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            HorizontalClothesCarousel(
-                                items = shoesItems,
-                                selectedId = selectedShoesId,
-                                onItemSelected = { id -> onSlotChanged(Type.Shoes, id) },
-                                onItemClick = onClick,
-                                categoryName = "Schuhe",
-                                modifier = Modifier.weight(1f).fillMaxWidth()
-                            )
-                        } else {
-                            // Normal mode: 3 rows
-                            // Row 1: TShirt
-                            HorizontalClothesCarousel(
-                                items = tshirtItems,
-                                selectedId = selectedTshirtId,
-                                onItemSelected = { id -> onSlotChanged(Type.TShirt, id) },
-                                onItemClick = onClick,
-                                categoryName = "T-Shirt/Longsleeve",
-                                modifier = Modifier.weight(1f).fillMaxWidth()
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-
-                            // Row 2: Pants/Skirt toggle + carousel
-                            Column(
-                                modifier = Modifier.weight(1f).fillMaxWidth(),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                // Toggle Hose | Rock
-                                Row(
-                                    horizontalArrangement = Arrangement.Center,
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    ModeToggleButton(
-                                        text = "Hose",
-                                        selected = showPants,
-                                        onClick = {
-                                            showPants = true
-                                            onSlotChanged(Type.Skirt, null)
-                                        }
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    ModeToggleButton(
-                                        text = "Rock",
-                                        selected = !showPants,
-                                        onClick = {
-                                            showPants = false
-                                            onSlotChanged(Type.Pants, null)
-                                        }
-                                    )
-                                }
-                                if (showPants) {
-                                    HorizontalClothesCarousel(
-                                        items = pantsItems,
-                                        selectedId = selectedPantsId,
-                                        onItemSelected = { id -> onSlotChanged(Type.Pants, id) },
-                                        onItemClick = onClick,
-                                        categoryName = "Hose",
-                                        modifier = Modifier.weight(1f).fillMaxWidth()
-                                    )
-                                } else {
-                                    HorizontalClothesCarousel(
-                                        items = skirtItems,
-                                        selectedId = selectedSkirtId,
-                                        onItemSelected = { id -> onSlotChanged(Type.Skirt, id) },
-                                        onItemClick = onClick,
-                                        categoryName = "Rock",
-                                        modifier = Modifier.weight(1f).fillMaxWidth()
-                                    )
-                                }
-                            }
-                            Spacer(modifier = Modifier.height(4.dp))
-
-                            // Row 3: Shoes
-                            HorizontalClothesCarousel(
-                                items = shoesItems,
-                                selectedId = selectedShoesId,
-                                onItemSelected = { id -> onSlotChanged(Type.Shoes, id) },
-                                onItemClick = onClick,
-                                categoryName = "Schuhe",
-                                modifier = Modifier.weight(1f).fillMaxWidth()
-                            )
-                        }
-                    }
-
-                    // RIGHT column: Pullover (vertical carousel)
-                    if (pulloverItems.isNotEmpty()) {
-                        VerticalClothesCarousel(
-                            items = pulloverItems,
-                            selectedId = selectedPulloverId,
-                            onItemSelected = { id -> onSlotChanged(Type.Pullover, id) },
-                            onItemClick = onClick,
-                            categoryName = "Pullover",
-                            modifier = Modifier
-                                .weight(0.25f)
-                                .fillMaxHeight()
-                                .padding(start = 4.dp)
-                        )
-                    }
-                }
-            }
-
-            // ──── Bottom action buttons ────
-            if (confirmedOutfit) {
-                IconButton(
-                    onClick = onGenerateRandom,
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(bottom = 16.dp)
-                        .size(50.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Shuffle,
-                        contentDescription = "Zufälliges Outfit generieren",
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
-            }
-
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                IconButton(
-                    onClick = {
-                        onSave()
-                        scope.launch {
-                            snackbarHostState.showSnackbar(
-                                "Outfit gespeichert",
-                                duration = SnackbarDuration.Short
-                            )
-                        }
-                    },
-                    modifier = Modifier.size(50.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Bookmark,
-                        contentDescription = "Outfit speichern",
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
-                if (confirmedOutfit) {
-                    IconButton(
-                        onClick = {
-                            onConfirm(allWornItems)
-                            scope.launch {
-                                snackbarHostState.showSnackbar(
-                                    "Schön, dass dir das Outfit gefällt und du es anziehst",
-                                    duration = SnackbarDuration.Short
+                        when (layoutState) {
+                            LayoutState.TWO_LAYERS -> {
+                                // Dress + Shoes
+                                HorizontalClothesCarousel(
+                                    items = dressItems,
+                                    selectedId = selectedDressId,
+                                    onItemSelected = { id -> onSlotChanged(Type.Dress, id) },
+                                    onItemClick = onClick,
+                                    categoryName = "Kleid",
+                                    modifier = Modifier.weight(1f).fillMaxWidth()
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                HorizontalClothesCarousel(
+                                    items = shoesItems,
+                                    selectedId = selectedShoesId,
+                                    onItemSelected = { id -> onSlotChanged(Type.Shoes, id) },
+                                    onItemClick = onClick,
+                                    categoryName = "Schuhe",
+                                    modifier = Modifier.weight(1f).fillMaxWidth()
                                 )
                             }
-                        },
-                        modifier = Modifier.size(50.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Check,
-                            contentDescription = "Outfit anziehen",
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
-                } else {
-                    var showConfirmDialog by remember { mutableStateOf(false) }
-                    IconButton(
-                        onClick = { showConfirmDialog = true },
-                        modifier = Modifier.size(50.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = "Neues Outfit",
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
-                    if (showConfirmDialog) {
-                        val wornClothes = allWornItems
-                        var selectedIds by remember {
-                            mutableStateOf(wornClothes.map { it.id }.toSet())
-                        }
-                        AlertDialog(
-                            onDismissRequest = { showConfirmDialog = false },
-                            title = { Text(text = "Neues Outfit") },
-                            text = {
-                                Column {
-                                    Text(
-                                        text = "Welche Kleider sollen als schmutzig markiert werden?",
-                                        modifier = Modifier.padding(bottom = 12.dp)
-                                    )
-                                    LazyVerticalGrid(
-                                        columns = GridCells.Fixed(2),
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        items(wornClothes) { clothItem ->
-                                            val isSelected = clothItem.id in selectedIds
-                                            WashingItemContainer(
-                                                item = clothItem,
-                                                isSelected = isSelected,
-                                                onClick = {
-                                                    selectedIds =
-                                                        if (isSelected) selectedIds - clothItem.id
-                                                        else selectedIds + clothItem.id
+
+                            LayoutState.THREE_LAYERS -> {
+                                // Merged Top (TShirts + Pullovers) + Merged Bottom (Pants + Skirts) + Shoes
+                                val mergedTopSelectedId = selectedTshirtId ?: selectedPulloverId
+                                HorizontalClothesCarousel(
+                                    items = mergedTopItems,
+                                    selectedId = mergedTopSelectedId,
+                                    onItemSelected = { id ->
+                                        val item = mergedTopItems.find { it.id == id }
+                                        if (item != null) {
+                                            when (item.type) {
+                                                Type.TShirt -> {
+                                                    onSlotChanged(Type.TShirt, id)
+                                                    onSlotChanged(Type.Pullover, null)
                                                 }
-                                            )
+                                                Type.Pullover -> {
+                                                    onSlotChanged(Type.Pullover, id)
+                                                    onSlotChanged(Type.TShirt, null)
+                                                }
+                                                else -> {}
+                                            }
                                         }
-                                    }
+                                    },
+                                    onItemClick = onClick,
+                                    categoryName = "Oberteil",
+                                    modifier = Modifier.weight(1f).fillMaxWidth()
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+
+                                val mergedBottomSelectedId3 = selectedPantsId ?: selectedSkirtId
+                                HorizontalClothesCarousel(
+                                    items = mergedBottomItems,
+                                    selectedId = mergedBottomSelectedId3,
+                                    onItemSelected = { id ->
+                                        val item = mergedBottomItems.find { it.id == id }
+                                        if (item != null) {
+                                            when (item.type) {
+                                                Type.Pants -> {
+                                                    onSlotChanged(Type.Pants, id)
+                                                    onSlotChanged(Type.Skirt, null)
+                                                }
+                                                Type.Skirt -> {
+                                                    onSlotChanged(Type.Skirt, id)
+                                                    onSlotChanged(Type.Pants, null)
+                                                }
+                                                else -> {}
+                                            }
+                                        }
+                                    },
+                                    onItemClick = onClick,
+                                    categoryName = "Unterteil",
+                                    modifier = Modifier.weight(1f).fillMaxWidth()
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+
+                                HorizontalClothesCarousel(
+                                    items = shoesItems,
+                                    selectedId = selectedShoesId,
+                                    onItemSelected = { id -> onSlotChanged(Type.Shoes, id) },
+                                    onItemClick = onClick,
+                                    categoryName = "Schuhe",
+                                    modifier = Modifier.weight(1f).fillMaxWidth()
+                                )
+                            }
+
+                            LayoutState.FOUR_LAYERS -> {
+                                // TShirt + Pullover + Merged Bottom + Shoes
+                                HorizontalClothesCarousel(
+                                    items = tshirtItems,
+                                    selectedId = selectedTshirtId,
+                                    onItemSelected = { id -> onSlotChanged(Type.TShirt, id) },
+                                    onItemClick = onClick,
+                                    categoryName = "T-Shirt/Longsleeve",
+                                    modifier = Modifier.weight(1f).fillMaxWidth()
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+
+                                HorizontalClothesCarousel(
+                                    items = pulloverItems,
+                                    selectedId = selectedPulloverId,
+                                    onItemSelected = { id -> onSlotChanged(Type.Pullover, id) },
+                                    onItemClick = onClick,
+                                    categoryName = "Pullover/Sweatshirt",
+                                    modifier = Modifier.weight(1f).fillMaxWidth()
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+
+                                val mergedBottomSelectedId4 = selectedPantsId ?: selectedSkirtId
+                                HorizontalClothesCarousel(
+                                    items = mergedBottomItems,
+                                    selectedId = mergedBottomSelectedId4,
+                                    onItemSelected = { id ->
+                                        val item = mergedBottomItems.find { it.id == id }
+                                        if (item != null) {
+                                            when (item.type) {
+                                                Type.Pants -> {
+                                                    onSlotChanged(Type.Pants, id)
+                                                    onSlotChanged(Type.Skirt, null)
+                                                }
+                                                Type.Skirt -> {
+                                                    onSlotChanged(Type.Skirt, id)
+                                                    onSlotChanged(Type.Pants, null)
+                                                }
+                                                else -> {}
+                                            }
+                                        }
+                                    },
+                                    onItemClick = onClick,
+                                    categoryName = "Unterteil",
+                                    modifier = Modifier.weight(1f).fillMaxWidth()
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+
+                                HorizontalClothesCarousel(
+                                    items = shoesItems,
+                                    selectedId = selectedShoesId,
+                                    onItemSelected = { id -> onSlotChanged(Type.Shoes, id) },
+                                    onItemClick = onClick,
+                                    categoryName = "Schuhe",
+                                    modifier = Modifier.weight(1f).fillMaxWidth()
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // ──── Bottom action row ────
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    // State selector buttons
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        StateButton(
+                            brickCount = 2,
+                            selected = layoutState == LayoutState.TWO_LAYERS,
+                            onClick = {
+                                if (layoutState != LayoutState.TWO_LAYERS) {
+                                    onSlotChanged(Type.TShirt, null)
+                                    onSlotChanged(Type.Pullover, null)
+                                    onSlotChanged(Type.Pants, null)
+                                    onSlotChanged(Type.Skirt, null)
+                                    layoutState = LayoutState.TWO_LAYERS
                                 }
-                            },
-                            confirmButton = {
-                                Button(onClick = {
-                                    onMoveToWashingMachine(
-                                        wornClothes.filter { it.id in selectedIds },
-                                        wornClothes.filter { it.id !in selectedIds }
-                                    )
-                                    showConfirmDialog = false
-                                }) { Text("Weiter") }
-                            },
-                            dismissButton = {
-                                Button(onClick = { showConfirmDialog = false }) {
-                                    Text("Abbrechen")
-                                }
-                            },
-                            shape = RoundedCornerShape(16.dp)
+                            }
                         )
+                        StateButton(
+                            brickCount = 3,
+                            selected = layoutState == LayoutState.THREE_LAYERS,
+                            onClick = {
+                                if (layoutState != LayoutState.THREE_LAYERS) {
+                                    if (layoutState == LayoutState.TWO_LAYERS) {
+                                        onSlotChanged(Type.Dress, null)
+                                    }
+                                    if (layoutState == LayoutState.FOUR_LAYERS &&
+                                        selectedTshirtId != null && selectedPulloverId != null
+                                    ) {
+                                        onSlotChanged(Type.Pullover, null)
+                                    }
+                                    layoutState = LayoutState.THREE_LAYERS
+                                }
+                            }
+                        )
+                        StateButton(
+                            brickCount = 4,
+                            selected = layoutState == LayoutState.FOUR_LAYERS,
+                            onClick = {
+                                if (layoutState != LayoutState.FOUR_LAYERS) {
+                                    if (layoutState == LayoutState.TWO_LAYERS) {
+                                        onSlotChanged(Type.Dress, null)
+                                    }
+                                    layoutState = LayoutState.FOUR_LAYERS
+                                }
+                            }
+                        )
+                    }
+
+                    // Action buttons
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        if (confirmedOutfit) {
+                            IconButton(
+                                onClick = onGenerateRandom,
+                                modifier = Modifier.size(40.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Shuffle,
+                                    contentDescription = "Zufälliges Outfit generieren",
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
+                        }
+                        IconButton(
+                            onClick = {
+                                onSave()
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        "Outfit gespeichert",
+                                        duration = SnackbarDuration.Short
+                                    )
+                                }
+                            },
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Bookmark,
+                                contentDescription = "Outfit speichern",
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                        if (confirmedOutfit) {
+                            IconButton(
+                                onClick = {
+                                    onConfirm(allWornItems)
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            "Schön, dass dir das Outfit gefällt und du es anziehst",
+                                            duration = SnackbarDuration.Short
+                                        )
+                                    }
+                                },
+                                modifier = Modifier.size(40.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Outfit anziehen",
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
+                        } else {
+                            var showConfirmDialog by remember { mutableStateOf(false) }
+                            IconButton(
+                                onClick = { showConfirmDialog = true },
+                                modifier = Modifier.size(40.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Refresh,
+                                    contentDescription = "Neues Outfit",
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
+                            if (showConfirmDialog) {
+                                val wornClothes = allWornItems
+                                var selectedIds by remember {
+                                    mutableStateOf(wornClothes.map { it.id }.toSet())
+                                }
+                                AlertDialog(
+                                    onDismissRequest = { showConfirmDialog = false },
+                                    title = { Text(text = "Neues Outfit") },
+                                    text = {
+                                        Column {
+                                            Text(
+                                                text = "Welche Kleider sollen als schmutzig markiert werden?",
+                                                modifier = Modifier.padding(bottom = 12.dp)
+                                            )
+                                            LazyVerticalGrid(
+                                                columns = GridCells.Fixed(2),
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                items(wornClothes) { clothItem ->
+                                                    val isSelected = clothItem.id in selectedIds
+                                                    WashingItemContainer(
+                                                        item = clothItem,
+                                                        isSelected = isSelected,
+                                                        onClick = {
+                                                            selectedIds =
+                                                                if (isSelected) selectedIds - clothItem.id
+                                                                else selectedIds + clothItem.id
+                                                        }
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    },
+                                    confirmButton = {
+                                        Button(onClick = {
+                                            onMoveToWashingMachine(
+                                                wornClothes.filter { it.id in selectedIds },
+                                                wornClothes.filter { it.id !in selectedIds }
+                                            )
+                                            showConfirmDialog = false
+                                        }) { Text("Weiter") }
+                                    },
+                                    dismissButton = {
+                                        Button(onClick = { showConfirmDialog = false }) {
+                                            Text("Abbrechen")
+                                        }
+                                    },
+                                    shape = RoundedCornerShape(16.dp)
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -548,30 +609,6 @@ fun FullOutfitScreen(
                 }
             }
         }
-    }
-}
-
-// ───────────────────────── Mode Toggle Button ─────────────────────────
-
-@Composable
-private fun ModeToggleButton(
-    text: String,
-    selected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Button(
-        onClick = onClick,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = if (selected) MaterialTheme.colorScheme.primary
-                             else MaterialTheme.colorScheme.surfaceVariant,
-            contentColor = if (selected) MaterialTheme.colorScheme.onPrimary
-                           else MaterialTheme.colorScheme.onSurfaceVariant
-        ),
-        shape = RoundedCornerShape(20.dp),
-        modifier = modifier.height(32.dp)
-    ) {
-        Text(text = text, fontSize = 12.sp, maxLines = 1)
     }
 }
 
@@ -813,12 +850,10 @@ private fun CarouselItemCard(
 ) {
     Box(
         modifier = modifier
-            .padding(4.dp)
+            .padding(horizontal = 4.dp, vertical = 2.dp)
             .graphicsLayer {
-                alpha = 1f - (dimFactor * 0.6f) // dimmed to 0.4 alpha at max offset
+                alpha = 1f - (dimFactor * 0.6f)
             }
-            .clip(RoundedCornerShape(12.dp))
-            .background(Color.White)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
@@ -827,6 +862,8 @@ private fun CarouselItemCard(
             contentDescription = clothes.type.displayName,
             modifier = Modifier
                 .fillMaxSize()
+                .clip(RoundedCornerShape(12.dp))
+                .background(Color.White)
                 .padding(4.dp),
             contentScale = ContentScale.Fit,
             error = painterResource(id = R.drawable.clothicon)
@@ -856,6 +893,58 @@ private fun CarouselArrowButton(
             )
         }
     )
+}
+
+// ─────────────────────── Brick Icon ───────────────────────
+
+@Composable
+private fun BrickIcon(
+    brickCount: Int,
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+    Canvas(modifier = modifier.size(24.dp)) {
+        val totalHeight = size.height
+        val totalWidth = size.width
+        val gap = 2.dp.toPx()
+        val brickHeight = (totalHeight - (brickCount - 1) * gap) / brickCount
+        val cornerRadius = 3.dp.toPx()
+
+        for (i in 0 until brickCount) {
+            val top = i * (brickHeight + gap)
+            drawRoundRect(
+                color = color,
+                topLeft = Offset(0f, top),
+                size = Size(totalWidth, brickHeight),
+                cornerRadius = CornerRadius(cornerRadius, cornerRadius)
+            )
+        }
+    }
+}
+
+// ─────────────────────── State Button ───────────────────────
+
+@Composable
+private fun StateButton(
+    brickCount: Int,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val bgColor = if (selected) MaterialTheme.colorScheme.primaryContainer
+                  else Color.Transparent
+    val iconColor = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
+                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+
+    IconButton(
+        onClick = onClick,
+        modifier = modifier
+            .size(40.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(bgColor)
+    ) {
+        BrickIcon(brickCount = brickCount, color = iconColor)
+    }
 }
 
 // ─────────────────────── Weather Icon Row ───────────────────────
