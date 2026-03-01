@@ -21,11 +21,14 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ChevronRight
@@ -220,7 +223,7 @@ fun FullOutfitScreen(
                             onItemClick = onClick,
                             categoryName = "Jacke",
                             modifier = Modifier
-                                .weight(0.4f)
+                                .weight(0.5f)
                                 .fillMaxHeight()
                                 .padding(end = 4.dp)
                         )
@@ -671,14 +674,31 @@ fun HorizontalClothesCarousel(
         }
     }
 
-    Row(
+    Box(
         modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
+        contentAlignment = Alignment.Center
     ) {
-        // Left arrow
+        // Pager fills full space
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxSize(),
+            beyondViewportPageCount = 1,
+            pageSpacing = 4.dp
+        ) { page ->
+            val pageOffset = ((pagerState.currentPage - page) +
+                    pagerState.currentPageOffsetFraction).absoluteValue
+
+            CarouselItemCard(
+                clothes = items[page],
+                onClick = { onItemClick(items[page].id) },
+                dimFactor = pageOffset.coerceIn(0f, 1f),
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        // Left arrow overlay
         CarouselArrowButton(
-            icon = Icons.Default.KeyboardArrowLeft,
+            icon = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
             contentDescription = "Vorheriges $categoryName",
             enabled = pagerState.currentPage > 0,
             onClick = {
@@ -686,37 +706,14 @@ fun HorizontalClothesCarousel(
                     pagerState.animateScrollToPage(pagerState.currentPage - 1)
                 }
             },
-            modifier = Modifier.size(32.dp)
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .size(32.dp)
         )
 
-        // Pager with peek
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxHeight(),
-            contentAlignment = Alignment.Center
-        ) {
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.fillMaxSize(),
-                beyondViewportPageCount = 1,
-                pageSpacing = 4.dp
-            ) { page ->
-                val pageOffset = ((pagerState.currentPage - page) +
-                        pagerState.currentPageOffsetFraction).absoluteValue
-
-                CarouselItemCard(
-                    clothes = items[page],
-                    onClick = { onItemClick(items[page].id) },
-                    dimFactor = pageOffset.coerceIn(0f, 1f),
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-        }
-
-        // Right arrow
+        // Right arrow overlay
         CarouselArrowButton(
-            icon = Icons.Default.KeyboardArrowRight,
+            icon = Icons.AutoMirrored.Filled.KeyboardArrowRight,
             contentDescription = "Nächstes $categoryName",
             enabled = pagerState.currentPage < items.size - 1,
             onClick = {
@@ -724,7 +721,9 @@ fun HorizontalClothesCarousel(
                     pagerState.animateScrollToPage(pagerState.currentPage + 1)
                 }
             },
-            modifier = Modifier.size(32.dp)
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .size(32.dp)
         )
     }
 }
@@ -784,12 +783,29 @@ fun VerticalClothesCarousel(
         }
     }
 
-    Column(
+    Box(
         modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        contentAlignment = Alignment.Center
     ) {
-        // Up arrow
+        // Pager fills full space
+        VerticalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxSize(),
+            beyondViewportPageCount = 1,
+            pageSpacing = 4.dp
+        ) { page ->
+            val pageOffset = ((pagerState.currentPage - page) +
+                    pagerState.currentPageOffsetFraction).absoluteValue
+
+            CarouselItemCard(
+                clothes = items[page],
+                onClick = { onItemClick(items[page].id) },
+                dimFactor = pageOffset.coerceIn(0f, 1f),
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        // Up arrow overlay
         CarouselArrowButton(
             icon = Icons.Default.KeyboardArrowUp,
             contentDescription = "Vorheriges $categoryName",
@@ -799,35 +815,12 @@ fun VerticalClothesCarousel(
                     pagerState.animateScrollToPage(pagerState.currentPage - 1)
                 }
             },
-            modifier = Modifier.size(32.dp)
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .size(32.dp)
         )
 
-        // Vertical Pager with peek
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
-            contentAlignment = Alignment.Center
-        ) {
-            VerticalPager(
-                state = pagerState,
-                modifier = Modifier.fillMaxSize(),
-                beyondViewportPageCount = 1,
-                pageSpacing = 4.dp
-            ) { page ->
-                val pageOffset = ((pagerState.currentPage - page) +
-                        pagerState.currentPageOffsetFraction).absoluteValue
-
-                CarouselItemCard(
-                    clothes = items[page],
-                    onClick = { onItemClick(items[page].id) },
-                    dimFactor = pageOffset.coerceIn(0f, 1f),
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-        }
-
-        // Down arrow
+        // Down arrow overlay
         CarouselArrowButton(
             icon = Icons.Default.KeyboardArrowDown,
             contentDescription = "Nächstes $categoryName",
@@ -837,7 +830,9 @@ fun VerticalClothesCarousel(
                     pagerState.animateScrollToPage(pagerState.currentPage + 1)
                 }
             },
-            modifier = Modifier.size(32.dp)
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .size(32.dp)
         )
     }
 }
@@ -888,12 +883,19 @@ private fun CarouselArrowButton(
         onClick = { if (enabled) onClick() },
         modifier = modifier.alpha(if (enabled) 1f else 0.3f),
         picture = {
-            Icon(
-                imageVector = icon,
-                contentDescription = contentDescription,
-                tint = if (enabled) MaterialTheme.colorScheme.onSurface
-                       else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
-            )
+            Box(
+                modifier = Modifier
+                    .size(20.dp)
+                    .background(Color.Black.copy(alpha = 0.6f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = contentDescription,
+                    tint = Color.White,
+                    modifier = Modifier.size(14.dp)
+                )
+            }
         }
     )
 }
