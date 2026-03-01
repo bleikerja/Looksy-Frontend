@@ -160,3 +160,84 @@ Added a **jacket toggle button** to the bottom action row that controls visibili
 ### Build Status
 
 - `assembleDebug`: **PASS**
+
+---
+
+## Phase 4 — GRID Super Mode
+
+### Overview
+
+Added a fourth layout state, **GRID**, that displays all 7 clothing categories simultaneously in a fullscreen 4×2 grid of independent horizontal carousels. Each carousel can be swiped all the way left to a "Keine Auswahl" (no selection) placeholder, allowing the user to opt out of any category. The GRID mode is mutually exclusive with the jacket toggle and layer-count buttons — activating GRID deactivates all of those, and vice versa. Save/Confirm are disabled in GRID mode until the outfit meets the minimum validity rule.
+
+### New Layout (GRID mode)
+
+```
+┌──────────────────┬──────────────────┐
+│  Jacke           │  Pullover/SW     │  row 0 (weight 1)
+├──────────────────┼──────────────────┤
+│  T-Shirt/LS      │                  │  row 1 (weight 1)
+├──────────────────┤  Kleid           │
+│  Hose            │  (weight 2)      │  row 2 (weight 1)
+├──────────────────┼──────────────────┤
+│  Rock            │  Schuhe          │  row 3 (weight 1)
+└──────────────────┴──────────────────┘
+         ↓ bottom action row ↓
+[ 🔀 ]  [J|disabled] | [▤▤][▦▦][▩▩][disabled]  |  [⊞]  [ 🔖 ][ ✓/⟳ ]
+                                                    └─ Grid button (active)
+```
+
+- **Left column (weight 1)**: Jacket → T-Shirt/Longsleeve → Trousers → Skirt
+- **Right column (weight 1)**: Pullover/Sweatshirt → Dress (2× row weight) → Shoes
+- **All carousels**: include a "Keine Auswahl" page as page 0 (swipe left from first item)
+- **No jacket side column** — the jacket is part of the grid; the side column is suppressed
+
+### Files Changed
+
+| File                             | Change                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ui/screens/FullOutfitScreen.kt` | Added `GRID` to `LayoutState` enum. Added `onGridModeChanged: (Boolean) -> Unit` parameter. Added `gridOutfitValid` computed variable. Added `allowNone: Boolean = false` parameter to `HorizontalClothesCarousel` — when `true`, prepends a page-0 "Keine Auswahl" placeholder and reports `null` via `onItemSelected`. Added `NoneSelectionCard` composable (dashed-border rounded rect). Added `GridBrickIcon` composable (Canvas 4×2 grid of bricks). Added `GridModeButton` composable. Added `enabled` parameter to `StateButton`. Modified bottom action row: jacket + layer-count buttons are disabled in GRID mode; grid button sits right of a second divider; shuffle exits GRID before firing. Modified `LaunchedEffect(selectedDressId)` to skip auto-TWO_LAYERS when already in GRID. Added new imports: `PathEffect`, `drawscope.Stroke`. |
+| `ui/navigation/NavGraph.kt`      | Added `isGridMode` state var. Modified `onSlotChanged` — the Dress↔Top/Bottom and Pants↔Skirt mutual exclusion is skipped when `isGridMode` is `true`. Wired `onGridModeChanged = { isGridMode = it }` in `FullOutfitScreen` call.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+
+### `allowNone` Carousel Behaviour
+
+| Condition                               | Page 0                                           | Pages 1..N                         |
+| --------------------------------------- | ------------------------------------------------ | ---------------------------------- |
+| `allowNone = true`, `selectedId = null` | pager syncs to page 0, `NoneSelectionCard` shown | clothing items                     |
+| `allowNone = true`, `selectedId = X`    | `NoneSelectionCard` (dimmed if not current)      | item with `id == X` synced to view |
+| user swipes to page 0                   | `onItemSelected(null)` fired                     | —                                  |
+| `allowNone = false` (default)           | unchanged from previous behaviour                | unchanged                          |
+
+### Outfit Validity in GRID Mode
+
+```
+gridOutfitValid = currentDress != null
+              || ((currentTop != null || currentPullover != null)
+                  && (currentPants != null || currentSkirt != null))
+```
+
+Save (bookmark) and Confirm (check) buttons render at 30 % alpha and block clicks when `isGridMode && !gridOutfitValid`. No shoes or jacket required.
+
+### State Transition Rules
+
+| Action                                         | Result                                                                                                        |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Tap Grid button (off → on)                     | `layoutState = GRID`; jacket + layer buttons disabled; `onGridModeChanged(true)`                              |
+| Tap Grid button (on → off)                     | `layoutState = THREE_LAYERS`; if dress + top were both selected, dress is cleared; `onGridModeChanged(false)` |
+| Tap Jacket or layer-count button while in GRID | no-op (buttons disabled, 30 % alpha)                                                                          |
+| Tap Shuffle while in GRID                      | `layoutState = THREE_LAYERS`, `onGridModeChanged(false)`, then `onGenerateRandom()`                           |
+| External dress selection (random gen)          | auto-switch to `TWO_LAYERS` is **skipped** when already in GRID                                               |
+
+### Key Design Decisions
+
+1. **GRID is a fourth orthogonal mode** — it replaces the jacket-side-column + center-column layout entirely with a uniform 2-column grid. The jacket toggle and layer-count buttons are visually disabled rather than hidden to preserve spatial memory.
+2. **No mutual exclusion in GRID mode** — the user can simultaneously have a dress, a T-Shirt, trousers, and a skirt in the grid. `NavGraph.onSlotChanged` skips its Dress↔Top/Bottom and Pants↔Skirt cleanup when `isGridMode` is `true`.
+3. **"Keine Auswahl" as page 0** — implemented as `allowNone` on the existing `HorizontalClothesCarousel` rather than a separate component, keeping the pager abstraction intact. No-selection is the first swipe-left position, matching native list-start UX.
+4. **Dress spans 2 rows** — achieved with `Modifier.weight(2f)` on the dress carousel inside the right column, giving it twice the vertical space of single-category rows to accommodate portrait dress images.
+5. **Grid button icon** — `GridBrickIcon` draws a 4-row × 2-column grid of rounded rectangles in a 24 dp Canvas, using the same 2 dp gap and 3 dp corner radius as `BrickIcon`, maintaining visual consistency.
+6. **`onGridModeChanged` callback** — instead of lifting `layoutState` to `NavGraph`, a lightweight boolean callback is used so `NavGraph` only needs to know about the GRID/non-GRID distinction for mutual exclusion, keeping all layout logic inside the composable.
+7. **No model/DB changes** — GRID mode uses the same slot IDs and `Outfit` entity as the other modes.
+
+### Build Status
+
+- `assembleDebug`: **PASS**
+- `test` (JVM unit tests): **PASS**

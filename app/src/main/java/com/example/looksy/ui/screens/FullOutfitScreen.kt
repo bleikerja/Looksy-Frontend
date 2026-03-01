@@ -69,6 +69,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -98,7 +100,8 @@ import kotlin.math.roundToInt
 private enum class LayoutState {
     TWO_LAYERS,    // Dress + Shoes (2 bricks)
     THREE_LAYERS,  // Merged Top + Merged Bottom + Shoes (3 bricks)
-    FOUR_LAYERS    // TShirt + Pullover + Merged Bottom + Shoes (4 bricks)
+    FOUR_LAYERS,   // TShirt + Pullover + Merged Bottom + Shoes (4 bricks)
+    GRID           // 4×2 grid: all 7 categories shown independently
 }
 
 // ───────────────────────────────── Main Screen ─────────────────────────────────
@@ -122,6 +125,7 @@ fun FullOutfitScreen(
     onGenerateRandom: () -> Unit = {},
     onCamera: () -> Unit = {},
     onSave: () -> Unit = {},
+    onGridModeChanged: (Boolean) -> Unit = {},
     weatherState: WeatherUiState = WeatherUiState.Loading,
     permissionState: PermissionState = PermissionState.NOT_ASKED,
     isLocationEnabled: Boolean = true,
@@ -166,7 +170,9 @@ fun FullOutfitScreen(
 
     // Sync layout state from external changes (e.g. random generation)
     LaunchedEffect(selectedDressId) {
-        if (selectedDressId != null) layoutState = LayoutState.TWO_LAYERS
+        if (selectedDressId != null && layoutState != LayoutState.GRID) {
+            layoutState = LayoutState.TWO_LAYERS
+        }
     }
 
     // Resolve selected clothes
@@ -185,6 +191,11 @@ fun FullOutfitScreen(
         val scope = rememberCoroutineScope()
         val allWornItems = listOfNotNull(currentTop, currentPullover, currentPants, currentSkirt, currentDress, currentJacket, currentShoes)
         val confirmedOutfit = allWornItems.isNotEmpty() && allWornItems.any { !it.selected }
+
+        // In GRID mode, outfit is valid only if: (top OR pullover) AND (pants OR skirt), OR dress
+        val gridOutfitValid = currentDress != null ||
+                ((currentTop != null || currentPullover != null) &&
+                 (currentPants != null || currentSkirt != null))
 
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
@@ -218,6 +229,95 @@ fun FullOutfitScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 // ──── Outfit area: jacket column + center carousels ────
+                if (layoutState == LayoutState.GRID) {
+                    // ──── GRID mode: 4×2 grid of independent carousels ────
+                    Row(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        // LEFT column: Jacket, T-Shirt, Trousers, Skirt
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight(),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            HorizontalClothesCarousel(
+                                items = jacketItems,
+                                selectedId = selectedJacketId,
+                                onItemSelected = { id -> onSlotChanged(Type.Jacket, id) },
+                                onItemClick = onClick,
+                                categoryName = "Jacke",
+                                allowNone = true,
+                                modifier = Modifier.weight(1f).fillMaxWidth()
+                            )
+                            HorizontalClothesCarousel(
+                                items = tshirtItems,
+                                selectedId = selectedTshirtId,
+                                onItemSelected = { id -> onSlotChanged(Type.TShirt, id) },
+                                onItemClick = onClick,
+                                categoryName = "T-Shirt/Longsleeve",
+                                allowNone = true,
+                                modifier = Modifier.weight(1f).fillMaxWidth()
+                            )
+                            HorizontalClothesCarousel(
+                                items = pantsItems,
+                                selectedId = selectedPantsId,
+                                onItemSelected = { id -> onSlotChanged(Type.Pants, id) },
+                                onItemClick = onClick,
+                                categoryName = "Hose",
+                                allowNone = true,
+                                modifier = Modifier.weight(1f).fillMaxWidth()
+                            )
+                            HorizontalClothesCarousel(
+                                items = skirtItems,
+                                selectedId = selectedSkirtId,
+                                onItemSelected = { id -> onSlotChanged(Type.Skirt, id) },
+                                onItemClick = onClick,
+                                categoryName = "Rock",
+                                allowNone = true,
+                                modifier = Modifier.weight(1f).fillMaxWidth()
+                            )
+                        }
+                        // RIGHT column: Pullover, Dress (2-row span), Shoes
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight(),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            HorizontalClothesCarousel(
+                                items = pulloverItems,
+                                selectedId = selectedPulloverId,
+                                onItemSelected = { id -> onSlotChanged(Type.Pullover, id) },
+                                onItemClick = onClick,
+                                categoryName = "Pullover/Sweatshirt",
+                                allowNone = true,
+                                modifier = Modifier.weight(1f).fillMaxWidth()
+                            )
+                            HorizontalClothesCarousel(
+                                items = dressItems,
+                                selectedId = selectedDressId,
+                                onItemSelected = { id -> onSlotChanged(Type.Dress, id) },
+                                onItemClick = onClick,
+                                categoryName = "Kleid",
+                                allowNone = true,
+                                modifier = Modifier.weight(2f).fillMaxWidth()
+                            )
+                            HorizontalClothesCarousel(
+                                items = shoesItems,
+                                selectedId = selectedShoesId,
+                                onItemSelected = { id -> onSlotChanged(Type.Shoes, id) },
+                                onItemClick = onClick,
+                                categoryName = "Schuhe",
+                                allowNone = true,
+                                modifier = Modifier.weight(1f).fillMaxWidth()
+                            )
+                        }
+                    }
+                } else {
                 Row(
                     modifier = Modifier
                         .weight(1f)
@@ -392,9 +492,14 @@ fun FullOutfitScreen(
                                     modifier = Modifier.weight(1f).fillMaxWidth()
                                 )
                             }
+
+                            LayoutState.GRID -> {
+                                // Handled by the if-branch above; unreachable here
+                            }
                         }
                     }
                 }
+                }  // end else (non-GRID)
 
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -406,7 +511,14 @@ fun FullOutfitScreen(
                 ) {
                     // 1. Shuffle button (always visible)
                     IconButton(
-                        onClick = onGenerateRandom,
+                        onClick = {
+                            if (layoutState == LayoutState.GRID) {
+                                // Exit GRID mode, then generate random
+                                layoutState = LayoutState.THREE_LAYERS
+                                onGridModeChanged(false)
+                            }
+                            onGenerateRandom()
+                        },
                         modifier = Modifier.size(40.dp)
                     ) {
                         Icon(
@@ -416,15 +528,16 @@ fun FullOutfitScreen(
                         )
                     }
 
-                    // 2. Jacket toggle + State selector buttons (grouped)
+                    // 2. Jacket toggle + State selector buttons + Grid button (grouped)
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(0.dp)
                     ) {
+                        val isGrid = layoutState == LayoutState.GRID
                         // Jacket vertical-brick toggle
                         JacketBrickButton(
-                            selected = showJacket,
-                            enabled = jacketItems.isNotEmpty(),
+                            selected = showJacket && !isGrid,
+                            enabled = jacketItems.isNotEmpty() && !isGrid,
                             onClick = {
                                 if (showJacket) onSlotChanged(Type.Jacket, null)
                                 showJacket = !showJacket
@@ -442,6 +555,7 @@ fun FullOutfitScreen(
                             StateButton(
                                 brickCount = 2,
                                 selected = layoutState == LayoutState.TWO_LAYERS,
+                                enabled = !isGrid,
                                 onClick = {
                                     if (layoutState != LayoutState.TWO_LAYERS) {
                                         onSlotChanged(Type.TShirt, null)
@@ -455,6 +569,7 @@ fun FullOutfitScreen(
                             StateButton(
                                 brickCount = 3,
                                 selected = layoutState == LayoutState.THREE_LAYERS,
+                                enabled = !isGrid,
                                 onClick = {
                                     if (layoutState != LayoutState.THREE_LAYERS) {
                                         if (layoutState == LayoutState.TWO_LAYERS) {
@@ -472,6 +587,7 @@ fun FullOutfitScreen(
                             StateButton(
                                 brickCount = 4,
                                 selected = layoutState == LayoutState.FOUR_LAYERS,
+                                enabled = !isGrid,
                                 onClick = {
                                     if (layoutState != LayoutState.FOUR_LAYERS) {
                                         if (layoutState == LayoutState.TWO_LAYERS) {
@@ -482,21 +598,53 @@ fun FullOutfitScreen(
                                 }
                             )
                         }
+                        // Thin vertical divider before Grid button
+                        Box(
+                            modifier = Modifier
+                                .width(1.dp)
+                                .height(28.dp)
+                                .background(MaterialTheme.colorScheme.outlineVariant)
+                        )
+                        // Grid mode toggle
+                        GridModeButton(
+                            selected = isGrid,
+                            onClick = {
+                                if (isGrid) {
+                                    // Leave GRID → default to THREE_LAYERS
+                                    // Cleanup: if both dress and top are selected, clear dress
+                                    if (selectedDressId != null && (selectedTshirtId != null || selectedPulloverId != null)) {
+                                        onSlotChanged(Type.Dress, null)
+                                    }
+                                    layoutState = LayoutState.THREE_LAYERS
+                                    onGridModeChanged(false)
+                                } else {
+                                    // Enter GRID mode
+                                    layoutState = LayoutState.GRID
+                                    onGridModeChanged(true)
+                                }
+                            }
+                        )
                     }
 
                     // 3. Save + confirm/refresh buttons (right)
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        val isGridMode = layoutState == LayoutState.GRID
+                        val buttonsEnabled = !isGridMode || gridOutfitValid
                         IconButton(
                             onClick = {
-                                onSave()
-                                scope.launch {
-                                    snackbarHostState.showSnackbar(
-                                        "Outfit gespeichert",
-                                        duration = SnackbarDuration.Short
-                                    )
+                                if (buttonsEnabled) {
+                                    onSave()
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            "Outfit gespeichert",
+                                            duration = SnackbarDuration.Short
+                                        )
+                                    }
                                 }
                             },
-                            modifier = Modifier.size(40.dp)
+                            modifier = Modifier
+                                .size(40.dp)
+                                .alpha(if (buttonsEnabled) 1f else 0.3f)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Bookmark,
@@ -507,15 +655,19 @@ fun FullOutfitScreen(
                         if (confirmedOutfit) {
                             IconButton(
                                 onClick = {
-                                    onConfirm(allWornItems)
-                                    scope.launch {
-                                        snackbarHostState.showSnackbar(
-                                            "Schön, dass dir das Outfit gefällt und du es anziehst",
-                                            duration = SnackbarDuration.Short
-                                        )
+                                    if (buttonsEnabled) {
+                                        onConfirm(allWornItems)
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar(
+                                                "Schön, dass dir das Outfit gefällt und du es anziehst",
+                                                duration = SnackbarDuration.Short
+                                            )
+                                        }
                                     }
                                 },
-                                modifier = Modifier.size(40.dp)
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .alpha(if (buttonsEnabled) 1f else 0.3f)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Check,
@@ -660,9 +812,10 @@ fun HorizontalClothesCarousel(
     onItemSelected: (Int?) -> Unit,
     onItemClick: (Int) -> Unit,
     categoryName: String,
+    allowNone: Boolean = false,
     modifier: Modifier = Modifier
 ) {
-    if (items.isEmpty()) {
+    if (items.isEmpty() && !allowNone) {
         // Empty placeholder
         Box(
             modifier = modifier
@@ -681,27 +834,57 @@ fun HorizontalClothesCarousel(
         return
     }
 
+    // When allowNone: page 0 = "Keine Auswahl", pages 1..N = items
+    // When !allowNone: pages 0..N-1 = items
+    val totalPageCount = if (allowNone) items.size + 1 else items.size
+
+    // If items is empty and allowNone, show only the "Keine Auswahl" page
+    if (totalPageCount == 0) return
+
     val scope = rememberCoroutineScope()
-    val initialPage = remember(items, selectedId) {
-        items.indexOfFirst { it.id == selectedId }.coerceAtLeast(0)
+    val initialPage = remember(items, selectedId, allowNone) {
+        if (allowNone) {
+            if (selectedId == null) 0
+            else (items.indexOfFirst { it.id == selectedId } + 1).coerceAtLeast(0)
+        } else {
+            items.indexOfFirst { it.id == selectedId }.coerceAtLeast(0)
+        }
     }
-    val pagerState = rememberPagerState(initialPage = initialPage) { items.size }
+    val pagerState = rememberPagerState(initialPage = initialPage) { totalPageCount }
 
     // Sync pager when selectedId changes externally
-    LaunchedEffect(selectedId, items) {
-        val targetIndex = items.indexOfFirst { it.id == selectedId }
-        if (targetIndex >= 0 && targetIndex != pagerState.currentPage) {
-            pagerState.scrollToPage(targetIndex)
+    LaunchedEffect(selectedId, items, allowNone) {
+        if (allowNone) {
+            val targetIndex = if (selectedId == null) 0
+                              else (items.indexOfFirst { it.id == selectedId } + 1).coerceAtLeast(0)
+            if (targetIndex != pagerState.currentPage) {
+                pagerState.scrollToPage(targetIndex)
+            }
+        } else {
+            val targetIndex = items.indexOfFirst { it.id == selectedId }
+            if (targetIndex >= 0 && targetIndex != pagerState.currentPage) {
+                pagerState.scrollToPage(targetIndex)
+            }
         }
     }
 
     // Notify parent when user swipes to a new page
-    LaunchedEffect(pagerState) {
+    LaunchedEffect(pagerState, allowNone) {
         snapshotFlow { pagerState.settledPage }.collect { page ->
-            if (page in items.indices) {
-                val newId = items[page].id
-                if (newId != selectedId) {
-                    onItemSelected(newId)
+            if (allowNone) {
+                if (page == 0) {
+                    if (selectedId != null) onItemSelected(null)
+                } else {
+                    val itemIndex = page - 1
+                    if (itemIndex in items.indices) {
+                        val newId = items[itemIndex].id
+                        if (newId != selectedId) onItemSelected(newId)
+                    }
+                }
+            } else {
+                if (page in items.indices) {
+                    val newId = items[page].id
+                    if (newId != selectedId) onItemSelected(newId)
                 }
             }
         }
@@ -721,12 +904,24 @@ fun HorizontalClothesCarousel(
             val pageOffset = ((pagerState.currentPage - page) +
                     pagerState.currentPageOffsetFraction).absoluteValue
 
-            CarouselItemCard(
-                clothes = items[page],
-                onClick = { onItemClick(items[page].id) },
-                dimFactor = pageOffset.coerceIn(0f, 1f),
-                modifier = Modifier.fillMaxSize()
-            )
+            if (allowNone && page == 0) {
+                // "Keine Auswahl" placeholder page
+                NoneSelectionCard(
+                    categoryName = categoryName,
+                    dimFactor = pageOffset.coerceIn(0f, 1f),
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                val itemIndex = if (allowNone) page - 1 else page
+                if (itemIndex in items.indices) {
+                    CarouselItemCard(
+                        clothes = items[itemIndex],
+                        onClick = { onItemClick(items[itemIndex].id) },
+                        dimFactor = pageOffset.coerceIn(0f, 1f),
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            }
         }
 
         // Left arrow overlay
@@ -748,7 +943,7 @@ fun HorizontalClothesCarousel(
         CarouselArrowButton(
             icon = Icons.AutoMirrored.Filled.KeyboardArrowRight,
             contentDescription = "Nächstes $categoryName",
-            enabled = pagerState.currentPage < items.size - 1,
+            enabled = pagerState.currentPage < totalPageCount - 1,
             onClick = {
                 scope.launch {
                     pagerState.animateScrollToPage(pagerState.currentPage + 1)
@@ -902,6 +1097,52 @@ private fun CarouselItemCard(
     }
 }
 
+// ─────────────────────── None Selection Card ───────────────────────
+
+@Composable
+private fun NoneSelectionCard(
+    categoryName: String,
+    dimFactor: Float,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .padding(horizontal = 4.dp, vertical = 2.dp)
+            .graphicsLayer {
+                alpha = 1f - (dimFactor * 0.6f)
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        val dashedColor = Color.Gray.copy(alpha = 0.5f)
+        Canvas(
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(RoundedCornerShape(12.dp))
+        ) {
+            drawRoundRect(
+                color = dashedColor,
+                topLeft = Offset.Zero,
+                size = size,
+                cornerRadius = CornerRadius(12.dp.toPx(), 12.dp.toPx()),
+                style = Stroke(
+                    width = 2.dp.toPx(),
+                    pathEffect = PathEffect.dashPathEffect(
+                        floatArrayOf(10.dp.toPx(), 6.dp.toPx()),
+                        0f
+                    )
+                )
+            )
+        }
+        Text(
+            text = "Keine\nAuswahl",
+            color = Color.Gray,
+            fontSize = 12.sp,
+            textAlign = TextAlign.Center,
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
+
 // ─────────────────────── Arrow Button ───────────────────────
 
 @Composable
@@ -1002,6 +1243,64 @@ private fun StateButton(
     brickCount: Int,
     selected: Boolean,
     onClick: () -> Unit,
+    enabled: Boolean = true,
+    modifier: Modifier = Modifier
+) {
+    val bgColor = if (selected) MaterialTheme.colorScheme.primaryContainer
+                  else Color.Transparent
+    val iconColor = if (!enabled) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                    else if (selected) MaterialTheme.colorScheme.onPrimaryContainer
+                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+
+    IconButton(
+        onClick = { if (enabled) onClick() },
+        modifier = modifier
+            .size(40.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(bgColor)
+    ) {
+        BrickIcon(brickCount = brickCount, color = iconColor)
+    }
+}
+
+// ─────────────────────── Grid Brick Icon ───────────────────────
+
+@Composable
+private fun GridBrickIcon(
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+    Canvas(modifier = modifier.size(24.dp)) {
+        val totalHeight = size.height
+        val totalWidth = size.width
+        val gap = 2.dp.toPx()
+        val rows = 4
+        val cols = 2
+        val brickHeight = (totalHeight - (rows - 1) * gap) / rows
+        val brickWidth = (totalWidth - (cols - 1) * gap) / cols
+        val cornerRadius = 3.dp.toPx()
+
+        for (row in 0 until rows) {
+            for (col in 0 until cols) {
+                val top = row * (brickHeight + gap)
+                val left = col * (brickWidth + gap)
+                drawRoundRect(
+                    color = color,
+                    topLeft = Offset(left, top),
+                    size = Size(brickWidth, brickHeight),
+                    cornerRadius = CornerRadius(cornerRadius, cornerRadius)
+                )
+            }
+        }
+    }
+}
+
+// ─────────────────────── Grid Mode Button ───────────────────────
+
+@Composable
+private fun GridModeButton(
+    selected: Boolean,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val bgColor = if (selected) MaterialTheme.colorScheme.primaryContainer
@@ -1016,7 +1315,7 @@ private fun StateButton(
             .clip(RoundedCornerShape(10.dp))
             .background(bgColor)
     ) {
-        BrickIcon(brickCount = brickCount, color = iconColor)
+        GridBrickIcon(color = iconColor)
     }
 }
 

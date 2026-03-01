@@ -83,6 +83,9 @@ fun NavGraph(
 
     var editingOutfitId by remember { mutableStateOf<Int?>(null) }
 
+    // Track whether the FullOutfitScreen is in GRID mode (no mutual exclusion)
+    var isGridMode by remember { mutableStateOf(false) }
+
     LaunchedEffect(allClothesFromDb) {
         if (listOfNotNull(topId, pulloverId, pantsId, jacketId, skirtId, dressId).isEmpty()){
             topId = allClothesFromDb.find { it.type == Type.TShirt && it.selected }?.id
@@ -154,21 +157,21 @@ fun NavGraph(
                         Type.Pullover -> pulloverId = id
                         Type.Pants -> {
                             pantsId = id
-                            if (id != null) {
+                            if (id != null && !isGridMode) {
                                 skirtId = null
                                 dressId = null
                             }
                         }
                         Type.Skirt -> {
                             skirtId = id
-                            if (id != null) {
+                            if (id != null && !isGridMode) {
                                 pantsId = null
                                 dressId = null
                             }
                         }
                         Type.Dress -> {
                             dressId = id
-                            if (id != null) {
+                            if (id != null && !isGridMode) {
                                 topId = null
                                 pantsId = null
                                 skirtId = null
@@ -237,7 +240,8 @@ fun NavGraph(
                         isManuelSaved = true
                     )
                     outfitViewModel.insert(outfitToSave)
-                }
+                },
+                onGridModeChanged = { gridMode -> isGridMode = gridMode }
             )
         }
 
