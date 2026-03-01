@@ -70,6 +70,7 @@ fun NavGraph(
         }
 
     var topId by remember { mutableStateOf<Int?>(null) }
+    var pulloverId by remember { mutableStateOf<Int?>(null) }
     var pantsId by remember { mutableStateOf<Int?>(null) }
     var jacketId by remember { mutableStateOf<Int?>(null) }
     var skirtId by remember { mutableStateOf<Int?>(null) }
@@ -83,8 +84,9 @@ fun NavGraph(
     var editingOutfitId by remember { mutableStateOf<Int?>(null) }
 
     LaunchedEffect(allClothesFromDb) {
-        if (listOfNotNull(topId, pantsId, jacketId, skirtId, dressId).isEmpty()){
-            topId = allClothesFromDb.find { it.type in Type.topTypes && it.selected }?.id
+        if (listOfNotNull(topId, pulloverId, pantsId, jacketId, skirtId, dressId).isEmpty()){
+            topId = allClothesFromDb.find { it.type == Type.TShirt && it.selected }?.id
+            pulloverId = allClothesFromDb.find { it.type == Type.Pullover && it.selected }?.id
             pantsId = allClothesFromDb.find { it.type == Type.Pants && it.selected }?.id
             jacketId = allClothesFromDb.find { it.type == Type.Jacket && it.selected }?.id
             skirtId = allClothesFromDb.find { it.type == Type.Skirt && it.selected }?.id
@@ -92,9 +94,10 @@ fun NavGraph(
             shoesId = allClothesFromDb.find { it.type == Type.Shoes && it.selected }?.id
         }
 
-        if (allClothesFromDb.isNotEmpty() && topId == null && dressId == null) {
+        if (allClothesFromDb.isNotEmpty() && topId == null && pulloverId == null && dressId == null) {
             val outfit = generateRandomOutfit(allClothesFromDb, allOutfitsFromDb)
             topId = outfit.top?.id
+            pulloverId = outfit.pullover?.id
             pantsId = outfit.pants?.id
             skirtId = outfit.skirt?.id
             jacketId = outfit.jacket?.id
@@ -137,12 +140,44 @@ fun NavGraph(
             }
 
             FullOutfitScreen(
-                top = getClothById(allClothesFromDb, topId ?: -1),
-                pants = getClothById(allClothesFromDb, pantsId ?: -1),
-                jacket = getClothById(allClothesFromDb, jacketId ?: -1),
-                skirt = getClothById(allClothesFromDb, skirtId ?: -1),
-                dress = getClothById(allClothesFromDb, dressId ?: -1),
-                shoes = getClothById(allClothesFromDb, shoesId ?: -1),
+                allClothes = allClothesFromDb,
+                selectedTshirtId = topId,
+                selectedPulloverId = pulloverId,
+                selectedPantsId = pantsId,
+                selectedSkirtId = skirtId,
+                selectedDressId = dressId,
+                selectedJacketId = jacketId,
+                selectedShoesId = shoesId,
+                onSlotChanged = { type, id ->
+                    when (type) {
+                        Type.TShirt -> topId = id
+                        Type.Pullover -> pulloverId = id
+                        Type.Pants -> {
+                            pantsId = id
+                            if (id != null) {
+                                skirtId = null
+                                dressId = null
+                            }
+                        }
+                        Type.Skirt -> {
+                            skirtId = id
+                            if (id != null) {
+                                pantsId = null
+                                dressId = null
+                            }
+                        }
+                        Type.Dress -> {
+                            dressId = id
+                            if (id != null) {
+                                topId = null
+                                pantsId = null
+                                skirtId = null
+                            }
+                        }
+                        Type.Jacket -> jacketId = id
+                        Type.Shoes -> shoesId = id
+                    }
+                },
                 weatherState = weatherState,
                 permissionState = permissionState,
                 isLocationEnabled = isLocationEnabled,
@@ -151,11 +186,8 @@ fun NavGraph(
                     navController.navigate(Routes.Details.createRoute(clothesId))
                 },
                 onConfirm = { wornClothesList ->
-                    // 1. Kleidung als ausgewählt markieren
                     val updatedClothesList = wornClothesList.map { it.copy(wornSince = System.currentTimeMillis(), selected = true) }
                     clothesViewModel.updateAll(updatedClothesList)
-
-                    // 2. Präferenzen erhöhen
                     clothesViewModel.incrementClothesPreference(updatedClothesList)
                     outfitViewModel.incrementOutfitPreference(
                         topId,
@@ -163,23 +195,13 @@ fun NavGraph(
                         skirtId,
                         pantsId,
                         jacketId,
+                        pulloverId,
                         shoesId
                     )
-                    /*
-                    // 3. Neues Outfit generieren (aus den verbleibenden sauberen Sachen)
-                    val remainingClean = allClothesFromDb.filter { cloth ->
-                        updatedClothesList.none { it.id == cloth.id } && cloth.clean
-                    }
-                    val outfit = generateRandomOutfit(remainingClean, allOutfitsFromDb)
-                    top = outfit.top
-                    pants = outfit.pants
-                    skirt = outfit.skirt
-                    jacket = outfit.jacket
-                    dress = outfit.dress
-                     */
                 },
                 onMoveToWashingMachine = { dirtyClothesList, cleanClothesList ->
                     topId = null
+                    pulloverId = null
                     pantsId = null
                     jacketId = null
                     skirtId = null
@@ -194,6 +216,7 @@ fun NavGraph(
                     clothesViewModel.updateAll(allClothesFromDb.map { it.copy(selected = false, wornSince = null, daysWorn = calculateDaysWorn(it)) })
                     val outfit = generateRandomOutfit(allClothesFromDb, allOutfitsFromDb)
                     topId = outfit.top?.id
+                    pulloverId = outfit.pullover?.id
                     pantsId = outfit.pants?.id
                     skirtId = outfit.skirt?.id
                     jacketId = outfit.jacket?.id
@@ -205,6 +228,7 @@ fun NavGraph(
                     val outfitToSave = Outfit(
                         dressId = dressId,
                         topsId = topId,
+                        pulloverId = pulloverId,
                         skirtId = skirtId,
                         pantsId = pantsId,
                         jacketId = jacketId,
@@ -276,7 +300,7 @@ fun NavGraph(
                 val message = stringResource(R.string.error_cannot_deselect_last_item)
 
                 clothesData?.let { cloth ->
-                    val isInOutfit = cloth.id == topId || cloth.id == pantsId ||
+                    val isInOutfit = cloth.id == topId || cloth.id == pulloverId || cloth.id == pantsId ||
                         cloth.id == jacketId || cloth.id == skirtId || cloth.id == dressId ||
                         cloth.id == shoesId
                     Scaffold(
@@ -290,6 +314,7 @@ fun NavGraph(
                                 val updatedCloth = cloth.copy(clean = false)
                                 clothesViewModel.update(updatedCloth)
                                 if(topId == cloth.id) topId = null
+                                if(pulloverId == cloth.id) pulloverId = null
                                 if(pantsId == cloth.id) pantsId = null
                                 if(jacketId == cloth.id) jacketId = null
                                 if(skirtId == cloth.id) skirtId = null
@@ -312,16 +337,24 @@ fun NavGraph(
 
                                 selectedCloth?.let {
                                     when (it.type) {
-                                        Type.TShirt, Type.Pullover -> topId = it.id
-                                        Type.Pants -> pantsId = it.id
+                                        Type.TShirt -> topId = it.id
+                                        Type.Pullover -> pulloverId = it.id
+                                        Type.Pants -> {
+                                            pantsId = it.id
+                                            skirtId = null
+                                            dressId = null
+                                        }
                                         Type.Jacket -> jacketId = it.id
                                         Type.Skirt -> {
                                             skirtId = it.id
+                                            pantsId = null
                                             dressId = null
                                         }
                                         Type.Dress -> {
                                             dressId = it.id
                                             skirtId = null
+                                            pantsId = null
+                                            topId = null
                                         }
                                         Type.Shoes -> shoesId = it.id
                                     }
@@ -343,7 +376,8 @@ fun NavGraph(
                                     }
                                 } else {
                                     when (cloth.type) {
-                                        Type.TShirt, Type.Pullover -> topId = null
+                                        Type.TShirt -> topId = null
+                                        Type.Pullover -> pulloverId = null
                                         Type.Pants -> pantsId = null
                                         Type.Jacket -> jacketId = null
                                         Type.Skirt -> skirtId = null
@@ -441,7 +475,8 @@ fun NavGraph(
                                 clothesViewModel.update(finalClothes)
                                 finalClothes.let {
                                     when (it.type) {
-                                        Type.TShirt, Type.Pullover -> if (topId == it.id) topId = it.id
+                                        Type.TShirt -> if (topId == it.id) topId = it.id
+                                        Type.Pullover -> if (pulloverId == it.id) pulloverId = it.id
                                         Type.Pants -> if (pantsId == it.id) pantsId = it.id
                                         Type.Jacket -> if (jacketId == it.id) jacketId = it.id
                                         Type.Skirt -> if (skirtId == it.id) skirtId = it.id
@@ -538,6 +573,7 @@ fun NavGraph(
 
                 outfitData?.let { outfit ->
                     val outfitTop = outfit.topsId?.let { id -> allClothesFromDb.find { it.id == id } }
+                    val outfitPullover = outfit.pulloverId?.let { id -> allClothesFromDb.find { it.id == id } }
                     val outfitPants = outfit.pantsId?.let { id -> allClothesFromDb.find { it.id == id } }
                     val outfitDress = outfit.dressId?.let { id -> allClothesFromDb.find { it.id == id } }
                     val outfitJacket = outfit.jacketId?.let { id -> allClothesFromDb.find { it.id == id } }
@@ -547,6 +583,7 @@ fun NavGraph(
                     OutfitDetailsScreen(
                         outfit = outfit,
                         outfitTop = outfitTop,
+                        outfitPullover = outfitPullover,
                         outfitPants = outfitPants,
                         outfitDress = outfitDress,
                         outfitJacket = outfitJacket,
@@ -565,6 +602,7 @@ fun NavGraph(
                         // Button 3: Tragen/Auswählen - Setzt Outfit auf Home
                         onWear = {
                             topId = outfitTop?.id
+                            pulloverId = outfitPullover?.id
                             pantsId = outfitPants?.id
                             dressId = outfitDress?.id
                             jacketId = outfitJacket?.id

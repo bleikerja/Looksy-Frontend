@@ -1,6 +1,7 @@
 package com.example.looksy.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,6 +41,9 @@ import com.example.looksy.data.model.Outfit
 import com.example.looksy.ui.components.ConfirmationDialog
 import com.example.looksy.ui.components.Header
 import kotlinx.coroutines.launch
+import coil.compose.AsyncImage
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 
 /**
  * Screen zur Detailansicht eines gespeicherten Outfits.
@@ -50,6 +54,7 @@ import kotlinx.coroutines.launch
 fun OutfitDetailsScreen(
     outfit: Outfit,
     outfitTop: Clothes? = null,
+    outfitPullover: Clothes? = null,
     outfitPants: Clothes? = null,
     outfitDress: Clothes? = null,
     outfitJacket: Clothes? = null,
@@ -100,6 +105,17 @@ fun OutfitDetailsScreen(
             }
 
             outfitTop?.let {
+                OutfitPart(
+                    imageResId = it.imagePath,
+                    onClick = { },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                        .padding(bottom = 12.dp)
+                )
+            }
+
+            outfitPullover?.let {
                 OutfitPart(
                     imageResId = it.imagePath,
                     onClick = { },
@@ -270,6 +286,28 @@ fun OutfitDetailsScreen(
         SnackbarHost(
             hostState = snackbarHostState,
             modifier = Modifier.align(Alignment.BottomCenter)
+        )
+    }
+}
+
+@Composable
+private fun OutfitPart(
+    imageResId: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color.White)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        AsyncImage(
+            model = imageResId,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
         )
     }
 }

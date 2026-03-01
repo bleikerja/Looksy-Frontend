@@ -10,7 +10,7 @@ import com.example.looksy.data.model.Clothes
 import com.example.looksy.data.local.dao.OutfitDao
 import com.example.looksy.data.model.Outfit
 
-@Database(entities = [Clothes::class, Outfit::class], version = 6, exportSchema = false)
+@Database(entities = [Clothes::class, Outfit::class], version = 7, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class ClothesDatabase : RoomDatabase() {
     abstract fun clothesDao(): ClothesDao

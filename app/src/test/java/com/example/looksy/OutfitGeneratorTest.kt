@@ -211,7 +211,7 @@ class OutfitGeneratorTest {
 
         val score = OutfitCompatibilityCalculator.calculateCompatibilityScore(result)
         assertTrue("Generator should return outfit with compatibility score in 0..100", score in 0..100)
-        assertTrue("At least top or dress must be present", result.top != null || result.dress != null)
+        assertTrue("At least top, pullover, or dress must be present", result.top != null || result.pullover != null || result.dress != null)
     }
 
     @Test
@@ -374,8 +374,8 @@ class OutfitGeneratorTest {
 
         val result = generateRandomOutfit(clothes, emptyList())
 
-        assertNotNull("Pullover should be selected as top", result.top)
-        assertEquals(Type.Pullover, result.top!!.type)
+        assertNotNull("Pullover should be selected in pullover slot", result.pullover)
+        assertEquals(Type.Pullover, result.pullover!!.type)
         val score = OutfitCompatibilityCalculator.calculateCompatibilityScore(result)
         assertTrue("Pullover outfit should be valid", score > 0)
     }

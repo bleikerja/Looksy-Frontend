@@ -177,11 +177,11 @@ class OutfitRepositoryTest {
 
         // Mocking: Das DAO findet dieses Outfit
         coEvery {
-            outfitDao.findMatchingOutfit(1, 2, null, null, null, null)
+            outfitDao.findMatchingOutfit(1, null, null, 2, null, null, null)
         } returns existingOutfit
 
         // When: Die Funktion wird aufgerufen
-        outfitRepository.incrementOutfitPreference(1, 2, null, null, null)
+        outfitRepository.incrementOutfitPreference(1, null, null, 2, null)
 
         // Then: Verifiziere, dass update mit Score 6 gerufen wurde
         coVerify {
@@ -192,7 +192,7 @@ class OutfitRepositoryTest {
     @Test
     fun `incrementOutfitPreference() should insert new outfit when no match found`() = runTest {// Given: Kein passendes Outfit in der Datenbank
         coEvery {
-            outfitDao.findMatchingOutfit(any(), any(), any(), any(), any(), any())
+            outfitDao.findMatchingOutfit(any(), any(), any(), any(), any(), any(), any())
         } returns null
 
         // When: Die Funktion wird aufgerufen

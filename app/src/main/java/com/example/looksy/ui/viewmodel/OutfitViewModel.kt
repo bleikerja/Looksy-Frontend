@@ -50,6 +50,7 @@ class OutfitViewModel(private val repository: OutfitRepository) : ViewModel() {
         selectedSkirtId: Int?,
         selectedPantsId: Int?,
         selectedJacketId: Int?,
+        selectedPulloverId: Int? = null,
         selectedShoesId: Int? = null
     ){
         viewModelScope.launch {
@@ -59,6 +60,7 @@ class OutfitViewModel(private val repository: OutfitRepository) : ViewModel() {
                 selectedSkirtId = selectedSkirtId,
                 selectedPantsId = selectedPantsId,
                 selectedJacketId = selectedJacketId,
+                selectedPulloverId = selectedPulloverId,
                 selectedShoesId = selectedShoesId
             )
         }

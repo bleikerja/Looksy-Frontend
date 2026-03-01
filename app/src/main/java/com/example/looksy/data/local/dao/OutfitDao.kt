@@ -38,6 +38,7 @@ interface OutfitDao {
         AND (skirtId IS :selectedSkirtId) 
         AND (pantsId IS :selectedPantsId) 
         AND (jacketId IS :selectedJacketId) 
+        AND (pulloverId IS :selectedPulloverId) 
         AND (shoesId IS :selectedShoesId) 
         LIMIT 1
     """)
@@ -47,6 +48,7 @@ interface OutfitDao {
         selectedSkirtId: Int?,
         selectedPantsId: Int?,
         selectedJacketId: Int?,
+        selectedPulloverId: Int?,
         selectedShoesId: Int?
     ): Outfit?
 }

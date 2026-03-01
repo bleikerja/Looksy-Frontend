@@ -417,8 +417,8 @@ class OutfitCompatibilityCalculatorTest {
         val top = createClothes(id = 1, type = Type.TShirt, size = Size._XS, season = Season.Summer)
         val pants = createClothes(id = 2, type = Type.Pants, size = Size._XS, season = Season.Summer)
         val shoes = createClothes(id = 3, type = Type.Shoes, size = Size._42, season = Season.Summer)
-        val outfitWithShoes = OutfitResult(top, pants, null, null, null, shoes)
-        val outfitWithoutShoes = OutfitResult(top, pants, null, null, null, null)
+        val outfitWithShoes = OutfitResult(top, pants, null, null, null, shoes = shoes)
+        val outfitWithoutShoes = OutfitResult(top, pants, null, null, null)
 
         // When
         val scoreWith = OutfitCompatibilityCalculator.calculateCompatibilityScore(outfitWithShoes)
@@ -434,7 +434,7 @@ class OutfitCompatibilityCalculatorTest {
         val top = createClothes(id = 1, type = Type.TShirt, season = Season.Summer, material = Material.Cotton, size = Size._M)
         val pants = createClothes(id = 2, type = Type.Pants, season = Season.Summer, material = Material.jeans, size = Size._M)
         val shoes = createClothes(id = 3, type = Type.Shoes, season = Season.Summer, material = Material.Polyester, size = Size._42)
-        val outfit = OutfitResult(top, pants, null, null, null, shoes)
+        val outfit = OutfitResult(top, pants, null, null, null, shoes = shoes)
 
         // When
         val score = OutfitCompatibilityCalculator.calculateCompatibilityScore(outfit)
@@ -448,7 +448,7 @@ class OutfitCompatibilityCalculatorTest {
         // Given - Pullover + pants should be a valid outfit
         val pullover = createClothes(id = 1, type = Type.Pullover, season = Season.Winter, material = Material.Wool, size = Size._M)
         val pants = createClothes(id = 2, type = Type.Pants, season = Season.Winter, material = Material.jeans, size = Size._M)
-        val outfit = OutfitResult(pullover, pants, null, null, null)
+        val outfit = OutfitResult(top = null, pants = pants, skirt = null, jacket = null, dress = null, pullover = pullover)
 
         // When
         val score = OutfitCompatibilityCalculator.calculateCompatibilityScore(outfit)

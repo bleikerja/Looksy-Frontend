@@ -13,7 +13,7 @@ object OutfitCompatibilityCalculator {
      * Calculates the compatibility score of an outfit (0-100 points)
      */
     fun calculateCompatibilityScore(outfit: OutfitResult): Int {
-        val items = listOfNotNull(outfit.top, outfit.pants, outfit.skirt, outfit.jacket, outfit.dress, outfit.shoes)
+        val items = listOfNotNull(outfit.top, outfit.pants, outfit.skirt, outfit.jacket, outfit.dress, outfit.pullover, outfit.shoes)
         
         // Empty outfit gets 0 points
         if (items.isEmpty()) return 0
@@ -49,7 +49,7 @@ object OutfitCompatibilityCalculator {
      * Used by generator to filter invalid outfits and by tests.
      */
     fun isOutfitColorCompatible(outfit: OutfitResult): Boolean {
-        val items = listOfNotNull(outfit.top, outfit.pants, outfit.skirt, outfit.jacket, outfit.dress, outfit.shoes)
+        val items = listOfNotNull(outfit.top, outfit.pants, outfit.skirt, outfit.jacket, outfit.dress, outfit.pullover, outfit.shoes)
         return calculateColorCompatibility(items) > 0.0
     }
 
@@ -129,8 +129,8 @@ object OutfitCompatibilityCalculator {
             return false
         }
 
-        // At least a top or dress must be present
-        if (outfit.top == null && outfit.dress == null) {
+        // At least a top, pullover, or dress must be present
+        if (outfit.top == null && outfit.pullover == null && outfit.dress == null) {
             return false
         }
 
@@ -227,7 +227,7 @@ object OutfitCompatibilityCalculator {
      * Calculates type combination score (0-100 points)
      */
     private fun calculateTypeCompatibility(outfit: OutfitResult): Double {
-        val hasTop = outfit.top != null
+        val hasTop = outfit.top != null || outfit.pullover != null
         val hasDress = outfit.dress != null
         val hasPants = outfit.pants != null
         val hasSkirt = outfit.skirt != null

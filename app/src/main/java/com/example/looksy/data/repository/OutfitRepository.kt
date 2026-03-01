@@ -38,6 +38,7 @@ class OutfitRepository(private val outfitDao: OutfitDao) {
         selectedSkirtId: Int?,
         selectedPantsId: Int?,
         selectedJacketId: Int?,
+        selectedPulloverId: Int? = null,
         selectedShoesId: Int? = null
     ) {
         val existingOutfit = outfitDao.findMatchingOutfit(
@@ -46,6 +47,7 @@ class OutfitRepository(private val outfitDao: OutfitDao) {
             selectedSkirtId,
             selectedPantsId,
             selectedJacketId,
+            selectedPulloverId,
             selectedShoesId
         )
         if (existingOutfit != null) {
@@ -62,6 +64,7 @@ class OutfitRepository(private val outfitDao: OutfitDao) {
                 dressId = selectedDressId,
                 skirtId = selectedSkirtId,
                 jacketId = selectedJacketId,
+                pulloverId = selectedPulloverId,
                 shoesId = selectedShoesId,
                 preference = 1
             )
