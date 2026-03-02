@@ -11,13 +11,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -118,11 +115,14 @@ fun FullOutfitScreen(
     onGenerateRandom: () -> Unit = {},
     onCamera: () -> Unit = {},
     onSave: () -> Unit = {},
+    isGridMode: Boolean = false,
+    isJacketVisible: Boolean = true,
     onLayoutStateChanged: (OutfitLayoutMode, Boolean) -> Unit = { _, _ -> },
     weatherState: WeatherUiState = WeatherUiState.Loading,
     permissionState: PermissionState = PermissionState.NOT_ASKED,
     isLocationEnabled: Boolean = true,
-    onWeatherClick: () -> Unit = {}
+    onWeatherClick: () -> Unit = {},
+    editSavedOutfit: Boolean = false
 ) {
     val cleanClothes = allClothes.filter { it.clean }
 
@@ -143,6 +143,7 @@ fun FullOutfitScreen(
     var layoutState by remember {
         mutableStateOf(
             when {
+                isGridMode -> OutfitLayoutMode.GRID
                 selectedDressId != null -> OutfitLayoutMode.TWO_LAYERS
                 selectedTshirtId != null && selectedPulloverId != null -> OutfitLayoutMode.FOUR_LAYERS
                 else -> OutfitLayoutMode.THREE_LAYERS
@@ -151,7 +152,7 @@ fun FullOutfitScreen(
     }
 
     // Jacket toggle state: on by default when jacket items exist
-    var showJacket by remember { mutableStateOf(jacketItems.isNotEmpty()) }
+    var showJacket by remember { mutableStateOf(isJacketVisible || selectedJacketId != null) }
 
     // Auto-disable jacket toggle when all jackets are removed from wardrobe
     LaunchedEffect(jacketItems) {
@@ -197,7 +198,8 @@ fun FullOutfitScreen(
                     permissionState = permissionState,
                     isLocationEnabled = isLocationEnabled,
                     onWeatherClick = onWeatherClick,
-                    onWashingMachine = onWashingMachine
+                    onWashingMachine = onWashingMachine,
+                    editSavedOutfit = editSavedOutfit
                 )
             },
             snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -616,27 +618,29 @@ fun FullOutfitScreen(
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         val isGridMode = layoutState == OutfitLayoutMode.GRID
                         val buttonsEnabled = !isGridMode || gridOutfitValid
-                        IconButton(
-                            onClick = {
-                                if (buttonsEnabled) {
-                                    onSave()
-                                    scope.launch {
-                                        snackbarHostState.showSnackbar(
-                                            "Outfit gespeichert",
-                                            duration = SnackbarDuration.Short
-                                        )
+                        if(!editSavedOutfit) {
+                            IconButton(
+                                onClick = {
+                                    if (buttonsEnabled) {
+                                        onSave()
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar(
+                                                "Outfit gespeichert",
+                                                duration = SnackbarDuration.Short
+                                            )
+                                        }
                                     }
-                                }
-                            },
-                            modifier = Modifier
-                                .size(40.dp)
-                                .alpha(if (buttonsEnabled) 1f else 0.3f)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Bookmark,
-                                contentDescription = "Outfit speichern",
-                                modifier = Modifier.fillMaxSize()
-                            )
+                                },
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .alpha(if (buttonsEnabled) 1f else 0.3f)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Bookmark,
+                                    contentDescription = "Outfit speichern",
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
                         }
                         if (!confirmedOutfit) {
                             IconButton(
@@ -736,7 +740,7 @@ fun FullOutfitScreen(
                     onNavigateBack = {},
                     onNavigateToRightIcon = {},
                     clothesData = null,
-                    headerText = "Heutiges Outfit",
+                    headerText = if(editSavedOutfit) "Outfit bearbeiten" else "Heutiges Outfit",
                     rightIconContentDescription = null,
                     rightIcon = null,
                     isFirstHeader = true
@@ -1432,25 +1436,38 @@ private fun FullOutfitTopBar(
     permissionState: PermissionState,
     isLocationEnabled: Boolean,
     onWeatherClick: () -> Unit,
-    onWashingMachine: () -> Unit
+    onWashingMachine: () -> Unit,
+    editSavedOutfit: Boolean = false,
 ) {
     Box(modifier = Modifier.fillMaxWidth()) {
-        Header(
-            onNavigateBack = {},
-            onNavigateToRightIcon = { onWashingMachine() },
-            clothesData = null,
-            headerText = "Heutiges Outfit",
-            rightIconContentDescription = "Zur Waschmaschine",
-            rightIcon = Icons.Default.LocalLaundryService,
-            isFirstHeader = true
-        )
-        WeatherIconRow(
-            weatherState = weatherState,
-            permissionState = permissionState,
-            isLocationEnabled = isLocationEnabled,
-            onClick = onWeatherClick,
-            modifier = Modifier.align(Alignment.CenterStart)
-        )
+        if(editSavedOutfit) {
+            Header(
+                onNavigateBack = {},
+                clothesData = null,
+                headerText = "Outfit bearbeiten",
+                rightIcon = null,
+                isFirstHeader = true,
+                onNavigateToRightIcon = {},
+                rightIconContentDescription = null,
+            )
+        }else {
+            Header(
+                onNavigateBack = {},
+                onNavigateToRightIcon = { onWashingMachine() },
+                clothesData = null,
+                headerText = "Heutiges Outfit",
+                rightIconContentDescription = "Zur Waschmaschine",
+                rightIcon = Icons.Default.LocalLaundryService,
+                isFirstHeader = true
+            )
+            WeatherIconRow(
+                weatherState = weatherState,
+                permissionState = permissionState,
+                isLocationEnabled = isLocationEnabled,
+                onClick = onWeatherClick,
+                modifier = Modifier.align(Alignment.CenterStart)
+            )
+        }
     }
 }
 

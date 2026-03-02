@@ -1,7 +1,6 @@
 package com.example.looksy.ui.navigation
 
 import android.net.Uri
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -253,6 +252,8 @@ fun NavGraph(
                     )
                     outfitViewModel.insert(outfitToSave)
                 },
+                isGridMode = isGridMode,
+                isJacketVisible = currentJacketVisible,
                 onLayoutStateChanged = { mode, jacketVisible ->
                     currentLayoutMode = mode
                     currentJacketVisible = jacketVisible
@@ -686,6 +687,9 @@ fun NavGraph(
                             jacketId = outfit.jacketId
                             skirtId = outfit.skirtId
                             shoesId = outfit.shoesId
+                            currentLayoutMode = outfit.layoutMode
+                            isGridMode = outfit.layoutMode == OutfitLayoutMode.GRID
+                            currentJacketVisible = outfit.isJacketVisible
                             navController.navigate(Routes.Home.route) {
                                 popUpTo(Routes.SavedOutfits.route) { inclusive = false }
                             }
@@ -701,14 +705,91 @@ fun NavGraph(
             arguments = listOf(navArgument(RouteArgs.ID) { type = NavType.IntType })
         ) { backStackEntry ->
             val outfitId = backStackEntry.arguments?.getInt(RouteArgs.ID)
-            if (outfitId != null) {
+            val outfit = outfitViewModel.getOutfitById(outfitId ?: -1).collectAsState(initial = null).value
+            if (outfitId != null && outfit != null) {
+                var outfitTopId by remember { mutableStateOf(outfit.topsId) }
+                var outfitPulloverId by remember { mutableStateOf(outfit.pulloverId) }
+                var outfitPantsId by remember { mutableStateOf(outfit.pantsId) }
+                var outfitJacketId by remember { mutableStateOf(outfit.jacketId) }
+                var outfitSkirtId by remember { mutableStateOf(outfit.skirtId) }
+                var outfitDressId by remember { mutableStateOf(outfit.dressId) }
+                var outfitShoesId by remember { mutableStateOf(outfit.shoesId) }
 
-                CategoriesScreen(
-                    categoryItems = categoryItems,
-                    onClick = { type ->
-                        val finalRoute = Routes.SpecificCategory.createRoute(type)
-                        navController.navigate(finalRoute)
-                    }
+                var outfitLayoutMode by remember { mutableStateOf(outfit.layoutMode) }
+                var outfitJacketVisible by remember { mutableStateOf(outfit.isJacketVisible) }
+
+                FullOutfitScreen(
+                    allClothes = allClothesFromDb,
+                    selectedTshirtId = outfitTopId,
+                    selectedPulloverId = outfitPulloverId,
+                    selectedPantsId = outfitPantsId,
+                    selectedSkirtId = outfitSkirtId,
+                    selectedDressId = outfitDressId,
+                    selectedJacketId = outfitJacketId,
+                    selectedShoesId = outfitShoesId,
+                    onSlotChanged = { type, id ->
+                        when (type) {
+                            Type.TShirt -> outfitTopId = id
+                            Type.Pullover -> outfitPulloverId = id
+                            Type.Pants -> {
+                                outfitPantsId = id
+                                if (id != null && !isGridMode) {
+                                    outfitSkirtId = null
+                                    outfitDressId = null
+                                }
+                            }
+                            Type.Skirt -> {
+                                outfitSkirtId = id
+                                if (id != null && !isGridMode) {
+                                    outfitPantsId = null
+                                    outfitDressId = null
+                                }
+                            }
+                            Type.Dress -> {
+                                outfitDressId = id
+                                if (id != null && !isGridMode) {
+                                    outfitTopId = null
+                                    outfitPantsId = null
+                                    outfitSkirtId = null
+                                }
+                            }
+                            Type.Jacket -> outfitJacketId = id
+                            Type.Shoes -> outfitShoesId = id
+                        }
+                    },
+                    onConfirm = { wornClothesList ->
+                        outfitViewModel.update(outfit.copy(
+                            topsId = outfitTopId,
+                            pulloverId = outfitPulloverId,
+                            pantsId = outfitPantsId,
+                            skirtId = outfitSkirtId,
+                            dressId = outfitDressId,
+                            jacketId = outfitJacketId,
+                            shoesId = outfitShoesId,
+                            layoutMode = outfitLayoutMode,
+                            isJacketVisible = outfitJacketVisible
+                        ))
+                        navController.popBackStack()
+                    },
+                    onGenerateRandom = {
+                        clothesViewModel.updateAll(allClothesFromDb.map { it.copy(selected = false, wornSince = null, daysWorn = calculateDaysWorn(it)) })
+                        val outfit = generateRandomOutfit(allClothesFromDb, allOutfitsFromDb, outfitLayoutMode)
+                        outfitTopId = outfit.top?.id
+                        outfitPulloverId = outfit.pullover?.id
+                        outfitPantsId = outfit.pants?.id
+                        outfitSkirtId = outfit.skirt?.id
+                        outfitJacketId = outfit.jacket?.id
+                        outfitDressId = outfit.dress?.id
+                        outfitShoesId = outfit.shoes?.id
+                    },
+                    isGridMode = outfitLayoutMode == OutfitLayoutMode.GRID,
+                    isJacketVisible = outfitJacketVisible,
+                    onLayoutStateChanged = { mode, jacketVisible ->
+                        outfitLayoutMode = mode
+                        outfitJacketVisible = jacketVisible
+                        isGridMode = mode == OutfitLayoutMode.GRID
+                    },
+                    editSavedOutfit = true
                 )
             }
         }
