@@ -35,8 +35,6 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.DomainDisabled
 import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.LocalLaundryService
 import androidx.compose.material.icons.filled.LocationOff
@@ -129,17 +127,17 @@ fun FullOutfitScreen(
     val cleanClothes = allClothes.filter { it.clean }
 
     // Per-category lists
-    val tshirtItems = remember(cleanClothes) { cleanClothes.filter { it.type == Type.TShirt } }
-    val pulloverItems = remember(cleanClothes) { cleanClothes.filter { it.type == Type.Pullover } }
-    val pantsItems = remember(cleanClothes) { cleanClothes.filter { it.type == Type.Pants } }
-    val skirtItems = remember(cleanClothes) { cleanClothes.filter { it.type == Type.Skirt } }
-    val dressItems = remember(cleanClothes) { cleanClothes.filter { it.type == Type.Dress } }
-    val jacketItems = remember(cleanClothes) { cleanClothes.filter { it.type == Type.Jacket } }
-    val shoesItems = remember(cleanClothes) { cleanClothes.filter { it.type == Type.Shoes } }
+    val tshirtItems = remember(cleanClothes) { cleanClothes.filter { it.type == Type.TShirt }.sortedBy { it.id } }
+    val pulloverItems = remember(cleanClothes) { cleanClothes.filter { it.type == Type.Pullover }.sortedBy { it.id } }
+    val pantsItems = remember(cleanClothes) { cleanClothes.filter { it.type == Type.Pants }.sortedBy { it.id } }
+    val skirtItems = remember(cleanClothes) { cleanClothes.filter { it.type == Type.Skirt }.sortedBy { it.id } }
+    val dressItems = remember(cleanClothes) { cleanClothes.filter { it.type == Type.Dress }.sortedBy { it.id } }
+    val jacketItems = remember(cleanClothes) { cleanClothes.filter { it.type == Type.Jacket }.sortedBy { it.id } }
+    val shoesItems = remember(cleanClothes) { cleanClothes.filter { it.type == Type.Shoes }.sortedBy { it.id } }
 
     // Merged lists for combined carousels
-    val mergedTopItems = remember(cleanClothes) { (tshirtItems + pulloverItems).shuffled() }
-    val mergedBottomItems = remember(cleanClothes) { (pantsItems + skirtItems).shuffled() }
+    val mergedTopItems = remember(cleanClothes) { (tshirtItems + pulloverItems).sortedBy { it.id } }
+    val mergedBottomItems = remember(cleanClothes) { (pantsItems + skirtItems).sortedBy { it.id } }
 
     // Layout state: 2/3/4 layers
     var layoutState by remember {
@@ -185,7 +183,7 @@ fun FullOutfitScreen(
         val snackbarHostState = remember { SnackbarHostState() }
         val scope = rememberCoroutineScope()
         val allWornItems = listOfNotNull(currentTop, currentPullover, currentPants, currentSkirt, currentDress, currentJacket, currentShoes)
-        val confirmedOutfit = allWornItems.isNotEmpty() && allWornItems.any { !it.selected }
+        val confirmedOutfit = allWornItems.isNotEmpty() && allWornItems.all { it.selected }
 
         // In GRID mode, outfit is valid only if: (top OR pullover) AND (pants OR skirt), OR dress
         val gridOutfitValid = currentDress != null ||
@@ -640,7 +638,7 @@ fun FullOutfitScreen(
                                 modifier = Modifier.fillMaxSize()
                             )
                         }
-                        if (confirmedOutfit) {
+                        if (!confirmedOutfit) {
                             IconButton(
                                 onClick = {
                                     if (buttonsEnabled) {
@@ -821,7 +819,7 @@ fun HorizontalClothesCarousel(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "Keine $categoryName",
+                text = "Kein${if (categoryName == "Schuhe") "e" else ""} $categoryName",
                 color = Color.Gray,
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center
@@ -972,7 +970,7 @@ private fun VerticalClothesCarousel(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "Keine $categoryName",
+                text = "Kein${if (categoryName == "Schuhe") "e" else ""} $categoryName",
                 color = Color.Gray,
                 fontSize = 12.sp,
                 textAlign = TextAlign.Center
