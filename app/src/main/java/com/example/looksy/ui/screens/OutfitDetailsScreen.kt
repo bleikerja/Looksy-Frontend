@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -69,16 +70,8 @@ fun OutfitDetailsScreen(
     val scope = rememberCoroutineScope()
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color(249, 246, 242))
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // Header ähnlich wie FullOutfitScreen
+    Scaffold(
+        topBar = {
             Header(
                 onNavigateBack = onNavigateBack,
                 onNavigateToRightIcon = { },
@@ -86,13 +79,21 @@ fun OutfitDetailsScreen(
                 headerText = "Outfit Details",
                 rightIconContentDescription = null,
                 rightIcon = null,
-                isFirstHeader = true
+                isFirstHeader = false
             )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+                .background(Color(249, 246, 242))
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             // Zeige alle Kleidungsstücke des Outfits
-            // Ähnlich wie im FullOutfitScreen
             outfitJacket?.let {
                 OutfitPart(
                     imageResId = it.imagePath,
@@ -266,26 +267,21 @@ fun OutfitDetailsScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
         }
+    }
 
-        // Lösch-Bestätigungsdialog
-        if (showDeleteConfirmDialog) {
-            ConfirmationDialog(
-                title = "Outfit löschen?",
-                text = "Möchtest du dieses Outfit wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
-                dismissText = "Abbrechen",
-                onDismiss = { showDeleteConfirmDialog = false },
-                confirmText = "Löschen",
-                isDeletion = true,
-                onConfirm = {
-                    onDelete()
-                    showDeleteConfirmDialog = false
-                }
-            )
-        }
-
-        SnackbarHost(
-            hostState = snackbarHostState,
-            modifier = Modifier.align(Alignment.BottomCenter)
+    // Lösch-Bestätigungsdialog
+    if (showDeleteConfirmDialog) {
+        ConfirmationDialog(
+            title = "Outfit löschen?",
+            text = "Möchtest du dieses Outfit wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+            dismissText = "Abbrechen",
+            onDismiss = { showDeleteConfirmDialog = false },
+            confirmText = "Löschen",
+            isDeletion = true,
+            onConfirm = {
+                onDelete()
+                showDeleteConfirmDialog = false
+            }
         )
     }
 }
