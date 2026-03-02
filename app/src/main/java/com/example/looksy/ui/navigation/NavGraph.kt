@@ -32,6 +32,7 @@ import com.example.looksy.ui.screens.WeatherScreen
 import com.example.looksy.R
 import com.example.looksy.data.model.Clothes
 import com.example.looksy.data.model.Outfit
+import com.example.looksy.data.model.OutfitLayoutMode
 import com.example.looksy.data.model.Type
 import com.example.looksy.ui.viewmodel.ClothesViewModel
 import com.example.looksy.ui.viewmodel.GeocodingViewModel
@@ -84,6 +85,10 @@ fun NavGraph(
 
     // Track whether the FullOutfitScreen is in GRID mode (no mutual exclusion)
     var isGridMode by remember { mutableStateOf(false) }
+
+    // Track current layout state for saving outfits with their visual layout
+    var currentLayoutMode by remember { mutableStateOf(OutfitLayoutMode.THREE_LAYERS) }
+    var currentJacketVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(allClothesFromDb) {
         if (listOfNotNull(topId, pulloverId, pantsId, jacketId, skirtId, dressId).isEmpty()){
@@ -242,11 +247,17 @@ fun NavGraph(
                         jacketId = jacketId,
                         shoesId = shoesId,
                         isSynced = false,
-                        isManuelSaved = true
+                        isManuelSaved = true,
+                        layoutMode = currentLayoutMode,
+                        isJacketVisible = currentJacketVisible
                     )
                     outfitViewModel.insert(outfitToSave)
                 },
-                onGridModeChanged = { gridMode -> isGridMode = gridMode }
+                onLayoutStateChanged = { mode, jacketVisible ->
+                    currentLayoutMode = mode
+                    currentJacketVisible = jacketVisible
+                    isGridMode = mode == OutfitLayoutMode.GRID
+                }
             )
         }
 
@@ -650,23 +661,12 @@ fun NavGraph(
                     .collectAsState(initial = null)
 
                 outfitData?.let { outfit ->
-                    val outfitTop = outfit.topsId?.let { id -> allClothesFromDb.find { it.id == id } }
-                    val outfitPullover = outfit.pulloverId?.let { id -> allClothesFromDb.find { it.id == id } }
-                    val outfitPants = outfit.pantsId?.let { id -> allClothesFromDb.find { it.id == id } }
-                    val outfitDress = outfit.dressId?.let { id -> allClothesFromDb.find { it.id == id } }
-                    val outfitJacket = outfit.jacketId?.let { id -> allClothesFromDb.find { it.id == id } }
-                    val outfitSkirt = outfit.skirtId?.let { id -> allClothesFromDb.find { it.id == id } }
-                    val outfitShoes = outfit.shoesId?.let { id -> allClothesFromDb.find { it.id == id } }
-
                     OutfitDetailsScreen(
                         outfit = outfit,
-                        outfitTop = outfitTop,
-                        outfitPullover = outfitPullover,
-                        outfitPants = outfitPants,
-                        outfitDress = outfitDress,
-                        outfitJacket = outfitJacket,
-                        outfitSkirt = outfitSkirt,
-                        outfitShoes = outfitShoes,
+                        allClothes = allClothesFromDb,
+                        onClothesClick = { clothesId ->
+                            navController.navigate(Routes.Details.createRoute(clothesId))
+                        },
                         // Button 1: Bearbeiten - Navigiert zu Edit Screen
                         onEdit = {
                             editingOutfitId = outfitId
@@ -679,13 +679,13 @@ fun NavGraph(
                         },
                         // Button 3: Tragen/Auswählen - Setzt Outfit auf Home
                         onWear = {
-                            topId = outfitTop?.id
-                            pulloverId = outfitPullover?.id
-                            pantsId = outfitPants?.id
-                            dressId = outfitDress?.id
-                            jacketId = outfitJacket?.id
-                            skirtId = outfitSkirt?.id
-                            shoesId = outfitShoes?.id
+                            topId = outfit.topsId
+                            pulloverId = outfit.pulloverId
+                            pantsId = outfit.pantsId
+                            dressId = outfit.dressId
+                            jacketId = outfit.jacketId
+                            skirtId = outfit.skirtId
+                            shoesId = outfit.shoesId
                             navController.navigate(Routes.Home.route) {
                                 popUpTo(Routes.SavedOutfits.route) { inclusive = false }
                             }

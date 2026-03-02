@@ -18,5 +18,11 @@ data class Outfit(
     val shoesId: Int? = null,
     val preference: Int = 0,
     val isSynced: Boolean = false,
-    val isManuelSaved: Boolean = false
+    val isManuelSaved: Boolean = false,
+
+    /** Visual layout the outfit was saved with (carousel vs grid). */
+    val layoutMode: OutfitLayoutMode = OutfitLayoutMode.THREE_LAYERS,
+
+    /** Whether the jacket side-column was active at save time (ignored in GRID mode). */
+    val isJacketVisible: Boolean = false
 )

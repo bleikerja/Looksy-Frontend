@@ -1,4 +1,4 @@
-package com.example.looksy.ui.screens
+﻿package com.example.looksy.ui.screens
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -87,6 +87,7 @@ import coil.compose.AsyncImage
 import com.example.looksy.R
 import com.example.looksy.data.location.PermissionState
 import com.example.looksy.data.model.Clothes
+import com.example.looksy.data.model.OutfitLayoutMode
 import com.example.looksy.data.model.Type
 import com.example.looksy.ui.components.Header
 import com.example.looksy.ui.components.LooksyButton
@@ -96,14 +97,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 
-// ───────────────────────────────── Layout State ─────────────────────────────────
-
-private enum class LayoutState {
-    TWO_LAYERS,    // Dress + Shoes (2 bricks)
-    THREE_LAYERS,  // Merged Top + Merged Bottom + Shoes (3 bricks)
-    FOUR_LAYERS,   // TShirt + Pullover + Merged Bottom + Shoes (4 bricks)
-    GRID           // 4×2 grid: all 7 categories shown independently
-}
+// FullOutfitScreen now uses OutfitLayoutMode from data.model for layout state.
 
 // ───────────────────────────────── Main Screen ─────────────────────────────────
 
@@ -126,7 +120,7 @@ fun FullOutfitScreen(
     onGenerateRandom: () -> Unit = {},
     onCamera: () -> Unit = {},
     onSave: () -> Unit = {},
-    onGridModeChanged: (Boolean) -> Unit = {},
+    onLayoutStateChanged: (OutfitLayoutMode, Boolean) -> Unit = { _, _ -> },
     weatherState: WeatherUiState = WeatherUiState.Loading,
     permissionState: PermissionState = PermissionState.NOT_ASKED,
     isLocationEnabled: Boolean = true,
@@ -151,9 +145,9 @@ fun FullOutfitScreen(
     var layoutState by remember {
         mutableStateOf(
             when {
-                selectedDressId != null -> LayoutState.TWO_LAYERS
-                selectedTshirtId != null && selectedPulloverId != null -> LayoutState.FOUR_LAYERS
-                else -> LayoutState.THREE_LAYERS
+                selectedDressId != null -> OutfitLayoutMode.TWO_LAYERS
+                selectedTshirtId != null && selectedPulloverId != null -> OutfitLayoutMode.FOUR_LAYERS
+                else -> OutfitLayoutMode.THREE_LAYERS
             }
         )
     }
@@ -171,8 +165,8 @@ fun FullOutfitScreen(
 
     // Sync layout state from external changes (e.g. random generation)
     LaunchedEffect(selectedDressId) {
-        if (selectedDressId != null && layoutState != LayoutState.GRID) {
-            layoutState = LayoutState.TWO_LAYERS
+        if (selectedDressId != null && layoutState != OutfitLayoutMode.GRID) {
+            layoutState = OutfitLayoutMode.TWO_LAYERS
         }
     }
 
@@ -223,7 +217,7 @@ fun FullOutfitScreen(
 
 
                     // ──── Outfit area: jacket column + center carousels ────
-                if (layoutState == LayoutState.GRID) {
+                if (layoutState == OutfitLayoutMode.GRID) {
                     // ──── GRID mode: 4×2 grid of independent carousels ────
                     Row(
                         modifier = Modifier
@@ -344,7 +338,7 @@ fun FullOutfitScreen(
                         verticalArrangement = Arrangement.SpaceAround
                     ) {
                         when (layoutState) {
-                            LayoutState.TWO_LAYERS -> {
+                            OutfitLayoutMode.TWO_LAYERS -> {
                                 // Dress + Shoes
                                 HorizontalClothesCarousel(
                                     items = dressItems,
@@ -365,7 +359,7 @@ fun FullOutfitScreen(
                                 )
                             }
 
-                            LayoutState.THREE_LAYERS -> {
+                            OutfitLayoutMode.THREE_LAYERS -> {
                                 // Merged Top (TShirts + Pullovers) + Merged Bottom (Pants + Skirts) + Shoes
                                 val mergedTopSelectedId = selectedTshirtId ?: selectedPulloverId
                                 HorizontalClothesCarousel(
@@ -429,7 +423,7 @@ fun FullOutfitScreen(
                                 )
                             }
 
-                            LayoutState.FOUR_LAYERS -> {
+                            OutfitLayoutMode.FOUR_LAYERS -> {
                                 // TShirt + Pullover + Merged Bottom + Shoes
                                 HorizontalClothesCarousel(
                                     items = tshirtItems,
@@ -487,7 +481,7 @@ fun FullOutfitScreen(
                                 )
                             }
 
-                            LayoutState.GRID -> {
+                            OutfitLayoutMode.GRID -> {
                                 // Handled by the if-branch above; unreachable here
                             }
                         }
@@ -506,10 +500,10 @@ fun FullOutfitScreen(
                     // 1. Shuffle button (always visible)
                     IconButton(
                         onClick = {
-                            if (layoutState == LayoutState.GRID) {
+                            if (layoutState == OutfitLayoutMode.GRID) {
                                 // Exit GRID mode, then generate random
-                                layoutState = LayoutState.THREE_LAYERS
-                                onGridModeChanged(false)
+                                layoutState = OutfitLayoutMode.THREE_LAYERS
+                                onLayoutStateChanged(layoutState, showJacket)
                             }
                             onGenerateRandom()
                         },
@@ -527,7 +521,7 @@ fun FullOutfitScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(0.dp)
                     ) {
-                        val isGrid = layoutState == LayoutState.GRID
+                        val isGrid = layoutState == OutfitLayoutMode.GRID
                         // Jacket vertical-brick toggle
                         JacketBrickButton(
                             selected = showJacket && !isGrid,
@@ -535,6 +529,7 @@ fun FullOutfitScreen(
                             onClick = {
                                 if (showJacket) onSlotChanged(Type.Jacket, null)
                                 showJacket = !showJacket
+                                onLayoutStateChanged(layoutState, showJacket)
                             }
                         )
                         // Thin vertical divider
@@ -548,46 +543,49 @@ fun FullOutfitScreen(
                         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                             StateButton(
                                 brickCount = 2,
-                                selected = layoutState == LayoutState.TWO_LAYERS,
+                                selected = layoutState == OutfitLayoutMode.TWO_LAYERS,
                                 enabled = !isGrid,
                                 onClick = {
-                                    if (layoutState != LayoutState.TWO_LAYERS) {
+                                    if (layoutState != OutfitLayoutMode.TWO_LAYERS) {
                                         onSlotChanged(Type.TShirt, null)
                                         onSlotChanged(Type.Pullover, null)
                                         onSlotChanged(Type.Pants, null)
                                         onSlotChanged(Type.Skirt, null)
-                                        layoutState = LayoutState.TWO_LAYERS
+                                        layoutState = OutfitLayoutMode.TWO_LAYERS
+                                        onLayoutStateChanged(layoutState, showJacket)
                                     }
                                 }
                             )
                             StateButton(
                                 brickCount = 3,
-                                selected = layoutState == LayoutState.THREE_LAYERS,
+                                selected = layoutState == OutfitLayoutMode.THREE_LAYERS,
                                 enabled = !isGrid,
                                 onClick = {
-                                    if (layoutState != LayoutState.THREE_LAYERS) {
-                                        if (layoutState == LayoutState.TWO_LAYERS) {
+                                    if (layoutState != OutfitLayoutMode.THREE_LAYERS) {
+                                        if (layoutState == OutfitLayoutMode.TWO_LAYERS) {
                                             onSlotChanged(Type.Dress, null)
                                         }
-                                        if (layoutState == LayoutState.FOUR_LAYERS &&
+                                        if (layoutState == OutfitLayoutMode.FOUR_LAYERS &&
                                             selectedTshirtId != null && selectedPulloverId != null
                                         ) {
                                             onSlotChanged(Type.Pullover, null)
                                         }
-                                        layoutState = LayoutState.THREE_LAYERS
+                                        layoutState = OutfitLayoutMode.THREE_LAYERS
+                                        onLayoutStateChanged(layoutState, showJacket)
                                     }
                                 }
                             )
                             StateButton(
                                 brickCount = 4,
-                                selected = layoutState == LayoutState.FOUR_LAYERS,
+                                selected = layoutState == OutfitLayoutMode.FOUR_LAYERS,
                                 enabled = !isGrid,
                                 onClick = {
-                                    if (layoutState != LayoutState.FOUR_LAYERS) {
-                                        if (layoutState == LayoutState.TWO_LAYERS) {
+                                    if (layoutState != OutfitLayoutMode.FOUR_LAYERS) {
+                                        if (layoutState == OutfitLayoutMode.TWO_LAYERS) {
                                             onSlotChanged(Type.Dress, null)
                                         }
-                                        layoutState = LayoutState.FOUR_LAYERS
+                                        layoutState = OutfitLayoutMode.FOUR_LAYERS
+                                        onLayoutStateChanged(layoutState, showJacket)
                                     }
                                 }
                             )
@@ -609,12 +607,12 @@ fun FullOutfitScreen(
                                     if (selectedDressId != null && (selectedTshirtId != null || selectedPulloverId != null)) {
                                         onSlotChanged(Type.Dress, null)
                                     }
-                                    layoutState = LayoutState.THREE_LAYERS
-                                    onGridModeChanged(false)
+                                    layoutState = OutfitLayoutMode.THREE_LAYERS
+                                    onLayoutStateChanged(layoutState, showJacket)
                                 } else {
                                     // Enter GRID mode
-                                    layoutState = LayoutState.GRID
-                                    onGridModeChanged(true)
+                                    layoutState = OutfitLayoutMode.GRID
+                                    onLayoutStateChanged(layoutState, showJacket)
                                 }
                             }
                         )
@@ -622,7 +620,7 @@ fun FullOutfitScreen(
 
                     // 3. Save + confirm/refresh buttons (right)
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        val isGridMode = layoutState == LayoutState.GRID
+                        val isGridMode = layoutState == OutfitLayoutMode.GRID
                         val buttonsEnabled = !isGridMode || gridOutfitValid
                         IconButton(
                             onClick = {

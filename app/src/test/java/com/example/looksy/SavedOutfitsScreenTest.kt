@@ -3,6 +3,7 @@ package com.example.looksy
 import com.example.looksy.data.model.Clothes
 import com.example.looksy.data.model.Material
 import com.example.looksy.data.model.Outfit
+import com.example.looksy.data.model.OutfitLayoutMode
 import com.example.looksy.data.model.Season
 import com.example.looksy.data.model.Size
 import com.example.looksy.data.model.Type
@@ -242,5 +243,104 @@ class SavedOutfitsScreenTest {
 
         // Then
         assertEquals(42, clickedId)
+    }
+
+    // ─── OutfitLayoutMode tests ───
+
+    @Test
+    fun `outfit default layoutMode should be THREE_LAYERS`() {
+        val outfit = Outfit(id = 1, topsId = 1, pantsId = 2)
+        assertEquals(OutfitLayoutMode.THREE_LAYERS, outfit.layoutMode)
+    }
+
+    @Test
+    fun `outfit default isJacketVisible should be false`() {
+        val outfit = Outfit(id = 1, topsId = 1, pantsId = 2)
+        assertFalse(outfit.isJacketVisible)
+    }
+
+    @Test
+    fun `outfit with TWO_LAYERS layout should store correctly`() {
+        val outfit = Outfit(
+            id = 1,
+            dressId = 3,
+            layoutMode = OutfitLayoutMode.TWO_LAYERS
+        )
+        assertEquals(OutfitLayoutMode.TWO_LAYERS, outfit.layoutMode)
+        assertNotNull(outfit.dressId)
+    }
+
+    @Test
+    fun `outfit with FOUR_LAYERS layout should store correctly`() {
+        val outfit = Outfit(
+            id = 1,
+            topsId = 1,
+            pulloverId = 5,
+            pantsId = 2,
+            layoutMode = OutfitLayoutMode.FOUR_LAYERS
+        )
+        assertEquals(OutfitLayoutMode.FOUR_LAYERS, outfit.layoutMode)
+    }
+
+    @Test
+    fun `outfit with GRID layout should store correctly`() {
+        val outfit = Outfit(
+            id = 1,
+            topsId = 1,
+            pantsId = 2,
+            layoutMode = OutfitLayoutMode.GRID
+        )
+        assertEquals(OutfitLayoutMode.GRID, outfit.layoutMode)
+    }
+
+    @Test
+    fun `outfit with jacket visible should store correctly`() {
+        val outfit = Outfit(
+            id = 1,
+            topsId = 1,
+            pantsId = 2,
+            jacketId = 4,
+            isJacketVisible = true,
+            layoutMode = OutfitLayoutMode.THREE_LAYERS
+        )
+        assertTrue(outfit.isJacketVisible)
+        assertNotNull(outfit.jacketId)
+    }
+
+    @Test
+    fun `grid outfit should resolve all slot IDs including missing`() {
+        // Given – GRID mode outfit with some empty slots
+        val outfit = Outfit(
+            id = 1,
+            topsId = 1,
+            pantsId = 2,
+            jacketId = null,
+            dressId = null,
+            skirtId = null,
+            shoesId = null,
+            layoutMode = OutfitLayoutMode.GRID
+        )
+
+        // When – resolving clothes for each slot
+        val slotIds = listOf(
+            outfit.jacketId, outfit.topsId, outfit.pantsId,
+            outfit.skirtId, outfit.pulloverId, outfit.dressId, outfit.shoesId
+        )
+        val filledSlots = slotIds.filterNotNull()
+        val emptySlots = slotIds.count { it == null }
+
+        // Then – in GRID mode, empty slots should still be shown as placeholders
+        assertEquals(2, filledSlots.size)  // topsId=1, pantsId=2
+        assertEquals(5, emptySlots)
+    }
+
+    @Test
+    fun `outfit layoutMode values should cover all cases`() {
+        val allModes = OutfitLayoutMode.entries
+        assertEquals(4, allModes.size)
+        assertTrue(allModes.contains(OutfitLayoutMode.TWO_LAYERS))
+        assertTrue(allModes.contains(OutfitLayoutMode.THREE_LAYERS))
+        assertTrue(allModes.contains(OutfitLayoutMode.FOUR_LAYERS))
+        assertTrue(allModes.contains(OutfitLayoutMode.GRID))
     }
 }

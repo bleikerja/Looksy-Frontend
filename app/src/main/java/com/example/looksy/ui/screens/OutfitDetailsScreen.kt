@@ -1,19 +1,15 @@
 package com.example.looksy.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -27,11 +23,11 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue  // ✅ WICHTIG: Für by delegate
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue  // ✅ WICHTIG: Für by delegate
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -41,26 +37,19 @@ import com.example.looksy.data.model.Clothes
 import com.example.looksy.data.model.Outfit
 import com.example.looksy.ui.components.ConfirmationDialog
 import com.example.looksy.ui.components.Header
+import com.example.looksy.ui.components.OutfitLayoutPreview
 import kotlinx.coroutines.launch
-import coil.compose.AsyncImage
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 
 /**
  * Screen zur Detailansicht eines gespeicherten Outfits.
- * Zeigt das Outfit ähnlich wie der Home-Screen an.
- * Bietet drei Buttons: Bearbeiten, Löschen und Tragen/Auswählen.
+ * Zeigt das Outfit im selben Layout wie der FullOutfitScreen (Carousel / Grid).
+ * Bietet drei Buttons: Bearbeiten, Löschen und Tragen/Auswählen in einer Zeile am unteren Rand.
  */
 @Composable
 fun OutfitDetailsScreen(
     outfit: Outfit,
-    outfitTop: Clothes? = null,
-    outfitPullover: Clothes? = null,
-    outfitPants: Clothes? = null,
-    outfitDress: Clothes? = null,
-    outfitJacket: Clothes? = null,
-    outfitSkirt: Clothes? = null,
-    outfitShoes: Clothes? = null,
+    allClothes: List<Clothes>,
+    onClothesClick: (Int) -> Unit = {},
     onEdit: () -> Unit = {},
     onDelete: () -> Unit = {},
     onWear: () -> Unit = {},
@@ -82,107 +71,21 @@ fun OutfitDetailsScreen(
                 isFirstHeader = false
             )
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-                .background(Color(249, 246, 242))
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // Zeige alle Kleidungsstücke des Outfits
-            outfitJacket?.let {
-                OutfitPart(
-                    imageResId = it.imagePath,
-                    onClick = { },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp)
-                        .padding(bottom = 12.dp)
-                )
-            }
-
-            outfitTop?.let {
-                OutfitPart(
-                    imageResId = it.imagePath,
-                    onClick = { },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp)
-                        .padding(bottom = 12.dp)
-                )
-            }
-
-            outfitPullover?.let {
-                OutfitPart(
-                    imageResId = it.imagePath,
-                    onClick = { },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp)
-                        .padding(bottom = 12.dp)
-                )
-            }
-
-            outfitDress?.let {
-                OutfitPart(
-                    imageResId = it.imagePath,
-                    onClick = { },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp)
-                        .padding(bottom = 12.dp)
-                )
-            }
-
-            outfitSkirt?.let {
-                OutfitPart(
-                    imageResId = it.imagePath,
-                    onClick = { },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp)
-                        .padding(bottom = 12.dp)
-                )
-            }
-
-            outfitPants?.let {
-                OutfitPart(
-                    imageResId = it.imagePath,
-                    onClick = { },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp)
-                )
-            }
-
-            outfitShoes?.let {
-                OutfitPart(
-                    imageResId = it.imagePath,
-                    onClick = { },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Drei Action Buttons
-            Column(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        bottomBar = {
+            // Three action buttons in a horizontal row, equal width
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                    .background(Color(249, 246, 242))
+                    .padding(horizontal = 12.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 // Button 1: Bearbeiten
                 Button(
                     onClick = onEdit,
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .weight(1f)
                         .height(50.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -194,13 +97,13 @@ fun OutfitDetailsScreen(
                         contentDescription = "Bearbeiten",
                         modifier = Modifier
                             .size(24.dp)
-                            .padding(end = 8.dp),
+                            .padding(end = 4.dp),
                         tint = Color.White
                     )
                     Text(
                         "Bearbeiten",
                         color = Color.White,
-                        fontSize = 16.sp
+                        fontSize = 13.sp
                     )
                 }
 
@@ -208,7 +111,7 @@ fun OutfitDetailsScreen(
                 Button(
                     onClick = { showDeleteConfirmDialog = true },
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .weight(1f)
                         .height(50.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -220,13 +123,13 @@ fun OutfitDetailsScreen(
                         contentDescription = "Löschen",
                         modifier = Modifier
                             .size(24.dp)
-                            .padding(end = 8.dp),
+                            .padding(end = 4.dp),
                         tint = Color.White
                     )
                     Text(
                         "Löschen",
                         color = Color.White,
-                        fontSize = 16.sp
+                        fontSize = 13.sp
                     )
                 }
 
@@ -242,7 +145,7 @@ fun OutfitDetailsScreen(
                         }
                     },
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .weight(1f)
                         .height(50.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -254,18 +157,35 @@ fun OutfitDetailsScreen(
                         contentDescription = "Tragen",
                         modifier = Modifier
                             .size(24.dp)
-                            .padding(end = 8.dp),
+                            .padding(end = 4.dp),
                         tint = Color.White
                     )
                     Text(
-                        "Tragen/Auswählen",
+                        "Tragen",
                         color = Color.White,
-                        fontSize = 16.sp
+                        fontSize = 13.sp
                     )
                 }
             }
-
-            Spacer(modifier = Modifier.height(32.dp))
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+                .background(Color(249, 246, 242))
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Outfit preview using the same layout as FullOutfitScreen
+            OutfitLayoutPreview(
+                outfit = outfit,
+                allClothes = allClothes,
+                onClothesClick = onClothesClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            )
         }
     }
 
@@ -282,28 +202,6 @@ fun OutfitDetailsScreen(
                 onDelete()
                 showDeleteConfirmDialog = false
             }
-        )
-    }
-}
-
-@Composable
-private fun OutfitPart(
-    imageResId: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(Color.White)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        AsyncImage(
-            model = imageResId,
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize()
         )
     }
 }

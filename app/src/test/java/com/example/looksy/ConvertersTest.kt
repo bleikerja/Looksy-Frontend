@@ -2,6 +2,7 @@ package com.example.looksy
 
 import com.example.looksy.data.local.database.Converters
 import com.example.looksy.data.model.Material
+import com.example.looksy.data.model.OutfitLayoutMode
 import com.example.looksy.data.model.Season
 import com.example.looksy.data.model.Size
 import com.example.looksy.data.model.Type
@@ -135,5 +136,40 @@ class ConvertersTest {
             Assert.assertEquals(expectedName, converted)
             Assert.assertEquals(size, converters.toSize(converted))
         }
+    }
+
+    // ─── OutfitLayoutMode converter tests ───
+
+    @Test
+    fun outfitLayoutModeConversion_allValues() {
+        for (mode in OutfitLayoutMode.entries) {
+            val converted = converters.fromOutfitLayoutMode(mode)
+            Assert.assertEquals(mode.name, converted)
+            Assert.assertEquals(mode, converters.toOutfitLayoutMode(converted))
+        }
+    }
+
+    @Test
+    fun toOutfitLayoutMode_defaultsOnInvalid() {
+        Assert.assertEquals(
+            OutfitLayoutMode.THREE_LAYERS,
+            converters.toOutfitLayoutMode("INVALID_VALUE")
+        )
+    }
+
+    @Test
+    fun outfitLayoutModeConversion_twoLayers() {
+        val mode = OutfitLayoutMode.TWO_LAYERS
+        val converted = converters.fromOutfitLayoutMode(mode)
+        Assert.assertEquals("TWO_LAYERS", converted)
+        Assert.assertEquals(mode, converters.toOutfitLayoutMode(converted))
+    }
+
+    @Test
+    fun outfitLayoutModeConversion_grid() {
+        val mode = OutfitLayoutMode.GRID
+        val converted = converters.fromOutfitLayoutMode(mode)
+        Assert.assertEquals("GRID", converted)
+        Assert.assertEquals(mode, converters.toOutfitLayoutMode(converted))
     }
 }

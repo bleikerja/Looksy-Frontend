@@ -241,3 +241,82 @@ Save (bookmark) and Confirm (check) buttons render at 30 % alpha and block click
 
 - `assembleDebug`: **PASS**
 - `test` (JVM unit tests): **PASS**
+
+---
+
+## Phase 5 — Consistent Outfit Preview in OutfitDetails & SavedOutfits
+
+### Overview
+
+Extended the layout-state concept introduced in Phase 4 beyond `FullOutfitScreen`. A shared `OutfitLayoutMode` enum replaced the screen-private `LayoutState`. The layout choice made on the home screen is now **persisted on the `Outfit` entity** and replayed identically in `OutfitDetailsScreen` and in each `OutfitCard` on `SavedOutfitsScreen`. A new shared `OutfitLayoutPreview` composable renders the carousel-equivalent static view without any interaction. The three action buttons in `OutfitDetailsScreen` were moved into an equal-width horizontal row in the `Scaffold` bottom bar.
+
+### Layout (OutfitDetailsScreen)
+
+```
+┌──────────────────────────────────────┐
+│  Header (back arrow + title)         │
+├──────────────────────────────────────┤
+│                                      │
+│   OutfitLayoutPreview                │
+│   (matches FullOutfitScreen layout)  │
+│   • TWO_LAYERS  → Dress + Shoes      │
+│   • THREE_LAYERS→ Top + Bottom+Shoes │
+│   • FOUR_LAYERS → T + P + Bot + Shoe │
+│   • GRID        → 4×2, empty slots   │
+│                                      │
+├──────────────────────────────────────┤
+│  [ Bearbeiten ] [ Löschen ] [ Tragen ]│  ← equal-width bottom bar
+└──────────────────────────────────────┘
+```
+
+### Files Changed
+
+#### Model & Database
+
+| File                                     | Change                                                                                                                |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `data/model/OutfitLayoutMode.kt`         | **New file.** Shared enum: `TWO_LAYERS`, `THREE_LAYERS`, `FOUR_LAYERS`, `GRID` (replaces private `LayoutState`)       |
+| `data/model/Outfit.kt`                   | Added `layoutMode: OutfitLayoutMode = THREE_LAYERS` and `isJacketVisible: Boolean = false` fields                     |
+| `data/local/database/Converters.kt`      | Added `fromOutfitLayoutMode` / `toOutfitLayoutMode` converter pair (`.name` / `valueOf` with `THREE_LAYERS` fallback) |
+| `data/local/database/ClothesDatabase.kt` | Bumped version 7 → 8 (`fallbackToDestructiveMigration()`)                                                             |
+
+#### UI
+
+| File                                   | Change                                                                                                                                                                                                                                                                                                                                                                                 |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ui/components/OutfitLayoutPreview.kt` | **New file.** `OutfitLayoutPreview` composable: resolves clothes by ID, dispatches to `CarouselLayout` (2/3/4 layers, optional jacket column) or `GridLayout` (4×2, gray rounded-rect placeholders)                                                                                                                                                                                    |
+| `ui/screens/FullOutfitScreen.kt`       | Removed private `LayoutState` enum; now imports `OutfitLayoutMode`. `onGridModeChanged: (Boolean) -> Unit` replaced with `onLayoutStateChanged: (OutfitLayoutMode, Boolean) -> Unit`; all state-change sites call `onLayoutStateChanged(layoutState, showJacket)`                                                                                                                      |
+| `ui/screens/OutfitDetailsScreen.kt`    | **Rewritten.** 7 individual `Clothes?` parameters collapsed to `allClothes: List<Clothes>`. Body replaced with `OutfitLayoutPreview`. Three buttons moved to `Scaffold(bottomBar)` as a `Row` with `Modifier.weight(1f)` per button, `RoundedCornerShape(12.dp)`, 50 dp height                                                                                                         |
+| `ui/screens/SavedOutfitsScreen.kt`     | `OutfitCard` now uses `OutfitLayoutPreview` inside the existing `Card` wrapper. Removed the now-unused private `OutfitClothesPreview` composable                                                                                                                                                                                                                                       |
+| `ui/navigation/NavGraph.kt`            | Added `OutfitLayoutMode` import. Added `currentLayoutMode` and `currentJacketVisible` state vars. `onSave` passes `layoutMode = currentLayoutMode, isJacketVisible = currentJacketVisible` to `Outfit`. `onGridModeChanged` replaced with `onLayoutStateChanged`. `OutfitDetails` destination simplified: 7 individual clothes lookups removed, passes `allClothes = allClothesFromDb` |
+
+#### Tests
+
+| File                             | Change                                                                                                                                                                     |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `test/ConvertersTest.kt`         | Added `outfitLayoutModeConversion_allValues`, `toOutfitLayoutMode_defaultsOnInvalid`, `_twoLayers`, `_grid` — cover round-trip and invalid-input fallback                  |
+| `test/SavedOutfitsScreenTest.kt` | Added `OutfitLayoutMode` import. Added 8 tests: default field values, each enum value stored correctly, `isJacketVisible`, grid empty-slot resolution, all-values coverage |
+
+### `OutfitLayoutPreview` Slot Resolution
+
+| Layout mode    | Left column                   | Center / right                             | Empty slot handling                         |
+| -------------- | ----------------------------- | ------------------------------------------ | ------------------------------------------- |
+| `TWO_LAYERS`   | —                             | Dress → Shoes (2 rows)                     | N/A (outfit guarantees dress)               |
+| `THREE_LAYERS` | Jacket (if `isJacketVisible`) | MergedTop → MergedBottom → Shoes (3 rows)  | Missing IDs simply omitted                  |
+| `FOUR_LAYERS`  | Jacket (if `isJacketVisible`) | TShirt → Pullover → MergedBottom → Shoes   | Missing IDs simply omitted                  |
+| `GRID`         | —                             | 4-row × 2-col grid, all 7 categories shown | Gray `RoundedCornerShape(8.dp)` placeholder |
+
+### Key Design Decisions
+
+1. **Shared data-layer enum** — moving `OutfitLayoutMode` to `data/model/` makes it available to Room, ViewModels, repositories, and UI without any circular-dependency risk. The old `LayoutState` inside `FullOutfitScreen.kt` is gone.
+2. **Persisted on the entity** — storing `layoutMode` and `isJacketVisible` on `Outfit` means the exact visual state the user confirmed is replayed on every subsequent view without inference heuristics.
+3. **Default values preserve backwards compatibility** — both new fields have defaults (`THREE_LAYERS` / `false`), so all existing `Outfit(...)` call sites (tests, generator, repository) continue to compile with no changes.
+4. **`OutfitLayoutPreview` is purely static** — it never owns a pager state or handles input beyond an optional `onClick` pass-through. This keeps it lightweight enough to embed inside lazy grid cards.
+5. **Gray placeholder for GRID empty slots** — a `Box` with `Color(0xFFE0E0E0)` background and `RoundedCornerShape(8.dp)` occupies the same dimensions as a filled slot, preserving the grid structure for sparse outfits.
+6. **Bottom bar buttons** — equal `weight(1f)` in a fixed-height (50 dp) `Row` ensures all three actions are always fully visible regardless of screen width, matching Material3 bottom-bar conventions.
+7. **DB destructive migration** — version 7 → 8 continues the project-wide policy of `fallbackToDestructiveMigration()`; no migration SQL needed.
+
+### Build Status
+
+- `assembleDebug`: **PASS**
+- `test` (JVM unit tests): **PASS** (84 tasks)
