@@ -52,6 +52,16 @@ class SavedOutfitsScreenTest {
             clean = true,
             seasonUsage = Season.Winter,
             imagePath = "path/to/jacket.jpg"
+        ),
+        Clothes(
+            id = 5,
+            type = Type.Pullover,
+            size = Size._M,
+            material = Material.Wool,
+            washingNotes = listOf(WashingNotes.Temperature30),
+            clean = true,
+            seasonUsage = Season.Winter,
+            imagePath = "path/to/pullover.jpg"
         )
     )
 
@@ -87,15 +97,35 @@ class SavedOutfitsScreenTest {
         val pants = testClothes.find { it.id == outfit.pantsId }
         val jacket = testClothes.find { it.id == outfit.jacketId }
         val dress = outfit.dressId?.let { id -> testClothes.find { it.id == id } }
+        val pullover = outfit.pulloverId?.let { id -> testClothes.find { it.id == id } }
 
         // Then
         assertNotNull(top)
         assertNotNull(pants)
         assertNotNull(jacket)
         assertNull(dress)
+        assertNull(pullover)
         assertEquals(Type.TShirt, top?.type)
         assertEquals(Type.Pants, pants?.type)
         assertEquals(Type.Jacket, jacket?.type)
+    }
+
+    @Test
+    fun `outfit should correctly reference pullover by id`() {
+        // Given
+        val outfit = Outfit(id = 1, pulloverId = 5, pantsId = 2)
+
+        // When
+        val pullover = outfit.pulloverId?.let { id -> testClothes.find { it.id == id } }
+        val pants = testClothes.find { it.id == outfit.pantsId }
+        val top = outfit.topsId?.let { id -> testClothes.find { it.id == id } }
+
+        // Then
+        assertNotNull(pullover)
+        assertNotNull(pants)
+        assertNull(top)
+        assertEquals(Type.Pullover, pullover?.type)
+        assertEquals(Type.Pants, pants?.type)
     }
 
     @Test
@@ -129,15 +159,43 @@ class SavedOutfitsScreenTest {
         val jacket = outfit.jacketId?.let { id -> testClothes.find { it.id == id } }
         val dress = outfit.dressId?.let { id -> testClothes.find { it.id == id } }
         val top = outfit.topsId?.let { id -> testClothes.find { it.id == id } }
+        val pullover = outfit.pulloverId?.let { id -> testClothes.find { it.id == id } }
         val skirt = outfit.skirtId?.let { id -> testClothes.find { it.id == id } }
         val pants = outfit.pantsId?.let { id -> testClothes.find { it.id == id } }
 
-        val clothesList = listOfNotNull(jacket, dress, top, skirt, pants)
+        val clothesList = listOfNotNull(jacket, dress, top, pullover, skirt, pants)
 
         // Then - Die Reihenfolge sollte Jacket, Top, Pants sein
         assertEquals(3, clothesList.size)
         assertEquals(Type.Jacket, clothesList[0].type)
         assertEquals(Type.TShirt, clothesList[1].type)
+        assertEquals(Type.Pants, clothesList[2].type)
+    }
+
+    @Test
+    fun `outfit clothes list should include pullover in correct order`() {
+        // Given - Outfit mit Pullover statt TShirt
+        val outfit = Outfit(
+            id = 1,
+            jacketId = 4,
+            pulloverId = 5,
+            pantsId = 2
+        )
+
+        // When
+        val jacket = outfit.jacketId?.let { id -> testClothes.find { it.id == id } }
+        val dress = outfit.dressId?.let { id -> testClothes.find { it.id == id } }
+        val top = outfit.topsId?.let { id -> testClothes.find { it.id == id } }
+        val pullover = outfit.pulloverId?.let { id -> testClothes.find { it.id == id } }
+        val skirt = outfit.skirtId?.let { id -> testClothes.find { it.id == id } }
+        val pants = outfit.pantsId?.let { id -> testClothes.find { it.id == id } }
+
+        val clothesList = listOfNotNull(jacket, dress, top, pullover, skirt, pants)
+
+        // Then - Die Reihenfolge sollte Jacket, Pullover, Pants sein
+        assertEquals(3, clothesList.size)
+        assertEquals(Type.Jacket, clothesList[0].type)
+        assertEquals(Type.Pullover, clothesList[1].type)
         assertEquals(Type.Pants, clothesList[2].type)
     }
 

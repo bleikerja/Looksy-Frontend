@@ -40,7 +40,6 @@ import com.example.looksy.ui.viewmodel.WeatherViewModel
 import com.example.looksy.ui.screens.AddNewClothesScreen
 import com.example.looksy.ui.screens.EditPictureScreen
 import com.example.looksy.ui.screens.CameraScreen
-import com.example.looksy.ui.screens.Category
 import com.example.looksy.ui.screens.CategoryItems
 import com.example.looksy.ui.screens.OutfitDetailsScreen
 import com.example.looksy.ui.screens.DiscardScreen
@@ -301,8 +300,8 @@ fun NavGraph(
                 val message = stringResource(R.string.error_cannot_deselect_last_item)
 
                 clothesData?.let { cloth ->
-                    val isInOutfit = cloth.id == topId || cloth.id == pantsId ||
-                        cloth.id == jacketId || cloth.id == skirtId || cloth.id == dressId
+                    val isInOutfit = cloth.id == topId || cloth.id == pulloverId || cloth.id == pantsId ||
+                        cloth.id == jacketId || cloth.id == skirtId || cloth.id == dressId || cloth.id == shoesId
                     Scaffold(
                         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
                     ) { innerPadding ->
@@ -354,6 +353,7 @@ fun NavGraph(
                                             skirtId = null
                                             pantsId = null
                                             topId = null
+                                            pulloverId = null
                                         }
                                         Type.Shoes -> shoesId = it.id
                                     }

@@ -386,4 +386,41 @@ class OutfitGeneratorTest {
         assertTrue("topTypes should contain Pullover", Type.Pullover in Type.topTypes)
         assertEquals("topTypes should have exactly 2 entries", 2, Type.topTypes.size)
     }
+
+    @Test
+    fun savedOutfitWithDirtyPulloverIsNotSuggested() {
+        val cleanPants = Clothes(
+            id = 201,
+            type = Type.Pants,
+            clean = true,
+            size = Size._M,
+            seasonUsage = Season.Summer,
+            material = Material.Cotton,
+            washingNotes = listOf(WashingNotes.Temperature30)
+        )
+        val dirtyPullover = Clothes(
+            id = 202,
+            type = Type.Pullover,
+            clean = false,
+            size = Size._M,
+            seasonUsage = Season.Summer,
+            material = Material.Wool,
+            washingNotes = listOf(WashingNotes.Temperature30)
+        )
+
+        val outfitWithDirtyPullover =
+            Outfit(id = 20, pulloverId = dirtyPullover.id, pantsId = cleanPants.id, preference = 100)
+
+        val currentClothes = clothes + cleanPants
+        val currentOutfits = outfits + outfitWithDirtyPullover
+
+        repeat(1000) {
+            val result = generateRandomOutfit(currentClothes, currentOutfits)
+            val isTheDirtyOutfit = result.pullover?.id == dirtyPullover.id && result.pants?.id == cleanPants.id
+            Assert.assertFalse(
+                "Ein Outfit mit schmutzigem Pullover darf nicht aus den gespeicherten Outfits vorgeschlagen werden",
+                isTheDirtyOutfit
+            )
+        }
+    }
 }

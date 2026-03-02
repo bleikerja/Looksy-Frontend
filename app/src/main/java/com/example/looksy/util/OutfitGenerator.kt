@@ -27,6 +27,7 @@ fun generateSingleRandomOutfit(allClothes: List<Clothes>, allOutfits: List<Outfi
     if (allOutfits.isNotEmpty() && Random.nextDouble() < 0.3) {
         val cleanOutfits = allOutfits.filter { outfit ->
             (outfit.topsId == null || outfit.topsId in cleanClothesIds) &&
+                    (outfit.pulloverId == null || outfit.pulloverId in cleanClothesIds) &&
                     (outfit.pantsId == null || outfit.pantsId in cleanClothesIds) &&
                     (outfit.skirtId == null || outfit.skirtId in cleanClothesIds) &&
                     (outfit.jacketId == null || outfit.jacketId in cleanClothesIds) &&

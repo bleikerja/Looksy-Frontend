@@ -32,7 +32,8 @@ class OutfitRepositoryTest {
             topsId = 2,
             skirtId = null,
             pantsId = 3,
-            jacketId = null
+            jacketId = null,
+            pulloverId = null
         )
 
         // When
@@ -51,7 +52,8 @@ class OutfitRepositoryTest {
             topsId = null,
             skirtId = null,
             pantsId = null,
-            jacketId = null
+            jacketId = null,
+            pulloverId = null
         )
 
         // When
@@ -70,7 +72,8 @@ class OutfitRepositoryTest {
             topsId = 1,
             skirtId = null,
             pantsId = 2,
-            jacketId = null
+            jacketId = null,
+            pulloverId = null
         )
 
         // When
@@ -181,7 +184,15 @@ class OutfitRepositoryTest {
         } returns existingOutfit
 
         // When: Die Funktion wird aufgerufen
-        outfitRepository.incrementOutfitPreference(1, null, null, 2, null)
+        outfitRepository.incrementOutfitPreference(
+            selectedTopId = 1,
+            selectedDressId = null,
+            selectedSkirtId = null,
+            selectedPantsId = 2,
+            selectedJacketId = null,
+            selectedPulloverId = null,
+            selectedShoesId = null
+        )
 
         // Then: Verifiziere, dass update mit Score 6 gerufen wurde
         coVerify {
@@ -190,25 +201,84 @@ class OutfitRepositoryTest {
     }
 
     @Test
-    fun `incrementOutfitPreference() should insert new outfit when no match found`() = runTest {// Given: Kein passendes Outfit in der Datenbank
+    fun `incrementOutfitPreference() should handle pullover outfit`() = runTest {
+        // Given: Ein existierendes Outfit mit Pullover
+        val existingOutfit = Outfit(
+            id = 101,
+            pulloverId = 5,
+            pantsId = 2,
+            preference = 3
+        )
+
+        coEvery {
+            outfitDao.findMatchingOutfit(null, null, null, 2, null, 5, null)
+        } returns existingOutfit
+
+        // When
+        outfitRepository.incrementOutfitPreference(
+            selectedTopId = null,
+            selectedDressId = null,
+            selectedSkirtId = null,
+            selectedPantsId = 2,
+            selectedJacketId = null,
+            selectedPulloverId = 5,
+            selectedShoesId = null
+        )
+
+        // Then
+        coVerify {
+            outfitDao.update(match { it.id == 101 && it.preference == 4 && it.pulloverId == 5 })
+        }
+    }
+
+    @Test
+    fun `incrementOutfitPreference() should insert new outfit when no match found`() = runTest {
+        // Given: Kein passendes Outfit in der Datenbank
         coEvery {
             outfitDao.findMatchingOutfit(any(), any(), any(), any(), any(), any(), any())
         } returns null
 
         // When: Die Funktion wird aufgerufen
-        // Nutze hier benannte Parameter, um sicherzugehen, dass 20 wirklich die pantsId ist
         outfitRepository.incrementOutfitPreference(
             selectedTopId = 10,
             selectedDressId = null,
             selectedSkirtId = null,
             selectedPantsId = 20,
-            selectedJacketId = null
+            selectedJacketId = null,
+            selectedPulloverId = null,
+            selectedShoesId = null
         )
 
         // Then: Verifiziere, dass ein neues Outfit mit Score 1 eingefügt wurde
         coVerify {
             outfitDao.insert(match {
                 it.topsId == 10 && it.pantsId == 20 && it.preference == 1
+            })
+        }
+    }
+
+    @Test
+    fun `incrementOutfitPreference() should insert new pullover outfit when no match`() = runTest {
+        // Given: Kein passendes Outfit
+        coEvery {
+            outfitDao.findMatchingOutfit(any(), any(), any(), any(), any(), any(), any())
+        } returns null
+
+        // When
+        outfitRepository.incrementOutfitPreference(
+            selectedTopId = null,
+            selectedDressId = null,
+            selectedSkirtId = null,
+            selectedPantsId = 20,
+            selectedJacketId = null,
+            selectedPulloverId = 7,
+            selectedShoesId = null
+        )
+
+        // Then: Neues Outfit mit pulloverId
+        coVerify {
+            outfitDao.insert(match {
+                it.pulloverId == 7 && it.pantsId == 20 && it.topsId == null && it.preference == 1
             })
         }
     }
