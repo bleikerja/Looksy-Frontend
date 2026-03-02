@@ -25,7 +25,7 @@ class ClothesRepositoryTest {
         id = 1,
         size = Size._M,
         seasonUsage = Season.Summer,
-        type = Type.Tops,
+        type = Type.TShirt,
         material = Material.Cotton,
         clean = true,
         washingNotes = listOf(WashingNotes.Temperature30),

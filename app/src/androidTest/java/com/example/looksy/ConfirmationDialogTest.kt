@@ -21,10 +21,10 @@ class ConfirmationDialogTest {
             ConfirmationDialog (
                 title = "Löschen bestätigen",
                 text = "Möchtest du dieses Kleidungsstück wirklich endgültig löschen?",
-                confirmText = "Ja",
                 dismissText = "Nein",
-                onConfirm = { confirmed = true },
-                onDismiss = { dismissed = true }
+                onDismiss = { dismissed = true },
+                confirmText = "Ja",
+                onConfirm = { confirmed = true }
             )
         }
 
