@@ -500,11 +500,7 @@ fun FullOutfitScreen(
                     // 1. Shuffle button (always visible)
                     IconButton(
                         onClick = {
-                            if (layoutState == OutfitLayoutMode.GRID) {
-                                // Exit GRID mode, then generate random
-                                layoutState = OutfitLayoutMode.THREE_LAYERS
-                                onLayoutStateChanged(layoutState, showJacket)
-                            }
+                    
                             onGenerateRandom()
                         },
                         modifier = Modifier.size(40.dp)

@@ -317,17 +317,28 @@ fun WeatherScreen(
                     // Permission not asked yet — use the same card as location-disabled,
                     // wiring the primary button to request permission instead.
                     permissionState == PermissionState.NOT_ASKED -> {
-                        LocationAccessCard(
-                            onEnableLocation = {
-                                locationPermissionLauncher.launch(
-                                    arrayOf(
-                                        Manifest.permission.ACCESS_COARSE_LOCATION,
-                                        Manifest.permission.ACCESS_FINE_LOCATION
-                                    )
-                                )
+                        CityInputCard(
+                            cityName = cityName,
+                            onCityNameChange = { cityName = it },
+                            isLoading = geocodingState is GeocodingUiState.Loading,
+                            onSubmit = {
+                                if (cityName.isNotBlank()) {
+                                    geocodingViewModel.getCityCoordinates(cityName)
+                                }
                             },
-                            onEnterCity = { showCityInput = true },
-                            enableButtonText = "Standort erlauben"
+                            // Show the permission button whenever the app does not
+                            // yet have permission (covers both NOT_ASKED and DENIED).
+                            onRequestPermission = if (permissionState != PermissionState.GRANTED_WHILE_IN_USE &&
+                                permissionState != PermissionState.GRANTED_ONCE) {
+                                {
+                                    locationPermissionLauncher.launch(
+                                        arrayOf(
+                                            Manifest.permission.ACCESS_COARSE_LOCATION,
+                                            Manifest.permission.ACCESS_FINE_LOCATION
+                                        )
+                                    )
+                                }
+                            } else null
                         )
                     }
 

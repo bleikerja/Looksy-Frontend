@@ -4,6 +4,7 @@ import com.example.looksy.data.model.Clothes
 import com.example.looksy.data.model.ClothesColor
 import com.example.looksy.data.model.Material
 import com.example.looksy.data.model.Outfit
+import com.example.looksy.data.model.OutfitLayoutMode
 import com.example.looksy.data.model.Season
 import com.example.looksy.data.model.Size
 import com.example.looksy.data.model.Type
@@ -421,6 +422,77 @@ class OutfitGeneratorTest {
                 "Ein Outfit mit schmutzigem Pullover darf nicht aus den gespeicherten Outfits vorgeschlagen werden",
                 isTheDirtyOutfit
             )
+        }
+    }
+
+    // ──────────── Layout-aware generator tests ────────────
+
+    @Test
+    fun `FOUR_LAYERS generates both TShirt and Pullover independently`() {
+        val tshirt   = createClothes(id = 10, type = Type.TShirt)
+        val pullover = createClothes(id = 11, type = Type.Pullover)
+        val pants    = createClothes(id = 12, type = Type.Pants)
+        val wardrobe = listOf(tshirt, pullover, pants)
+
+        var bothPresent = 0
+        repeat(200) {
+            val result = generateRandomOutfit(wardrobe, emptyList(), OutfitLayoutMode.FOUR_LAYERS)
+            if (result.top != null && result.pullover != null) bothPresent++
+        }
+        assertTrue(
+            "FOUR_LAYERS should generate both TShirt and Pullover in most runs (got $bothPresent/200)",
+            bothPresent >= 160
+        )
+    }
+
+    @Test
+    fun `TWO_LAYERS always generates a dress and never top or bottom`() {
+        val dress  = createClothes(id = 20, type = Type.Dress)
+        val tshirt = createClothes(id = 21, type = Type.TShirt)
+        val pants  = createClothes(id = 22, type = Type.Pants)
+        val wardrobe = listOf(dress, tshirt, pants)
+
+        repeat(200) {
+            val result = generateRandomOutfit(wardrobe, emptyList(), OutfitLayoutMode.TWO_LAYERS)
+            assertNotNull("TWO_LAYERS must always produce a dress", result.dress)
+            assertEquals("TWO_LAYERS top must be null",     null, result.top)
+            assertEquals("TWO_LAYERS pullover must be null", null, result.pullover)
+            assertEquals("TWO_LAYERS pants must be null",   null, result.pants)
+            assertEquals("TWO_LAYERS skirt must be null",   null, result.skirt)
+        }
+    }
+
+    @Test
+    fun `TWO_LAYERS never uses a saved outfit from a different layout mode`() {
+        val dress = createClothes(id = 30, type = Type.Dress)
+        val pants = createClothes(id = 31, type = Type.Pants)
+        val top   = createClothes(id = 32, type = Type.TShirt)
+        // Saved outfit is THREE_LAYERS (top + pants)
+        val threeLayers = Outfit(
+            id = 99, topsId = top.id, pantsId = pants.id, preference = 100,
+            layoutMode = OutfitLayoutMode.THREE_LAYERS
+        )
+        val wardrobe = listOf(dress, pants, top)
+
+        repeat(500) {
+            val result = generateRandomOutfit(wardrobe, listOf(threeLayers), OutfitLayoutMode.TWO_LAYERS)
+            assertEquals(
+                "TWO_LAYERS must not return a saved THREE_LAYERS outfit",
+                null, result.top
+            )
+        }
+    }
+
+    @Test
+    fun `THREE_LAYERS never generates a dress even when one exists`() {
+        val dress    = createClothes(id = 40, type = Type.Dress)
+        val tshirt   = createClothes(id = 41, type = Type.TShirt)
+        val pants    = createClothes(id = 42, type = Type.Pants)
+        val wardrobe = listOf(dress, tshirt, pants)
+
+        repeat(200) {
+            val result = generateRandomOutfit(wardrobe, emptyList(), OutfitLayoutMode.THREE_LAYERS)
+            assertEquals("THREE_LAYERS dress must always be null", null, result.dress)
         }
     }
 }

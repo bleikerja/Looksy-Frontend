@@ -102,7 +102,7 @@ fun NavGraph(
         }
 
         if (allClothesFromDb.isNotEmpty() && topId == null && pulloverId == null && dressId == null) {
-            val outfit = generateRandomOutfit(allClothesFromDb, allOutfitsFromDb)
+            val outfit = generateRandomOutfit(allClothesFromDb, allOutfitsFromDb, currentLayoutMode)
             topId = outfit.top?.id
             pulloverId = outfit.pullover?.id
             pantsId = outfit.pants?.id
@@ -227,7 +227,7 @@ fun NavGraph(
                 onWashingMachine = { navController.navigate(Routes.WashingMachine.route) },
                 onGenerateRandom = {
                     clothesViewModel.updateAll(allClothesFromDb.map { it.copy(selected = false, wornSince = null, daysWorn = calculateDaysWorn(it)) })
-                    val outfit = generateRandomOutfit(allClothesFromDb, allOutfitsFromDb)
+                    val outfit = generateRandomOutfit(allClothesFromDb, allOutfitsFromDb, currentLayoutMode)
                     topId = outfit.top?.id
                     pulloverId = outfit.pullover?.id
                     pantsId = outfit.pants?.id
