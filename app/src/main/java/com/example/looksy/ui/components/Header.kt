@@ -27,7 +27,9 @@ fun Header(
     rightIcon: ImageVector?,
     rightIconSize: Float = 1F,
     isFirstHeader: Boolean = false,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    leftIcon: @Composable (modifier: Modifier) -> Unit = {},
+    leftIconEmpty: Boolean = true,
 ) {
     Box(
         modifier = modifier
@@ -35,15 +37,21 @@ fun Header(
             .padding(8.dp),
         contentAlignment = Alignment.Center
     ) {
-        if (!isFirstHeader) {
-            IconButton(
-                onClick = onNavigateBack,
-                modifier = Modifier.align(Alignment.CenterStart)
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Zurück",
-                    modifier = Modifier.fillMaxSize()
+        if (!isFirstHeader || leftIconEmpty) {
+            if (!isFirstHeader) {
+                IconButton(
+                    onClick = onNavigateBack,
+                    modifier = Modifier.align(Alignment.CenterStart)
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Zurück",
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            }
+            else {
+                leftIcon(modifier.align(Alignment.CenterStart)
                 )
             }
         }

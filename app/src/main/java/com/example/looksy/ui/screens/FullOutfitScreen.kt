@@ -204,7 +204,9 @@ fun FullOutfitScreen(
             },
             snackbarHost = { SnackbarHost(snackbarHostState) }
         ) { padding ->
-            Box(modifier = Modifier.padding(padding).fillMaxSize()) {
+            Box(modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -239,7 +241,9 @@ fun FullOutfitScreen(
                                 onItemClick = onClick,
                                 categoryName = "Jacke",
                                 allowNone = true,
-                                modifier = Modifier.weight(1f).fillMaxWidth()
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxWidth()
                             )
                             HorizontalClothesCarousel(
                                 items = tshirtItems,
@@ -248,7 +252,9 @@ fun FullOutfitScreen(
                                 onItemClick = onClick,
                                 categoryName = "T-Shirt/Longsleeve",
                                 allowNone = true,
-                                modifier = Modifier.weight(1f).fillMaxWidth()
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxWidth()
                             )
                             HorizontalClothesCarousel(
                                 items = pantsItems,
@@ -257,7 +263,9 @@ fun FullOutfitScreen(
                                 onItemClick = onClick,
                                 categoryName = "Hose",
                                 allowNone = true,
-                                modifier = Modifier.weight(1f).fillMaxWidth()
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxWidth()
                             )
                             HorizontalClothesCarousel(
                                 items = skirtItems,
@@ -266,7 +274,9 @@ fun FullOutfitScreen(
                                 onItemClick = onClick,
                                 categoryName = "Rock",
                                 allowNone = true,
-                                modifier = Modifier.weight(1f).fillMaxWidth()
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxWidth()
                             )
                         }
                         // RIGHT column: Pullover, Dress (2-row span), Shoes
@@ -283,7 +293,9 @@ fun FullOutfitScreen(
                                 onItemClick = onClick,
                                 categoryName = "Pullover/Sweatshirt",
                                 allowNone = true,
-                                modifier = Modifier.weight(1f).fillMaxWidth()
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxWidth()
                             )
                             HorizontalClothesCarousel(
                                 items = dressItems,
@@ -292,7 +304,9 @@ fun FullOutfitScreen(
                                 onItemClick = onClick,
                                 categoryName = "Kleid",
                                 allowNone = true,
-                                modifier = Modifier.weight(2f).fillMaxWidth()
+                                modifier = Modifier
+                                    .weight(2f)
+                                    .fillMaxWidth()
                             )
                             HorizontalClothesCarousel(
                                 items = shoesItems,
@@ -301,7 +315,9 @@ fun FullOutfitScreen(
                                 onItemClick = onClick,
                                 categoryName = "Schuhe",
                                 allowNone = true,
-                                modifier = Modifier.weight(1f).fillMaxWidth()
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxWidth()
                             )
                         }
                     }
@@ -346,7 +362,9 @@ fun FullOutfitScreen(
                                     onItemSelected = { id -> onSlotChanged(Type.Dress, id) },
                                     onItemClick = onClick,
                                     categoryName = "Kleid",
-                                    modifier = Modifier.weight(1f).fillMaxWidth()
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxWidth()
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 HorizontalClothesCarousel(
@@ -355,7 +373,9 @@ fun FullOutfitScreen(
                                     onItemSelected = { id -> onSlotChanged(Type.Shoes, id) },
                                     onItemClick = onClick,
                                     categoryName = "Schuhe",
-                                    modifier = Modifier.weight(1f).fillMaxWidth()
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxWidth()
                                 )
                             }
 
@@ -383,7 +403,9 @@ fun FullOutfitScreen(
                                     },
                                     onItemClick = onClick,
                                     categoryName = "Oberteil",
-                                    modifier = Modifier.weight(1f).fillMaxWidth()
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxWidth()
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
 
@@ -409,7 +431,9 @@ fun FullOutfitScreen(
                                     },
                                     onItemClick = onClick,
                                     categoryName = "Unterteil",
-                                    modifier = Modifier.weight(1f).fillMaxWidth()
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxWidth()
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
 
@@ -419,7 +443,9 @@ fun FullOutfitScreen(
                                     onItemSelected = { id -> onSlotChanged(Type.Shoes, id) },
                                     onItemClick = onClick,
                                     categoryName = "Schuhe",
-                                    modifier = Modifier.weight(1f).fillMaxWidth()
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxWidth()
                                 )
                             }
 
@@ -431,7 +457,9 @@ fun FullOutfitScreen(
                                     onItemSelected = { id -> onSlotChanged(Type.TShirt, id) },
                                     onItemClick = onClick,
                                     categoryName = "T-Shirt/Longsleeve",
-                                    modifier = Modifier.weight(1f).fillMaxWidth()
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxWidth()
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
 
@@ -441,7 +469,9 @@ fun FullOutfitScreen(
                                     onItemSelected = { id -> onSlotChanged(Type.Pullover, id) },
                                     onItemClick = onClick,
                                     categoryName = "Pullover/Sweatshirt",
-                                    modifier = Modifier.weight(1f).fillMaxWidth()
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxWidth()
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
 
@@ -467,7 +497,9 @@ fun FullOutfitScreen(
                                     },
                                     onItemClick = onClick,
                                     categoryName = "Unterteil",
-                                    modifier = Modifier.weight(1f).fillMaxWidth()
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxWidth()
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
 
@@ -477,7 +509,9 @@ fun FullOutfitScreen(
                                     onItemSelected = { id -> onSlotChanged(Type.Shoes, id) },
                                     onItemClick = onClick,
                                     categoryName = "Schuhe",
-                                    modifier = Modifier.weight(1f).fillMaxWidth()
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxWidth()
                                 )
                             }
 
@@ -747,7 +781,9 @@ fun FullOutfitScreen(
                 )
             }
         ) { padding ->
-        Box(modifier = Modifier.padding(padding).fillMaxSize(), contentAlignment = Alignment.Center) {
+        Box(modifier = Modifier
+            .padding(padding)
+            .fillMaxSize(), contentAlignment = Alignment.Center) {
             WeatherIconRow(
                 weatherState = weatherState,
                 permissionState = permissionState,
@@ -1458,15 +1494,19 @@ private fun FullOutfitTopBar(
                 headerText = "Heutiges Outfit",
                 rightIconContentDescription = "Zur Waschmaschine",
                 rightIcon = Icons.Default.LocalLaundryService,
-                isFirstHeader = true
+                isFirstHeader = true,
+                leftIcon = {
+                    WeatherIconRow(
+                        weatherState = weatherState,
+                        permissionState = permissionState,
+                        isLocationEnabled = isLocationEnabled,
+                        onClick = onWeatherClick,
+                        modifier = Modifier.align(Alignment.CenterStart)
+                    )
+                },
+                leftIconEmpty = false
             )
-            WeatherIconRow(
-                weatherState = weatherState,
-                permissionState = permissionState,
-                isLocationEnabled = isLocationEnabled,
-                onClick = onWeatherClick,
-                modifier = Modifier.align(Alignment.CenterStart)
-            )
+
         }
     }
 }
