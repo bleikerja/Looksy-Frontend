@@ -85,7 +85,7 @@ fun OutfitDetailsScreen(
                 Button(
                     onClick = onEdit,
                     modifier = Modifier
-                        .weight(1f)
+                        .weight(1.1f)
                         .height(50.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(

@@ -770,29 +770,27 @@ fun FullOutfitScreen(
     } }else {
         Scaffold(
             topBar = {
-                Header(
-                    onNavigateBack = {},
-                    onNavigateToRightIcon = {},
-                    clothesData = null,
-                    headerText = if(editSavedOutfit) "Outfit bearbeiten" else "Heutiges Outfit",
-                    rightIconContentDescription = null,
-                    rightIcon = null,
-                    isFirstHeader = true
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    WeatherIconRow(
+                        weatherState = weatherState,
+                        permissionState = permissionState,
+                        isLocationEnabled = isLocationEnabled,
+                        onClick = onWeatherClick,
+                    )
+                    Header(
+                        onNavigateBack = {},
+                        onNavigateToRightIcon = {},
+                        clothesData = null,
+                        headerText = if(editSavedOutfit) "Outfit bearbeiten" else "Heutiges Outfit",
+                        isFirstHeader = true,
+                        headerTextStart = true
+                    )
+                }
             }
         ) { padding ->
         Box(modifier = Modifier
             .padding(padding)
             .fillMaxSize(), contentAlignment = Alignment.Center) {
-            WeatherIconRow(
-                weatherState = weatherState,
-                permissionState = permissionState,
-                isLocationEnabled = isLocationEnabled,
-                onClick = onWeatherClick,
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(start = 16.dp, top = 16.dp)
-            )
             IconButton(
                 onClick = onGenerateRandom,
                 modifier = Modifier
@@ -1479,33 +1477,30 @@ private fun FullOutfitTopBar(
         if(editSavedOutfit) {
             Header(
                 onNavigateBack = {},
+                onNavigateToRightIcon = {},
                 clothesData = null,
                 headerText = "Outfit bearbeiten",
-                rightIcon = null,
                 isFirstHeader = true,
-                onNavigateToRightIcon = {},
-                rightIconContentDescription = null,
             )
         }else {
-            Header(
-                onNavigateBack = {},
-                onNavigateToRightIcon = { onWashingMachine() },
-                clothesData = null,
-                headerText = "Heutiges Outfit",
-                rightIconContentDescription = "Zur Waschmaschine",
-                rightIcon = Icons.Default.LocalLaundryService,
-                isFirstHeader = true,
-                leftIcon = {
-                    WeatherIconRow(
-                        weatherState = weatherState,
-                        permissionState = permissionState,
-                        isLocationEnabled = isLocationEnabled,
-                        onClick = onWeatherClick,
-                        modifier = Modifier.align(Alignment.CenterStart)
-                    )
-                },
-                leftIconEmpty = false
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                WeatherIconRow(
+                    weatherState = weatherState,
+                    permissionState = permissionState,
+                    isLocationEnabled = isLocationEnabled,
+                    onClick = onWeatherClick,
+                )
+                Header(
+                    onNavigateBack = {},
+                    onNavigateToRightIcon = { onWashingMachine() },
+                    clothesData = null,
+                    headerText = "Heutiges Outfit",
+                    rightIconContentDescription = "Zur Waschmaschine",
+                    rightIcon = Icons.Default.LocalLaundryService,
+                    isFirstHeader = true,
+                    headerTextStart = true
+                )
+            }
 
         }
     }
