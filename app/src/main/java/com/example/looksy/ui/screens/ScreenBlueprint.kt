@@ -1,5 +1,7 @@
 package com.example.looksy.ui.screens
 
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -131,7 +133,12 @@ fun ScreenBlueprint(navController: NavHostController) {
     ) { innerPadding ->
         NavGraph(
             navController = navController,
-            modifier = Modifier.padding(innerPadding),
+            modifier = Modifier.padding(
+                start = innerPadding.calculateStartPadding(androidx.compose.ui.unit.LayoutDirection.Ltr),
+                top = innerPadding.calculateTopPadding(),
+                end = innerPadding.calculateEndPadding(androidx.compose.ui.unit.LayoutDirection.Ltr),
+                bottom = innerPadding.calculateBottomPadding() - 8.dp  // Reduce bottom by 8.dp
+            ),
             clothesViewModel=viewModelClothes,
             outfitViewModel = viewModelOutfit,
             weatherViewModel = viewModelWeather
