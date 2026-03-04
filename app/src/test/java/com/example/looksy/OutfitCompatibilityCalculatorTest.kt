@@ -19,7 +19,7 @@ class OutfitCompatibilityCalculatorTest {
         id: Int = 0,
         size: Size = Size._M,
         season: Season = Season.Summer,
-        type: Type = Type.Tops,
+        type: Type = Type.TShirt,
         material: Material = Material.Cotton,
         clean: Boolean = true,
         color: ClothesColor? = null
@@ -96,7 +96,7 @@ class OutfitCompatibilityCalculatorTest {
         // Given - Perfect combination: same season, well-matched materials, logical combination
         val top = createClothes(
             id = 1,
-            type = Type.Tops,
+            type = Type.TShirt,
             season = Season.Summer,
             material = Material.Cotton,
             size = Size._M
@@ -148,7 +148,7 @@ class OutfitCompatibilityCalculatorTest {
         // Given - Different season combination
         val top = createClothes(
             id = 1,
-            type = Type.Tops,
+            type = Type.TShirt,
             season = Season.Summer,
             material = Material.Cotton
         )
@@ -172,7 +172,7 @@ class OutfitCompatibilityCalculatorTest {
         // Given - Dirty clothes
         val top = createClothes(
             id = 1,
-            type = Type.Tops,
+            type = Type.TShirt,
             season = Season.Summer,
             material = Material.Cotton,
             clean = false
@@ -197,7 +197,7 @@ class OutfitCompatibilityCalculatorTest {
         // Given - Well-matched material combination (Cotton + Jeans)
         val top = createClothes(
             id = 1,
-            type = Type.Tops,
+            type = Type.TShirt,
             material = Material.Cotton,
             season = Season.Summer
         )
@@ -221,7 +221,7 @@ class OutfitCompatibilityCalculatorTest {
         // Given - Incompatible material combination (Jeans + Silk)
         val top = createClothes(
             id = 1,
-            type = Type.Tops,
+            type = Type.TShirt,
             material = Material.jeans,
             season = Season.Summer
         )
@@ -245,7 +245,7 @@ class OutfitCompatibilityCalculatorTest {
         // Given - Similar sizes
         val top = createClothes(
             id = 1,
-            type = Type.Tops,
+            type = Type.TShirt,
             size = Size._M,
             season = Season.Summer
         )
@@ -269,7 +269,7 @@ class OutfitCompatibilityCalculatorTest {
         // Given - Very different sizes
         val top = createClothes(
             id = 1,
-            type = Type.Tops,
+            type = Type.TShirt,
             size = Size._XS,
             season = Season.Summer
         )
@@ -293,7 +293,7 @@ class OutfitCompatibilityCalculatorTest {
         // Given - Including inBetween season
         val top = createClothes(
             id = 1,
-            type = Type.Tops,
+            type = Type.TShirt,
             season = Season.Summer,
             material = Material.Cotton
         )
@@ -317,7 +317,7 @@ class OutfitCompatibilityCalculatorTest {
         // Given - Complete outfit: top + bottom + jacket
         val top = createClothes(
             id = 1,
-            type = Type.Tops,
+            type = Type.TShirt,
             season = Season.Summer,
             material = Material.Cotton,
             size = Size._M
@@ -350,7 +350,7 @@ class OutfitCompatibilityCalculatorTest {
         // Given - Top only
         val top = createClothes(
             id = 1,
-            type = Type.Tops,
+            type = Type.TShirt,
             season = Season.Summer,
             material = Material.Cotton
         )
@@ -365,7 +365,7 @@ class OutfitCompatibilityCalculatorTest {
 
     @Test
     fun `three different ACCENT colors yields score 0`() {
-        val top = createClothes(id = 1, type = Type.Tops, color = ClothesColor.Red)
+        val top = createClothes(id = 1, type = Type.TShirt, color = ClothesColor.Red)
         val pants = createClothes(id = 2, type = Type.Pants, color = ClothesColor.Blue)
         val jacket = createClothes(id = 3, type = Type.Jacket, color = ClothesColor.Yellow)
         val outfit = OutfitResult(top, pants, null, jacket, null)
@@ -376,7 +376,7 @@ class OutfitCompatibilityCalculatorTest {
 
     @Test
     fun `two ACCENT and one NEUTRAL yields score greater than 0`() {
-        val top = createClothes(id = 1, type = Type.Tops, color = ClothesColor.Red)
+        val top = createClothes(id = 1, type = Type.TShirt, color = ClothesColor.Red)
         val pants = createClothes(id = 2, type = Type.Pants, color = ClothesColor.Blue)
         val jacket = createClothes(id = 3, type = Type.Jacket, color = ClothesColor.Black)
         val outfit = OutfitResult(top, pants, null, jacket, null)
@@ -391,7 +391,7 @@ class OutfitCompatibilityCalculatorTest {
         // Given - Well-matched material combination (Wool + Cashmere)
         val top = createClothes(
             id = 1,
-            type = Type.Tops,
+            type = Type.TShirt,
             material = Material.Wool,
             season = Season.Winter
         )
@@ -408,5 +408,52 @@ class OutfitCompatibilityCalculatorTest {
 
         // Then - High score due to good material combination
         assertTrue("Score should be high for wool and cashmere", score >= 70)
+    }
+
+    @Test
+    fun `shoes excluded from size compatibility`() {
+        // Given - Shoes have size 42 (shoe size), top and pants have XS (clothing size)
+        // Shoes should NOT affect size compatibility score
+        val top = createClothes(id = 1, type = Type.TShirt, size = Size._XS, season = Season.Summer)
+        val pants = createClothes(id = 2, type = Type.Pants, size = Size._XS, season = Season.Summer)
+        val shoes = createClothes(id = 3, type = Type.Shoes, size = Size._42, season = Season.Summer)
+        val outfitWithShoes = OutfitResult(top, pants, null, null, null, shoes = shoes)
+        val outfitWithoutShoes = OutfitResult(top, pants, null, null, null)
+
+        // When
+        val scoreWith = OutfitCompatibilityCalculator.calculateCompatibilityScore(outfitWithShoes)
+        val scoreWithout = OutfitCompatibilityCalculator.calculateCompatibilityScore(outfitWithoutShoes)
+
+        // Then - Scores should be similar since shoes don't affect size compatibility
+        assertTrue("Shoe size should not significantly affect compatibility score", kotlin.math.abs(scoreWith - scoreWithout) <= 5)
+    }
+
+    @Test
+    fun `outfit with shoes has valid compatibility score`() {
+        // Given - Complete outfit including shoes
+        val top = createClothes(id = 1, type = Type.TShirt, season = Season.Summer, material = Material.Cotton, size = Size._M)
+        val pants = createClothes(id = 2, type = Type.Pants, season = Season.Summer, material = Material.jeans, size = Size._M)
+        val shoes = createClothes(id = 3, type = Type.Shoes, season = Season.Summer, material = Material.Polyester, size = Size._42)
+        val outfit = OutfitResult(top, pants, null, null, null, shoes = shoes)
+
+        // When
+        val score = OutfitCompatibilityCalculator.calculateCompatibilityScore(outfit)
+
+        // Then
+        assertTrue("Outfit with shoes should have a valid score", score > 0)
+    }
+
+    @Test
+    fun `Pullover counts as top for outfit rules`() {
+        // Given - Pullover + pants should be a valid outfit
+        val pullover = createClothes(id = 1, type = Type.Pullover, season = Season.Winter, material = Material.Wool, size = Size._M)
+        val pants = createClothes(id = 2, type = Type.Pants, season = Season.Winter, material = Material.jeans, size = Size._M)
+        val outfit = OutfitResult(top = null, pants = pants, skirt = null, jacket = null, dress = null, pullover = pullover)
+
+        // When
+        val score = OutfitCompatibilityCalculator.calculateCompatibilityScore(outfit)
+
+        // Then - Should be a valid outfit with high score
+        assertTrue("Pullover + pants should be a valid outfit with high score", score >= 70)
     }
 }

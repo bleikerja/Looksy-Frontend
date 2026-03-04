@@ -124,20 +124,52 @@ class OutfitViewModelTest {
         val skirtId = 20
         val pantsId = null
         val jacketId = 30
+        val pulloverId: Int? = null
+        val shoesId: Int? = null
         viewModel.incrementOutfitPreference(
-            topId,
-            dressId,
-            skirtId,
-            pantsId,
-            jacketId)
+            selectedTopId = topId,
+            selectedDressId = dressId,
+            selectedSkirtId = skirtId,
+            selectedPantsId = pantsId,
+            selectedJacketId = jacketId,
+            selectedPulloverId = pulloverId,
+            selectedShoesId = shoesId
+        )
         advanceUntilIdle()
         coVerify {
             repository.incrementOutfitPreference(
-                topId,
-                dressId,
-                skirtId,
-                pantsId,
-                jacketId
+                selectedTopId = topId,
+                selectedDressId = dressId,
+                selectedSkirtId = skirtId,
+                selectedPantsId = pantsId,
+                selectedJacketId = jacketId,
+                selectedPulloverId = pulloverId,
+                selectedShoesId = shoesId
+            )
+        }
+    }
+
+    @Test
+    fun `incrementOutfitPreference() should forward pulloverId`() = testScope.runTest {
+        viewModel.incrementOutfitPreference(
+            selectedTopId = null,
+            selectedDressId = null,
+            selectedSkirtId = null,
+            selectedPantsId = 2,
+            selectedJacketId = null,
+            selectedPulloverId = 7,
+            selectedShoesId = null
+        )
+        advanceUntilIdle()
+        coVerify {
+            repository.incrementOutfitPreference(
+                selectedTopId = null,
+                selectedDressId = null,
+                selectedSkirtId = null,
+                selectedPantsId = 2,
+                selectedJacketId = null,
+                selectedPulloverId = 7,
+                selectedShoesId = null
             )
         }
     }
@@ -145,12 +177,28 @@ class OutfitViewModelTest {
     fun `incrementOutfitPreference() should handle all null IDs`() = testScope.runTest {
 
         // When
-        viewModel.incrementOutfitPreference(null, null, null, null, null)
+        viewModel.incrementOutfitPreference(
+            selectedTopId = null,
+            selectedDressId = null,
+            selectedSkirtId = null,
+            selectedPantsId = null,
+            selectedJacketId = null,
+            selectedPulloverId = null,
+            selectedShoesId = null
+        )
         advanceUntilIdle()
 
         // Then
         coVerify {
-            repository.incrementOutfitPreference(null, null, null, null, null)
+            repository.incrementOutfitPreference(
+                selectedTopId = null,
+                selectedDressId = null,
+                selectedSkirtId = null,
+                selectedPantsId = null,
+                selectedJacketId = null,
+                selectedPulloverId = null,
+                selectedShoesId = null
+            )
         }
     }
 }

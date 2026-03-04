@@ -45,14 +45,14 @@ I've successfully analyzed your entire Looksy-Frontend project and generated com
 
 - Clean MVVM separation
 - Flow-based reactive data
-- Simple dependency injection via Application class
+- Simple dependency injection via `LooksyApplication` (`by lazy`)
 - Type-safe navigation with sealed classes
 
 **Technologies:**
 
 - Kotlin 2.2.20
 - Jetpack Compose with Material3
-- Room 2.8.1 (using KSP, not KAPT)
+- Room 2.8.1 (using KSP, not KAPT) — **DB version 6**
 - CameraX 1.5.0
 - Navigation Compose 2.9.5
 - Coil 2.7.0 for images
@@ -62,18 +62,24 @@ I've successfully analyzed your entire Looksy-Frontend project and generated com
 
 **Data Model:**
 
-- `Clothes` entity with 5 enum types + `Outfit` entity
-- All enums use TypeConverters
+- `Clothes` entity: `type: Type`, `color: ClothesColor?`, `washingNotes: List<WashingNotes>`, `selected`, `wornClothes`, and more
+- `Outfit` entity: nullable per-slot IDs (`topsId`, `pantsId`, `skirtId`, `jacketId`, `dressId`, `shoesId`), `preference`, `isManuelSaved`
+- All enums use TypeConverters; `List<WashingNotes>` is JSON-serialized via Gson
 - Images stored as absolute paths in `filesDir/images/`
-- Ready for backend sync (`isSynced` field)
+- `isSynced` field on both entities reserved for future backend sync
+
+**Outfit Generation:**
+
+- `OutfitGenerator.kt` + `OutfitCompatibilityCalculator.kt` in `util/`
+- 70% weighted by `wornClothes+1`; 30% tries saved outfit weighted by `preference`
+- Compatibility score 0–100; score=0 or ≥3 distinct ACCENT colors disqualifies
 
 **Weather Feature:**
 
-- `WeatherViewModel` + `GeocodingViewModel` for GPS and manual city lookup
-- `PermissionState` enum drives permission-aware UI flow
-- `LocationInputMode` enum switches between GPS and manual city paths
+- `WeatherViewModel` (sealed `WeatherUiState`) + `GeocodingViewModel` (sealed `GeocodingUiState`)
+- `PermissionState` enum + `LocationProvider` drive GPS / manual-city UI branching
+- Single `refreshWeatherState()` lambda in `WeatherScreen` called from all 4 refresh sites
 - `WeatherIconRow` composable embedded in `FullOutfitScreen` (always visible)
-- Lifecycle-aware refresh via `DisposableEffect(ON_RESUME)` + `PullToRefreshBox`
 
 ## 🎯 How to Use
 
@@ -81,11 +87,11 @@ I've successfully analyzed your entire Looksy-Frontend project and generated com
 
 **Before (generic):**
 
-> "Add a color field"
+> "Add a new enum field to Clothes"
 
-**After (context-aware):**
+**After (context-aware, matches actual codebase):**
 
-> "Add a 'color' enum field to the Clothes entity in dataClassClones/, following the existing enum pattern with TypeConverter in Converters.kt"
+> "Add a `fit: Fit?` nullable enum field to the `Clothes` entity in `data/model/`, add `@TypeConverter` pair in `Converters.kt`, bump `ClothesDatabase.version`, and run `./gradlew clean assembleDebug`"
 
 ### Quick Access
 
@@ -130,11 +136,11 @@ val path = File(context.filesDir, "IMG_${timestamp}.jpg").absolutePath
 
 ## 🔧 Conventions Highlighted
 
-- **Enum naming**: Leading underscore for numbers (`_34`, `_XS`)
-- **Package naming**: Inconsistent case (documented for clarity)
-- **File organization**: Some screens in root, some in `screens/`
+- **Enum naming**: Leading underscore for numeric Size values (`_34`, `_XS`)
+- **Package naming**: Standard lowercase (`data/model/`, `ui/viewmodel/`, `ui/screens/`)
+- **File organization**: All screens under `ui/screens/`, all models under `data/model/`
 - **State management**: Flow → StateFlow → collectAsState
-- **ViewModel creation**: Factory pattern with Application DI
+- **ViewModel creation**: Factory pattern with lazy `LooksyApplication` DI
 
 ## 🚀 Future Enhancements Suggested
 

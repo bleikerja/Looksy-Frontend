@@ -45,7 +45,7 @@ class DiscardTest {
 
     private val oldCloth = Clothes(
         id = 10,
-        type = Type.Tops,
+        type = Type.TShirt,
         clean = true,
         size = Size._M,
         seasonUsage = Season.Summer,

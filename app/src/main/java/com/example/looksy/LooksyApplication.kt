@@ -1,7 +1,10 @@
 package com.example.looksy
 
 import android.app.Application
+import android.content.Context
+import androidx.datastore.preferences.preferencesDataStore
 import com.example.looksy.data.local.database.ClothesDatabase
+import com.example.looksy.data.preferences.UserPreferencesRepository
 import com.example.looksy.data.repository.ClothesRepository
 import com.example.looksy.data.repository.GeocodingRepository
 import com.example.looksy.data.repository.OutfitRepository
@@ -13,6 +16,8 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+
+private val Context.userPreferencesDataStore by preferencesDataStore(name = "user_prefs")
 
 class LooksyApplication : Application() {
     // Lazily initialize the database and repository
@@ -80,5 +85,10 @@ class LooksyApplication : Application() {
     // Location Provider
     val locationProvider by lazy { 
         LocationProvider(this) 
+    }
+
+    // User Preferences (city weather persistence)
+    val userPreferencesRepository by lazy {
+        UserPreferencesRepository(userPreferencesDataStore)
     }
 }

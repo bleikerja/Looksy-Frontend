@@ -1,280 +1,196 @@
-# Data Models Reference
+﻿# Data Models Reference
 
-## Core Entity: Clothes
+## Core Entities
 
-**File**: `dataClassClones/Clothes.kt`
+### Clothes (`clothes_table`)
+
+**File**: `app/src/main/java/com/example/looksy/data/model/Clothes.kt`
 
 ```kotlin
 @Entity(tableName = "clothes_table")
 data class Clothes(
-    @PrimaryKey(autoGenerate = true)
-    val id: Int = 0,
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val size: Size,
     val seasonUsage: Season,
     val type: Type,
     val material: Material,
+    val color: ClothesColor? = null,       // nullable — unknown/unset
+    val wornSince: Long? = null,           // epoch ms
+    val lastWorn: Long? = null,            // epoch ms
+    val daysWorn: Int = 0,
     val clean: Boolean,
-    val washingNotes: WashingNotes,
-    val imagePath: String = "",
-    val isSynced: Boolean = false
+    val washingNotes: List<WashingNotes>,  // stored as JSON via Gson
+    val selected: Boolean = false,         // active in current outfit
+    val imagePath: String = "",            // absolute path in filesDir/images/
+    val isSynced: Boolean = false,         // reserved for future backend sync
+    val wornClothes: Int = 0              // outfit-generation weight
 )
 ```
 
-### Field Descriptions
+**Key field notes:**
+- **`selected`**: marks which item occupies a slot in the current outfit (set by generator / manual slot swap).
+- **`wornClothes`**: incremented on outfit confirmation; used to weight random selection (`wornClothes + 1`).
+- **`clean`**: gates outfit generation — only clean items enter `OutfitGenerator`.
+- **`imagePath`**: set by `saveImagePermanently()` (`util/ImageStorage.kt`).
 
-- **id**: Auto-generated primary key, unique identifier
-- **size**: Clothing size (numeric or letter-based)
-- **seasonUsage**: When the item can be worn (Winter, Summer, inBetween)
-- **type**: Category of clothing (Dress, Tops, Skirt, Pants, Jacket)
-- **material**: Fabric type (Wool, Cotton, Polyester, etc.)
-- **clean**: Boolean flag indicating if item is clean
-- **washingNotes**: Care instructions (Temperature30, Hand, Dying, Dryer)
-- **imagePath**: Local file path to item's photo (stored as String)
-- **isSynced**: Boolean flag for future backend sync feature (currently unused)
+---
+
+### Outfit (`outfits_table`)
+
+**File**: `app/src/main/java/com/example/looksy/data/model/Outfit.kt`
+
+```kotlin
+@Entity(tableName = "outfits_table")
+data class Outfit(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val dressId: Int? = null,
+    val topsId: Int? = null,
+    val skirtId: Int? = null,
+    val pantsId: Int? = null,
+    val jacketId: Int? = null,
+    val shoesId: Int? = null,
+    val preference: Int = 0,              // weight for saved-outfit reuse
+    val isSynced: Boolean = false,
+    val isManuelSaved: Boolean = false    // true when saved by user manually
+)
+```
+
+All slot IDs are nullable. An outfit always uses **either** `topsId` **or** `dressId`; other slots are optional. `preference` is weighted in the 30% saved-outfit path of `OutfitGenerator`.
+
+---
 
 ## Enum Types
 
-### Size
+### Type
 
-**File**: `dataClassClones/Size.kt`
+**File**: `data/model/Type.kt`
 
 ```kotlin
-enum class Size {
-    _34, _36, _38, _40, _42, _44, _46, _48, _50, _52, _54, _56, _58, _60,
-    _XS, _S, _M, _L, _XL
+enum class Type(val displayName: String) {
+    Dress("Kleid"), TShirt("T-Shirt/Longsleeve"), Pullover("Pullover/Sweatshirt"),
+    Skirt("Rock"), Pants("Hose"), Jacket("Jacke"), Shoes("Schuhe");
+
+    companion object {
+        /** Types that fill the "top" slot in an outfit. */
+        val topTypes: Set<Type> = setOf(TShirt, Pullover)
+    }
 }
 ```
 
-**Special Features:**
+`Type.topTypes` is used in `OutfitGenerator`, `NavGraph` slot resolution, and `ClothesDao.getByType()`.
 
-- Leading underscore for numeric values (Kotlin requirement)
-- Letter sizes: `_XS`, `_S`, `_M`, `_L`, `_XL`
-- Conversion method: `toLetterSize` property
-  - Converts numeric sizes to letter equivalents
-  - Example: `Size._40.toLetterSize` → `Size._M`
-  - Throws `NoKnownSize` exception for unmapped sizes
-
-**Usage:**
-
-```kotlin
-val size = Size._40
-val letterSize = size.toLetterSize // Returns Size._M
-```
+---
 
 ### Season
 
-**File**: `dataClassClones/Season.kt`
-
 ```kotlin
-enum class Season {
-    Winter, Summer, inBetween
+enum class Season(val displayName: String) {
+    Winter("Winter"), Summer("Sommer"), inBetween("Übergang")
 }
 ```
 
-**Values:**
+---
 
-- `Winter` - Cold weather clothing
-- `Summer` - Warm weather clothing
-- `inBetween` - Transitional/all-season items
+### ClothesColor
 
-### Type
-
-**File**: `dataClassClones/Type.kt`
+**File**: `data/model/ClothesColor.kt`
 
 ```kotlin
-enum class Type {
-    Dress, Tops, Skirt, Pants, Jacket
+enum class ClothesColor(val displayName: String, val kind: Kind) {
+    // NEUTRAL — always compatible
+    Black("Schwarz", Kind.NEUTRAL), White("Weiss", Kind.NEUTRAL),
+    Grey("Grau", Kind.NEUTRAL), Navy("Navy", Kind.NEUTRAL),
+    // EARTH — compatible with anything
+    Beige("Beige", Kind.EARTH), Brown("Braun", Kind.EARTH), Olive("Olivegruen", Kind.EARTH),
+    // ACCENT — 3+ different ACCENT colors disqualify the outfit (score → 0)
+    Blue("Blau", Kind.ACCENT), LightBlue("Hellblau", Kind.ACCENT),
+    Green("Gruen", Kind.ACCENT), Red("Rot", Kind.ACCENT),
+    Burgundy("Burgunderrot", Kind.ACCENT), Pink("Pink/Rosa", Kind.ACCENT),
+    Purple("Lila/Violett", Kind.ACCENT), Yellow("Gelb", Kind.ACCENT), Orange("Orange", Kind.ACCENT);
+
+    enum class Kind { NEUTRAL, EARTH, ACCENT }
 }
 ```
 
-**Usage in Navigation:**
+`OutfitCompatibilityCalculator.isOutfitColorCompatible()` rejects outfits with ≥3 distinct ACCENT colors.
 
-- Used for filtering clothes by category
-- Passed as navigation argument: `Routes.SpecificCategory.createRoute(type.name)`
-- Grouping key: `allClothes.groupBy { it.type }`
+---
+
+### Size
+
+```kotlin
+enum class Size { _34, _36, _38, _40, _42, _44, _46, _48, _50, _52, _54, _56, _58, _60, _XS, _S, _M, _L, _XL }
+```
+
+Leading underscore required for Kotlin enum identifiers starting with a digit.
+
+---
 
 ### Material
 
-**File**: `dataClassClones/Material.kt`
+Enum with `displayName` property covering common fabrics (Wool, Cotton, Polyester, etc.).
 
-```kotlin
-enum class Material {
-    Wool, Cotton, Polyester, cashmere, silk, linen, fur, jeans
-}
-```
-
-**Note:** Inconsistent naming (most PascalCase, some lowercase)
-
-- PascalCase: `Wool`, `Cotton`, `Polyester`
-- lowercase: `cashmere`, `silk`, `linen`, `fur`, `jeans`
+---
 
 ### WashingNotes
 
-**File**: `dataClassClones/WashingNotes.kt`
-
 ```kotlin
-enum class WashingNotes {
-    Temperature30, Hand, Dying, Dryer
-}
+enum class WashingNotes { Temperature30, Hand, Dying, Dryer }
 ```
 
-**Values:**
+Stored as `List<WashingNotes>` in `Clothes.washingNotes`. `Converters.kt` uses `Gson` for JSON serialization and falls back gracefully for legacy single-value strings.
 
-- `Temperature30` - Wash at 30°C
-- `Hand` - Hand wash only
-- `Dying` - Can be dyed (possibly meant "Drying"?)
-- `Dryer` - Dryer safe
+---
 
-## Utility Classes
+## Type Converters (`Converters.kt`)
 
-### Filter
+**File**: `app/src/main/java/com/example/looksy/data/local/database/Converters.kt`
 
-**File**: `dataClassClones/Filter.kt`
-
-**Purpose**: Utility class for filtering lists of `Clothes` objects
-
-**Methods:**
-
+Pattern for simple enums:
 ```kotlin
-class Filter {
-    fun byType(type: Type, list: MutableList<Clothes>): MutableList<Clothes>
-    fun bySeason(season: Season, list: MutableList<Clothes>): MutableList<Clothes>
-    fun bySize(size: Size, list: MutableList<Clothes>): MutableList<Clothes>
-    fun byMaterial(material: Material, list: MutableList<Clothes>): MutableList<Clothes>
-    fun byCleanliness(clean: Boolean, list: MutableList<Clothes>): MutableList<Clothes>
-}
+@TypeConverter fun fromType(type: Type): String = type.name
+@TypeConverter fun toType(s: String): Type = Type.valueOf(s)
 ```
 
-**Usage Example:**
-
+`List<WashingNotes>` uses Gson:
 ```kotlin
-val filter = Filter()
-val winterClothes = filter.bySeason(Season.Winter, allClothes)
-val cleanWinterClothes = filter.byCleanliness(true, winterClothes)
+@TypeConverter fun fromWashingNotesList(v: List<WashingNotes>): String = Gson().toJson(v)
+@TypeConverter fun toWashingNotesList(v: String): List<WashingNotes> { /* Gson + fallback */ }
 ```
 
-**Note:**
+**Rule**: Add a `@TypeConverter` pair for every new enum-typed or collection-typed field, then bump `ClothesDatabase.version`.
 
-- Currently returns new `MutableList` on each filter
-- For better performance with Room, use DAO queries directly:
-  ```kotlin
-  @Query("SELECT * FROM clothes_table WHERE type = :type")
-  fun getByType(type: Type): Flow<List<Clothes>>
-  ```
+---
 
-## UI Helper Models
+## UI Helper Data Classes
 
-### Category
-
-**File**: `CategoriesScreen.kt`
+### OutfitResult (`util/OutfitGenerator.kt`)
 
 ```kotlin
-data class Category(val name: String, val iconRes: Int)
+data class OutfitResult(val top: Clothes?, val pants: Clothes?, val skirt: Clothes?,
+                        val jacket: Clothes?, val dress: Clothes?, val shoes: Clothes? = null)
 ```
 
-**Purpose**: UI model for category icons (not persisted)
+Transient — never persisted. Passed between `OutfitGenerator` and `OutfitCompatibilityCalculator`.
 
-**Usage:**
+### CategoryItems (`ui/screens/CategoriesScreen.kt`)
 
 ```kotlin
-val sampleCategories = listOf(
-    Category("Shirt", R.drawable.shirt_category),
-    Category("Pants", R.drawable.pants_category)
-)
+data class CategoryItems(val category: Type, val items: List<Clothes>)
 ```
 
-### CategoryItems
-
-**File**: `CategoriesScreen.kt`
-
+Built in `NavGraph`:
 ```kotlin
-data class CategoryItems(val categoryName: String, val items: List<Clothes>)
+allClothesFromDb.filter { it.clean }.groupBy { it.type }.map { (type, items) -> CategoryItems(type, items) }
 ```
 
-**Purpose**: Groups clothes by category name for display
+---
 
-**Creation Pattern:**
+## Database Version History
 
-```kotlin
-val categoryItems = allClothesFromDb
-    .groupBy { it.type }
-    .map { (type, items) ->
-        CategoryItems(categoryName = type.name, items = items)
-    }
-```
+| Version | Notes |
+|---------|-------|
+| 6       | Current — production schema (Feb 2026) |
+| < 6     | Earlier iterations (destructive migration clears data) |
 
-## Type Conversions
-
-All enums use the same conversion pattern via `Converters.kt`:
-
-```kotlin
-// To String (for database storage)
-@TypeConverter
-fun fromEnumType(value: EnumType): String = value.name
-
-// From String (from database)
-@TypeConverter
-fun toEnumType(value: String): EnumType = EnumType.valueOf(value)
-```
-
-**Registered in Database:**
-
-```kotlin
-@TypeConverters(Converters::class)
-abstract class ClothesDatabase : RoomDatabase()
-```
-
-## Data Validation
-
-### Form Validation Pattern
-
-**File**: `screens/ScreenAddNewClothes.kt`
-
-```kotlin
-val isFormValid = size != null &&
-                  season != null &&
-                  type != null &&
-                  material != null &&
-                  washingNotes != null
-
-Button(enabled = isFormValid) { ... }
-```
-
-All enum fields are required (non-nullable in entity).
-
-## Sample Data
-
-**Location**: `ClothInformationScreen.kt` (for previews)
-
-```kotlin
-val allClothes = listOf(
-    Clothes(
-        size = Size._46,
-        seasonUsage = Season.Winter,
-        type = Type.Pants,
-        material = Material.Wool,
-        clean = true,
-        washingNotes = WashingNotes.Temperature30,
-        imagePath = "android.resource://com.example.looksy/${R.drawable.jeans}"
-    )
-)
-```
-
-## Future Enhancements
-
-**Potential additions to `Clothes` entity:**
-
-1. **Brand**: String field for clothing brand
-2. **Color**: Enum or String for primary color
-3. **PurchaseDate**: Date field
-4. **Price**: Double field
-5. **TimesWorn**: Int counter
-6. **LastWorn**: Date field
-7. **Notes**: String for additional notes
-8. **Tags**: List<String> for custom categorization
-
-**Potential new enums:**
-
-- `Color` - Primary colors
-- `Pattern` - Solid, Striped, Floral, etc.
-- `Fit` - Slim, Regular, Loose, etc.
+`fallbackToDestructiveMigration()` is **active** — all local data is lost on version bump.

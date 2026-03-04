@@ -89,7 +89,7 @@ class AddNewClothesScreenTest {
 
         // Fill in Type
         composeTestRule.onNodeWithText("Typ").performClick()
-        composeTestRule.onNodeWithText("Oberteil").performClick()
+        composeTestRule.onNodeWithText("T-Shirt", substring = true).performClick()
 
         // Fill in Material
         composeTestRule.onNodeWithText("Material").performClick()

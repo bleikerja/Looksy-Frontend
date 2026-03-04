@@ -39,6 +39,7 @@ import com.example.looksy.R
 import com.example.looksy.data.model.Clothes
 import com.example.looksy.data.model.Outfit
 import com.example.looksy.ui.components.Header
+import com.example.looksy.ui.components.OutfitLayoutPreview
 import com.example.looksy.ui.theme.LooksyTheme
 
 /**
@@ -155,7 +156,7 @@ private fun OutfitsGrid(
 
 /**
  * Einzelne Outfit-Karte, die eine kompakte Vorschau des Outfits zeigt.
- * Zeigt die Kleidungsstücke vertikal gestapelt an.
+ * Verwendet OutfitLayoutPreview für eine konsistente Darstellung mit dem Home-Screen.
  */
 @Composable
 private fun OutfitCard(
@@ -163,16 +164,6 @@ private fun OutfitCard(
     allClothes: List<Clothes>,
     onClick: () -> Unit
 ) {
-    // Finde die Kleidungsstücke für dieses Outfit
-    val dress = outfit.dressId?.let { id -> allClothes.find { it.id == id } }
-    val top = outfit.topsId?.let { id -> allClothes.find { it.id == id } }
-    val jacket = outfit.jacketId?.let { id -> allClothes.find { it.id == id } }
-    val pants = outfit.pantsId?.let { id -> allClothes.find { it.id == id } }
-    val skirt = outfit.skirtId?.let { id -> allClothes.find { it.id == id } }
-
-    // Sammle alle vorhandenen Kleidungsstücke in der richtigen Reihenfolge
-    val clothesList = listOfNotNull(jacket, dress, top, skirt, pants)
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -182,52 +173,12 @@ private fun OutfitCard(
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Column(
+        OutfitLayoutPreview(
+            outfit = outfit,
+            allClothes = allClothes,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(8.dp),
-            verticalArrangement = Arrangement.SpaceEvenly,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            if (clothesList.isEmpty()) {
-                Text(
-                    text = "Leeres Outfit",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
-                )
-            } else {
-                clothesList.forEach { clothes ->
-                    OutfitClothesPreview(
-                        clothes = clothes,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-        }
-    }
-}
-
-/**
- * Kleine Vorschau eines einzelnen Kleidungsstücks innerhalb der Outfit-Karte.
- */
-@Composable
-private fun OutfitClothesPreview(
-    clothes: Clothes,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(2.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        AsyncImage(
-            model = clothes.imagePath,
-            contentDescription = clothes.type.toString(),
-            modifier = Modifier
-                .fillMaxSize()
-                .clip(RoundedCornerShape(8.dp)),
-            error = painterResource(id = R.drawable.clothicon)
+                .padding(8.dp)
         )
     }
 }

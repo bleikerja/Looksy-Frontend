@@ -1,11 +1,14 @@
 package com.example.looksy
 
 import com.example.looksy.data.model.Weather
+import com.example.looksy.data.preferences.UserPreferencesRepository
 import com.example.looksy.data.repository.WeatherRepository
 import com.example.looksy.ui.viewmodel.WeatherUiState
 import com.example.looksy.ui.viewmodel.WeatherViewModel
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -31,13 +34,18 @@ class WeatherViewModelTest {
 
     private lateinit var viewModel: WeatherViewModel
     private lateinit var repository: WeatherRepository
+    private lateinit var prefs: UserPreferencesRepository
     private val testDispatcher = StandardTestDispatcher()
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         repository = mockk(relaxed = true)
-        viewModel = WeatherViewModel(repository)
+        prefs = mockk(relaxed = true)
+        every { prefs.lastSearchedCity } returns flowOf("")
+        every { prefs.lastSearchedLat } returns flowOf(null)
+        every { prefs.lastSearchedLon } returns flowOf(null)
+        viewModel = WeatherViewModel(repository, prefs)
     }
 
     @After

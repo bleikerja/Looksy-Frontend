@@ -6,6 +6,7 @@ import com.example.looksy.data.model.Material
 import com.example.looksy.data.model.Season
 import com.example.looksy.data.model.Size
 import com.example.looksy.data.model.Type
+import com.example.looksy.data.model.OutfitLayoutMode
 import com.example.looksy.data.model.WashingNotes
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -93,5 +94,19 @@ class Converters {
     @TypeConverter
     fun toClothesColor(colorString: String?): ClothesColor? {
         return colorString?.let { ClothesColor.valueOf(it) }
+    }
+
+    @TypeConverter
+    fun fromOutfitLayoutMode(mode: OutfitLayoutMode): String {
+        return mode.name
+    }
+
+    @TypeConverter
+    fun toOutfitLayoutMode(modeString: String): OutfitLayoutMode {
+        return try {
+            OutfitLayoutMode.valueOf(modeString)
+        } catch (e: Exception) {
+            OutfitLayoutMode.THREE_LAYERS
+        }
     }
 }

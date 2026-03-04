@@ -1,5 +1,7 @@
 package com.example.looksy.ui.screens
 
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -11,11 +13,11 @@ import com.example.looksy.ui.navigation.Routes
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Checkroom
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.*
 import androidx.compose.runtime.mutableStateOf
@@ -62,7 +64,7 @@ fun ScreenBlueprint(navController: NavHostController) {
         factory = OutfitViewModelFactory(application.outfitRepository)
     )
     val viewModelWeather: WeatherViewModel = viewModel(
-        factory = WeatherViewModelFactory(application.weatherRepository)
+        factory = WeatherViewModelFactory(application.weatherRepository, application.userPreferencesRepository)
     )
     var nextRoute by remember { mutableStateOf(Routes.Home.route) }
     var showBackDialog by remember { mutableStateOf(false) }
@@ -73,6 +75,7 @@ fun ScreenBlueprint(navController: NavHostController) {
             dismissText = "Abbrechen",
             onDismiss = { showBackDialog = false },
             confirmText = "Weiter",
+            isDeletion = false,
             onConfirm = {
                 navController.navigate(nextRoute){
                     popUpTo(navController.graph.startDestinationId) {
@@ -81,7 +84,7 @@ fun ScreenBlueprint(navController: NavHostController) {
                     restoreState = true
                 }
                 showBackDialog = false
-            }
+            },
         )
     }
     Scaffold(
@@ -130,7 +133,12 @@ fun ScreenBlueprint(navController: NavHostController) {
     ) { innerPadding ->
         NavGraph(
             navController = navController,
-            modifier = Modifier.padding(innerPadding),
+            modifier = Modifier.padding(
+                start = innerPadding.calculateStartPadding(androidx.compose.ui.unit.LayoutDirection.Ltr),
+                top = innerPadding.calculateTopPadding(),
+                end = innerPadding.calculateEndPadding(androidx.compose.ui.unit.LayoutDirection.Ltr),
+                bottom = innerPadding.calculateBottomPadding() - 8.dp  // Reduce bottom by 8.dp
+            ),
             clothesViewModel=viewModelClothes,
             outfitViewModel = viewModelOutfit,
             weatherViewModel = viewModelWeather

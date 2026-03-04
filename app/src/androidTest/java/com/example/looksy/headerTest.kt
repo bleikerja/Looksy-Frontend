@@ -13,7 +13,7 @@ import org.junit.Rule
 import org.junit.Test
 
 val testClothes = Clothes(
-    id = 42, type = Type.Tops,
+    id = 42, type = Type.TShirt,
     size = Size._38,
     seasonUsage = Season.inBetween,
     material = Material.Wool,

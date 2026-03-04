@@ -7,7 +7,6 @@ This `.copilot` folder contains comprehensive documentation to help GitHub Copil
 ### Core Documentation
 
 1. **[project-overview.md](project-overview.md)**
-
    - High-level project description
    - Technology stack
    - Project structure
@@ -15,7 +14,6 @@ This `.copilot` folder contains comprehensive documentation to help GitHub Copil
    - Development environment setup
 
 2. **[architecture.md](architecture.md)**
-
    - MVVM architecture pattern
    - Layer breakdown (View, ViewModel, Repository, DAO, Model)
    - Data flow patterns
@@ -24,7 +22,6 @@ This `.copilot` folder contains comprehensive documentation to help GitHub Copil
    - Database design
 
 3. **[conventions.md](conventions.md)**
-
    - Kotlin coding style
    - Naming conventions
    - Compose best practices
@@ -34,7 +31,6 @@ This `.copilot` folder contains comprehensive documentation to help GitHub Copil
    - Performance considerations
 
 4. **[dependencies.md](dependencies.md)**
-
    - Complete dependency list with versions
    - Library purposes and key APIs
    - Usage patterns for major libraries
@@ -42,7 +38,6 @@ This `.copilot` folder contains comprehensive documentation to help GitHub Copil
    - Testing dependencies
 
 5. **[data-models.md](data-models.md)**
-
    - Clothes entity schema
    - All enum types (Size, Season, Type, Material, WashingNotes)
    - Type conversions
@@ -62,7 +57,6 @@ This `.copilot` folder contains comprehensive documentation to help GitHub Copil
 Located in `feature-guides/` folder:
 
 1. **[camera-image-handling.md](feature-guides/camera-image-handling.md)**
-
    - CameraX implementation
    - Permission handling
    - Image capture and storage
@@ -135,15 +129,23 @@ Update these files when:
 
 ```
 com.example.looksy/
-├── Application/          # App class & DI
-├── ViewModels/          # ClothesViewModel
-├── Repository/          # ClothesRepository
-├── dao/                 # ClothesDao (Room)
-├── dataClassClones/     # Data models & enums
-├── Factory/             # ViewModelFactory
-├── screens/             # Screen composables
-├── ui/theme/            # Material3 theme
-└── *.kt files           # Main activity, routes, etc.
+├── LooksyApplication.kt      # App class & lazy DI
+├── MainActivity.kt
+├── data/
+│   ├── local/
+│   │   ├── dao/              # ClothesDao, OutfitDao (Room)
+│   │   └── database/         # ClothesDatabase, Converters
+│   ├── model/                # Clothes, Outfit, enums (Type, Season, ClothesColor, …)
+│   ├── remote/api/           # WeatherApiService, GeocodingApiService (Retrofit)
+│   ├── repository/           # ClothesRepository, OutfitRepository, WeatherRepository, GeocodingRepository
+│   └── location/             # LocationProvider, PermissionState
+├── ui/
+│   ├── navigation/           # Routes.kt, NavGraph.kt
+│   ├── screens/              # All screen composables
+│   ├── viewmodel/            # ClothesViewModel, OutfitViewModel, WeatherViewModel, GeocodingViewModel
+│   ├── components/           # Shared composables (ConfirmationDialog, etc.)
+│   └── theme/
+└── util/                     # OutfitGenerator, OutfitCompatibilityCalculator, ImageStorage
 ```
 
 ### Key Technologies
@@ -183,7 +185,8 @@ Composable → ViewModel → Repository → DAO → Room DB
 
 - **Project**: Looksy Frontend
 - **Version**: 1.0
-- **Last Updated**: 2025-10-17
+- **Last Updated**: 2026-02-28
+- **DB Version**: 6
 - **Min SDK**: 28 (Android 9.0)
 - **Target SDK**: 36
 

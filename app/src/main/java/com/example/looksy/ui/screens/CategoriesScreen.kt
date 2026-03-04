@@ -50,7 +50,6 @@ data class CategoryItems(val category: Type, val items: List<Clothes>)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoriesScreen(
-    categories: List<Category>,
     categoryItems: List<CategoryItems>,
     onClick: (String) -> Unit = {},
     onButtonClicked: (Int) -> Unit = {},

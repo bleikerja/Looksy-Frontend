@@ -4,6 +4,7 @@ import com.example.looksy.data.model.Clothes
 import com.example.looksy.data.model.ClothesColor
 import com.example.looksy.data.model.Material
 import com.example.looksy.data.model.Outfit
+import com.example.looksy.data.model.OutfitLayoutMode
 import com.example.looksy.data.model.Season
 import com.example.looksy.data.model.Size
 import com.example.looksy.data.model.Type
@@ -22,7 +23,7 @@ class OutfitGeneratorTest {
         id: Int = 0,
         size: Size = Size._M,
         season: Season = Season.Summer,
-        type: Type = Type.Tops,
+        type: Type = Type.TShirt,
         material: Material = Material.Cotton,
         clean: Boolean = true,
         color: ClothesColor? = null
@@ -40,7 +41,7 @@ class OutfitGeneratorTest {
     )
     private val testTopOftenWorn = Clothes(
         id = 1,
-        type = Type.Tops,
+        type = Type.TShirt,
         clean = true,
         size = Size._M,
         seasonUsage = Season.inBetween,
@@ -53,7 +54,7 @@ class OutfitGeneratorTest {
 
     private val testTopRarelyWorn = Clothes(
         id = 2,
-        type = Type.Tops,
+        type = Type.TShirt,
         clean = true,
         size = Size._M,
         seasonUsage = Season.inBetween,
@@ -65,7 +66,7 @@ class OutfitGeneratorTest {
     )
     private val testTop1 = Clothes(
         id = 5,
-        type = Type.Tops,
+        type = Type.TShirt,
         clean = true,
         size = Size._M,
         seasonUsage = Season.inBetween,
@@ -77,7 +78,7 @@ class OutfitGeneratorTest {
     )
     private val testTop2 = Clothes(
         id = 6,
-        type = Type.Tops,
+        type = Type.TShirt,
         clean = true,
         size = Size._M,
         seasonUsage = Season.inBetween,
@@ -156,7 +157,7 @@ class OutfitGeneratorTest {
 
     @Test
     fun `generateRandomOutfit returns outfit with valid compatibility score`() {
-        val top = createClothes(id = 1, type = Type.Tops)
+        val top = createClothes(id = 1, type = Type.TShirt)
         val pants = createClothes(id = 2, type = Type.Pants)
         val clothes = listOf(top, pants)
 
@@ -171,7 +172,7 @@ class OutfitGeneratorTest {
     @Test
     fun `generateRandomOutfit uses rating and prefers higher scored outfit`() {
         // Top + Pants (valid) => high score; Dress + Pants (invalid) => 0
-        val top = createClothes(id = 1, type = Type.Tops, season = Season.Summer, material = Material.Cotton)
+        val top = createClothes(id = 1, type = Type.TShirt, season = Season.Summer, material = Material.Cotton)
         val pants = createClothes(id = 2, type = Type.Pants, season = Season.Summer, material = Material.jeans)
         val dress = createClothes(id = 3, type = Type.Dress, season = Season.Summer)
         val clothes = listOf(top, pants, dress)
@@ -189,7 +190,7 @@ class OutfitGeneratorTest {
 
     @Test
     fun `generateRandomOutfit returns empty outfit when no clean clothes`() {
-        val top = createClothes(id = 1, type = Type.Tops, clean = false)
+        val top = createClothes(id = 1, type = Type.TShirt, clean = false)
         val pants = createClothes(id = 2, type = Type.Pants, clean = false)
         val clothes = listOf(top, pants)
 
@@ -202,7 +203,7 @@ class OutfitGeneratorTest {
 
     @Test
     fun `generateRandomOutfit returns outfit with best score among candidates`() {
-        val top = createClothes(id = 1, type = Type.Tops, season = Season.Summer, material = Material.Cotton, size = Size._M)
+        val top = createClothes(id = 1, type = Type.TShirt, season = Season.Summer, material = Material.Cotton, size = Size._M)
         val pants = createClothes(id = 2, type = Type.Pants, season = Season.Summer, material = Material.jeans, size = Size._M)
         val jacket = createClothes(id = 3, type = Type.Jacket, season = Season.Summer, material = Material.Cotton, size = Size._M)
         val clothes = listOf(top, pants, jacket)
@@ -211,7 +212,7 @@ class OutfitGeneratorTest {
 
         val score = OutfitCompatibilityCalculator.calculateCompatibilityScore(result)
         assertTrue("Generator should return outfit with compatibility score in 0..100", score in 0..100)
-        assertTrue("At least top or dress must be present", result.top != null || result.dress != null)
+        assertTrue("At least top, pullover, or dress must be present", result.top != null || result.pullover != null || result.dress != null)
     }
 
     @Test
@@ -275,8 +276,8 @@ class OutfitGeneratorTest {
 
     @Test
     fun generatedOutfitsAreAlwaysColorCompatible() {
-        val redTop = createClothes(id = 10, type = Type.Tops, color = ClothesColor.Red)
-        val neutralTop = createClothes(id = 14, type = Type.Tops, color = ClothesColor.White)
+        val redTop = createClothes(id = 10, type = Type.TShirt, color = ClothesColor.Red)
+        val neutralTop = createClothes(id = 14, type = Type.TShirt, color = ClothesColor.White)
         val bluePants = createClothes(id = 11, type = Type.Pants, color = ClothesColor.Blue)
         val yellowJacket = createClothes(id = 12, type = Type.Jacket, color = ClothesColor.Yellow)
         val neutralJacket = createClothes(id = 13, type = Type.Jacket, color = ClothesColor.Black)
@@ -300,7 +301,7 @@ class OutfitGeneratorTest {
     fun savedOutfitWithDirtyPartIsNotSuggested() {
         val cleanTop = Clothes(
             id = 101,
-            type = Type.Tops,
+            type = Type.TShirt,
             clean = true,
             size = Size._M,
             seasonUsage = Season.Summer,
@@ -330,6 +331,168 @@ class OutfitGeneratorTest {
                 "Ein Outfit mit schmutzigen Teilen darf nicht aus den gespeicherten Outfits vorgeschlagen werden",
                 isTheDirtyOutfit
             )
+        }
+    }
+
+    @Test
+    fun `generateRandomOutfit can include shoes`() {
+        val top = createClothes(id = 1, type = Type.TShirt)
+        val pants = createClothes(id = 2, type = Type.Pants)
+        val shoes = createClothes(id = 3, type = Type.Shoes, size = Size._42)
+        val clothes = listOf(top, pants, shoes)
+
+        var foundShoes = false
+        repeat(200) {
+            val result = generateRandomOutfit(clothes, emptyList())
+            if (result.shoes != null) {
+                assertEquals(Type.Shoes, result.shoes!!.type)
+                foundShoes = true
+            }
+        }
+        assertTrue("Generator should include shoes in at least one outfit", foundShoes)
+    }
+
+    @Test
+    fun `generateRandomOutfit valid without shoes`() {
+        val top = createClothes(id = 1, type = Type.TShirt)
+        val pants = createClothes(id = 2, type = Type.Pants)
+        val clothes = listOf(top, pants)
+
+        val result = generateRandomOutfit(clothes, emptyList())
+
+        assertNotNull("Outfit should have a top", result.top)
+        assertNotNull("Outfit should have pants", result.pants)
+        assertEquals(null, result.shoes)
+        val score = OutfitCompatibilityCalculator.calculateCompatibilityScore(result)
+        assertTrue("Outfit without shoes should still have a valid score", score > 0)
+    }
+
+    @Test
+    fun `generateRandomOutfit uses Pullover as top`() {
+        val pullover = createClothes(id = 1, type = Type.Pullover)
+        val pants = createClothes(id = 2, type = Type.Pants)
+        val clothes = listOf(pullover, pants)
+
+        val result = generateRandomOutfit(clothes, emptyList())
+
+        assertNotNull("Pullover should be selected in pullover slot", result.pullover)
+        assertEquals(Type.Pullover, result.pullover!!.type)
+        val score = OutfitCompatibilityCalculator.calculateCompatibilityScore(result)
+        assertTrue("Pullover outfit should be valid", score > 0)
+    }
+
+    @Test
+    fun `topTypes contains TShirt and Pullover`() {
+        assertTrue("topTypes should contain TShirt", Type.TShirt in Type.topTypes)
+        assertTrue("topTypes should contain Pullover", Type.Pullover in Type.topTypes)
+        assertEquals("topTypes should have exactly 2 entries", 2, Type.topTypes.size)
+    }
+
+    @Test
+    fun savedOutfitWithDirtyPulloverIsNotSuggested() {
+        val cleanPants = Clothes(
+            id = 201,
+            type = Type.Pants,
+            clean = true,
+            size = Size._M,
+            seasonUsage = Season.Summer,
+            material = Material.Cotton,
+            washingNotes = listOf(WashingNotes.Temperature30)
+        )
+        val dirtyPullover = Clothes(
+            id = 202,
+            type = Type.Pullover,
+            clean = false,
+            size = Size._M,
+            seasonUsage = Season.Summer,
+            material = Material.Wool,
+            washingNotes = listOf(WashingNotes.Temperature30)
+        )
+
+        val outfitWithDirtyPullover =
+            Outfit(id = 20, pulloverId = dirtyPullover.id, pantsId = cleanPants.id, preference = 100)
+
+        val currentClothes = clothes + cleanPants
+        val currentOutfits = outfits + outfitWithDirtyPullover
+
+        repeat(1000) {
+            val result = generateRandomOutfit(currentClothes, currentOutfits)
+            val isTheDirtyOutfit = result.pullover?.id == dirtyPullover.id && result.pants?.id == cleanPants.id
+            Assert.assertFalse(
+                "Ein Outfit mit schmutzigem Pullover darf nicht aus den gespeicherten Outfits vorgeschlagen werden",
+                isTheDirtyOutfit
+            )
+        }
+    }
+
+    // ──────────── Layout-aware generator tests ────────────
+
+    @Test
+    fun `FOUR_LAYERS generates both TShirt and Pullover independently`() {
+        val tshirt   = createClothes(id = 10, type = Type.TShirt)
+        val pullover = createClothes(id = 11, type = Type.Pullover)
+        val pants    = createClothes(id = 12, type = Type.Pants)
+        val wardrobe = listOf(tshirt, pullover, pants)
+
+        var bothPresent = 0
+        repeat(200) {
+            val result = generateRandomOutfit(wardrobe, emptyList(), OutfitLayoutMode.FOUR_LAYERS)
+            if (result.top != null && result.pullover != null) bothPresent++
+        }
+        assertTrue(
+            "FOUR_LAYERS should generate both TShirt and Pullover in most runs (got $bothPresent/200)",
+            bothPresent >= 160
+        )
+    }
+
+    @Test
+    fun `TWO_LAYERS always generates a dress and never top or bottom`() {
+        val dress  = createClothes(id = 20, type = Type.Dress)
+        val tshirt = createClothes(id = 21, type = Type.TShirt)
+        val pants  = createClothes(id = 22, type = Type.Pants)
+        val wardrobe = listOf(dress, tshirt, pants)
+
+        repeat(200) {
+            val result = generateRandomOutfit(wardrobe, emptyList(), OutfitLayoutMode.TWO_LAYERS)
+            assertNotNull("TWO_LAYERS must always produce a dress", result.dress)
+            assertEquals("TWO_LAYERS top must be null",     null, result.top)
+            assertEquals("TWO_LAYERS pullover must be null", null, result.pullover)
+            assertEquals("TWO_LAYERS pants must be null",   null, result.pants)
+            assertEquals("TWO_LAYERS skirt must be null",   null, result.skirt)
+        }
+    }
+
+    @Test
+    fun `TWO_LAYERS never uses a saved outfit from a different layout mode`() {
+        val dress = createClothes(id = 30, type = Type.Dress)
+        val pants = createClothes(id = 31, type = Type.Pants)
+        val top   = createClothes(id = 32, type = Type.TShirt)
+        // Saved outfit is THREE_LAYERS (top + pants)
+        val threeLayers = Outfit(
+            id = 99, topsId = top.id, pantsId = pants.id, preference = 100,
+            layoutMode = OutfitLayoutMode.THREE_LAYERS
+        )
+        val wardrobe = listOf(dress, pants, top)
+
+        repeat(500) {
+            val result = generateRandomOutfit(wardrobe, listOf(threeLayers), OutfitLayoutMode.TWO_LAYERS)
+            assertEquals(
+                "TWO_LAYERS must not return a saved THREE_LAYERS outfit",
+                null, result.top
+            )
+        }
+    }
+
+    @Test
+    fun `THREE_LAYERS never generates a dress even when one exists`() {
+        val dress    = createClothes(id = 40, type = Type.Dress)
+        val tshirt   = createClothes(id = 41, type = Type.TShirt)
+        val pants    = createClothes(id = 42, type = Type.Pants)
+        val wardrobe = listOf(dress, tshirt, pants)
+
+        repeat(200) {
+            val result = generateRandomOutfit(wardrobe, emptyList(), OutfitLayoutMode.THREE_LAYERS)
+            assertEquals("THREE_LAYERS dress must always be null", null, result.dress)
         }
     }
 }

@@ -59,11 +59,14 @@ object RouteArgs {
 
 ```kotlin
 val navItems = listOf(
-    Triple(Routes.ChoseClothes.route, "Chose Clothes", R.drawable.wardrobeicon),
-    Triple(Routes.Home.route, "Home", R.drawable.clothicon),
-    Triple(Routes.Scan.route, "Scan", R.drawable.cameraicon)
+    Triple(Routes.ChoseClothes.route, "Chose Clothes", Icons.Default.Checkroom),
+    Triple(Routes.Home.route, "Home", Icons.Default.Home),
+    Triple(Routes.Scan.route, "Scan", Icons.Default.PhotoCamera),
+    Triple(Routes.SavedOutfits.route, "Saved Outfits", Icons.Default.Favorite)
 )
 ```
+
+The `Scan` tab navigates to the camera (`Kamera.kt`). `Home` is the start destination.
 
 ### Selection Handling
 

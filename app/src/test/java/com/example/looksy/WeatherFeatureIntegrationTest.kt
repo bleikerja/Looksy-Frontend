@@ -1,5 +1,6 @@
 package com.example.looksy
 
+import com.example.looksy.data.preferences.UserPreferencesRepository
 import com.example.looksy.data.remote.api.WeatherApiService
 import com.example.looksy.data.remote.dto.Main
 import com.example.looksy.data.remote.dto.WeatherInfo
@@ -8,7 +9,9 @@ import com.example.looksy.data.repository.WeatherRepository
 import com.example.looksy.ui.viewmodel.WeatherUiState
 import com.example.looksy.ui.viewmodel.WeatherViewModel
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -28,6 +31,7 @@ class WeatherFeatureIntegrationTest {
     private val dispatcher = StandardTestDispatcher()
     private lateinit var apiService: WeatherApiService
     private lateinit var repository: WeatherRepository
+    private lateinit var prefs: UserPreferencesRepository
     private lateinit var viewModel: WeatherViewModel
 
     @Before
@@ -35,7 +39,11 @@ class WeatherFeatureIntegrationTest {
         Dispatchers.setMain(dispatcher)
         apiService = mockk()
         repository = WeatherRepository(apiService, "integration_key")
-        viewModel = WeatherViewModel(repository)
+        prefs = mockk(relaxed = true)
+        every { prefs.lastSearchedCity } returns flowOf("")
+        every { prefs.lastSearchedLat } returns flowOf(null)
+        every { prefs.lastSearchedLon } returns flowOf(null)
+        viewModel = WeatherViewModel(repository, prefs)
     }
 
     @After

@@ -22,7 +22,7 @@ class FullOutfitScreenWeatherTest {
 
     private val testTop = Clothes(
         id = 1,
-        type = Type.Tops,
+        type = Type.TShirt,
         clean = true,
         size = Size._M,
         seasonUsage = Season.inBetween,
@@ -44,14 +44,17 @@ class FullOutfitScreenWeatherTest {
         isSynced = false
     )
 
+    private val testAllClothes = listOf(testTop, testPants)
+
     @Test
     fun fullOutfitScreen_displaysWeatherLoadingState() {
         // Given: Weather state is Loading
         composeTestRule.setContent {
             LooksyTheme {
                 FullOutfitScreen(
-                    top = testTop,
-                    pants = testPants,
+                    allClothes = testAllClothes,
+                    selectedTshirtId = testTop.id,
+                    selectedPantsId = testPants.id,
                     weatherState = WeatherUiState.Loading,
                     permissionState = PermissionState.GRANTED_WHILE_IN_USE,
                     onWeatherClick = {}
@@ -78,8 +81,9 @@ class FullOutfitScreenWeatherTest {
         composeTestRule.setContent {
             LooksyTheme {
                 FullOutfitScreen(
-                    top = testTop,
-                    pants = testPants,
+                    allClothes = testAllClothes,
+                    selectedTshirtId = testTop.id,
+                    selectedPantsId = testPants.id,
                     weatherState = WeatherUiState.Success(testWeather),
                     permissionState = PermissionState.GRANTED_WHILE_IN_USE,
                     onWeatherClick = {}
@@ -99,8 +103,9 @@ class FullOutfitScreenWeatherTest {
         composeTestRule.setContent {
             LooksyTheme {
                 FullOutfitScreen(
-                    top = testTop,
-                    pants = testPants,
+                    allClothes = testAllClothes,
+                    selectedTshirtId = testTop.id,
+                    selectedPantsId = testPants.id,
                     weatherState = WeatherUiState.Error("Network error"),
                     permissionState = PermissionState.GRANTED_WHILE_IN_USE,
                     onWeatherClick = {}
@@ -130,8 +135,9 @@ class FullOutfitScreenWeatherTest {
         composeTestRule.setContent {
             LooksyTheme {
                 FullOutfitScreen(
-                    top = testTop,
-                    pants = testPants,
+                    allClothes = testAllClothes,
+                    selectedTshirtId = testTop.id,
+                    selectedPantsId = testPants.id,
                     weatherState = WeatherUiState.Success(testWeather),
                     permissionState = PermissionState.GRANTED_WHILE_IN_USE,
                     onWeatherClick = { weatherClicked = true }
@@ -161,8 +167,9 @@ class FullOutfitScreenWeatherTest {
         composeTestRule.setContent {
             LooksyTheme {
                 FullOutfitScreen(
-                    top = testTop,
-                    pants = testPants,
+                    allClothes = testAllClothes,
+                    selectedTshirtId = testTop.id,
+                    selectedPantsId = testPants.id,
                     weatherState = WeatherUiState.Success(sunnyWeather),
                     permissionState = PermissionState.GRANTED_WHILE_IN_USE,
                     onWeatherClick = {}
@@ -189,8 +196,9 @@ class FullOutfitScreenWeatherTest {
         composeTestRule.setContent {
             LooksyTheme {
                 FullOutfitScreen(
-                    top = testTop,
-                    pants = testPants,
+                    allClothes = testAllClothes,
+                    selectedTshirtId = testTop.id,
+                    selectedPantsId = testPants.id,
                     weatherState = WeatherUiState.Success(rainyWeather),
                     permissionState = PermissionState.GRANTED_WHILE_IN_USE,
                     onWeatherClick = {}
@@ -217,8 +225,9 @@ class FullOutfitScreenWeatherTest {
         composeTestRule.setContent {
             LooksyTheme {
                 FullOutfitScreen(
-                    top = testTop,
-                    pants = testPants,
+                    allClothes = testAllClothes,
+                    selectedTshirtId = testTop.id,
+                    selectedPantsId = testPants.id,
                     weatherState = WeatherUiState.Success(cloudyWeather),
                     permissionState = PermissionState.GRANTED_WHILE_IN_USE,
                     onWeatherClick = {}
@@ -245,8 +254,9 @@ class FullOutfitScreenWeatherTest {
         composeTestRule.setContent {
             LooksyTheme {
                 FullOutfitScreen(
-                    top = testTop,
-                    pants = testPants,
+                    allClothes = testAllClothes,
+                    selectedTshirtId = testTop.id,
+                    selectedPantsId = testPants.id,
                     weatherState = WeatherUiState.Success(testWeather),
                     permissionState = PermissionState.GRANTED_WHILE_IN_USE,
                     onWeatherClick = {}
@@ -273,8 +283,9 @@ class FullOutfitScreenWeatherTest {
         composeTestRule.setContent {
             LooksyTheme {
                 FullOutfitScreen(
-                    top = testTop,
-                    pants = testPants,
+                    allClothes = testAllClothes,
+                    selectedTshirtId = testTop.id,
+                    selectedPantsId = testPants.id,
                     weatherState = WeatherUiState.Success(testWeather),
                     permissionState = PermissionState.GRANTED_WHILE_IN_USE,
                     onWeatherClick = {}
@@ -294,8 +305,9 @@ class FullOutfitScreenWeatherTest {
         composeTestRule.setContent {
             LooksyTheme {
                 FullOutfitScreen(
-                    top = testTop,
-                    pants = testPants,
+                    allClothes = testAllClothes,
+                    selectedTshirtId = testTop.id,
+                    selectedPantsId = testPants.id,
                     weatherState = WeatherUiState.Loading,
                     onWeatherClick = {}
                 )
@@ -310,11 +322,7 @@ class FullOutfitScreenWeatherTest {
         composeTestRule.setContent {
             LooksyTheme {
                 FullOutfitScreen(
-                    top = null,
-                    pants = null,
-                    skirt = null,
-                    dress = null,
-                    jacket = null,
+                    allClothes = emptyList(),
                     weatherState = WeatherUiState.Loading,
                     permissionState = PermissionState.NOT_ASKED,
                     isLocationEnabled = false,

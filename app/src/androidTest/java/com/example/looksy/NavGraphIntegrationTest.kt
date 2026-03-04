@@ -52,7 +52,7 @@ class NavGraphIntegrationTest {
 
     // Testdaten mit gültigen Bildpfaden, damit die Komponenten gerendert werden und klickbar sind
     private val testTop = Clothes(
-        id = 1, type = Type.Tops, clean = true, size = Size._M,
+        id = 1, type = Type.TShirt, clean = true, size = Size._M,
         seasonUsage = Season.inBetween, material = Material.Cotton,
         washingNotes = listOf(WashingNotes.Temperature30),
         imagePath = "android.resource://com.example.looksy/${R.drawable.shirt_category}", 
@@ -133,19 +133,11 @@ class NavGraphIntegrationTest {
 
         // Wait for the outfit parts (OutfitPart AsyncImage) to appear in the semantic tree
         composeTestRule.waitUntilAtLeastOneExists(
-            hasContentDescription("Kleidungsst\u00fcck"),
+            hasContentDescription("T-Shirt/Longsleeve"),
             timeoutMillis = 15000
         )
 
-        // Klick auf den LooksyButton (IconButton) im OutfitPart
-        // Wir schließen den "Zur Waschmaschine" Button im Header aus
-        composeTestRule.onAllNodes(
-            hasClickAction() and 
-            hasAnySibling(hasContentDescription("Kleidungsstück")) and 
-            !hasContentDescription("Zur Waschmaschine")
-        )
-            .onLast()
-            .performClick()
+        composeTestRule.onNodeWithContentDescription("T-Shirt/Longsleeve").performClick()
 
         composeTestRule.waitUntil(timeoutMillis = 10000) {
             navController.currentDestination?.route == Routes.Details.route

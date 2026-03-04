@@ -34,16 +34,16 @@
 
 ### Package Structure
 
-**Package naming**: All lowercase, no underscores
-
 - `com.example.looksy`
-- `com.example.looksy.ViewModels` (Note: Typically would be lowercase `viewmodels`, but this project uses PascalCase)
-- `com.example.looksy.dataClassClones`
-
-**Unusual naming in this project:**
-
-- `dataClassClones` - Actually contains data models and enums (not clones)
-- Consider renaming to `models` or `domain` in future refactoring
+- `com.example.looksy.ui.viewmodel`
+- `com.example.looksy.data.model`
+- `com.example.looksy.data.local.dao`
+- `com.example.looksy.data.local.database`
+- `com.example.looksy.data.remote.api`
+- `com.example.looksy.data.repository`
+- `com.example.looksy.ui.screens`
+- `com.example.looksy.ui.navigation`
+- `com.example.looksy.util`
 
 ## Compose Conventions
 
@@ -76,6 +76,42 @@ fun ScreenName(
 
 - Always include `modifier: Modifier = Modifier` as last parameter
 - Apply to root composable: `.then(modifier)` or directly
+
+### Screen Structure
+
+Every screen composable must be wrapped in `Scaffold` with a `topBar` using the shared `Header` component. This ensures consistent inset handling, back-navigation affordance, and visual uniformity across the app.
+
+```kotlin
+Scaffold(
+    topBar = {
+        Header(
+            onNavigateBack = onNavigateBack,
+            onNavigateToRightIcon = { id -> /* optional */ },
+            clothesData = null,
+            headerText = "Titel",
+            rightIconContentDescription = null, // null hides the right icon button
+            rightIcon = null,
+            isFirstHeader = false   // true for bottom-nav root screens (no back arrow)
+        )
+    },
+    snackbarHost = { SnackbarHost(snackbarHostState) }, // include only when needed
+    floatingActionButton = { /* ... */ }                // include only when needed
+) { padding ->
+    Column(
+        modifier = Modifier
+            .padding(padding)
+            .fillMaxSize()
+    ) {
+        /* screen content */
+    }
+}
+```e
+
+**Rules:**
+- `isFirstHeader = true` suppresses the back arrow; use it for bottom-nav root destinations (`Home`, `ChoseClothes`, `SavedOutfits`).
+- Never place extra composables (e.g. `WeatherIconRow`) inside the `topBar` lambda; add them as the first item in the body instead.
+- The only intentional exception is `Kamera.kt` — a live camera full-screen UI with no header.
+- Do **not** use `statusBarsPadding()`/`navigationBarsPadding()` manually; `Scaffold` handles window insets.
 
 ### State Management
 
@@ -132,7 +168,7 @@ fun ScreenNamePreview() {
 **Using Factory Pattern:**
 
 ```kotlin
-val application = LocalContext.current.applicationContext as ClothesApplication
+val application = LocalContext.current.applicationContext as LooksyApplication
 val viewModel: ClothesViewModel = viewModel(
     factory = ClothesViewModelFactory(application.repository)
 )
@@ -275,7 +311,6 @@ composable(
 **Current Patterns:**
 
 1. **Null Safety:**
-
    - Use nullable types: `Clothes?`
    - Safe calls: `clothes?.property`
    - Elvis operator: `clothes ?: return`
@@ -315,22 +350,20 @@ composable(
 
 ## File Organization
 
-**Screen Files:**
+**Screen Files** — all in `ui/screens/`:
 
-- Large screens can be in root package: `CategoriesScreen.kt`, `ClothInformationScreen.kt`
-- OR in `screens/` package
-- **Note**: This project is inconsistent - consider standardizing
-
-**Data Classes:**
-
-- All in `dataClassClones/` package
-- Each enum in separate file
-
-**Single Responsibility:**
-
-- One main component per file
+- One screen composable per file
 - Helper composables in same file if tightly coupled
-- Example: `OutfitPart` in `FullOutfitScreen.kt`
+- Example: `OutfitPart` composable lives inside `FullOutfitScreen.kt`
+
+**Data Models** — all in `data/model/`:
+
+- Each entity and enum in its own file
+
+**Utilities** — in `util/`:
+
+- Pure functions (`OutfitGenerator.kt`, `OutfitCompatibilityCalculator.kt`)
+- Side-effect helpers (`ImageStorage.kt`)
 
 ## Performance Considerations
 

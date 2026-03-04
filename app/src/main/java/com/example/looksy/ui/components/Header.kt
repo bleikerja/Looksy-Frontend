@@ -23,11 +23,13 @@ fun Header(
     onNavigateToRightIcon: (Int?) -> Unit,
     clothesData: Clothes?,
     headerText: String,
-    rightIconContentDescription: String?,
-    rightIcon: ImageVector?,
+    modifier: Modifier = Modifier,
+    headerTextStart: Boolean = false,
+    rightIconContentDescription: String? = null,
+    rightIcon: ImageVector? = null,
     rightIconSize: Float = 1F,
     isFirstHeader: Boolean = false,
-    modifier: Modifier = Modifier
+    leftIcon: (@Composable (modifier: Modifier) -> Unit)? = null,
 ) {
     Box(
         modifier = modifier
@@ -35,7 +37,9 @@ fun Header(
             .padding(8.dp),
         contentAlignment = Alignment.Center
     ) {
-        if (!isFirstHeader) {
+        if (leftIcon != null){
+            leftIcon(modifier.align(Alignment.CenterStart))
+        } else if (!isFirstHeader) {
             IconButton(
                 onClick = onNavigateBack,
                 modifier = Modifier.align(Alignment.CenterStart)
@@ -52,7 +56,7 @@ fun Header(
             text = headerText,
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.align(Alignment.Center)
+            modifier = if(headerTextStart) Modifier.align(Alignment.CenterStart) else Modifier.align(Alignment.Center)
         )
 
         if (rightIcon != null && rightIconContentDescription != null) {
