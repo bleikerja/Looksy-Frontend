@@ -555,78 +555,85 @@ fun FullOutfitScreen(
                         horizontalArrangement = Arrangement.spacedBy(0.dp)
                     ) {
                         val isGrid = layoutState == OutfitLayoutMode.GRID
-                        // Jacket vertical-brick toggle
-                        JacketBrickButton(
-                            selected = showJacket && !isGrid,
-                            enabled = jacketItems.isNotEmpty() && !isGrid,
-                            onClick = {
-                                if (showJacket) onSlotChanged(Type.Jacket, null)
-                                showJacket = !showJacket
-                                onLayoutStateChanged(layoutState, showJacket)
-                            }
-                        )
-                        // Thin vertical divider
-                        Box(
-                            modifier = Modifier
-                                .width(1.dp)
-                                .height(28.dp)
-                                .background(MaterialTheme.colorScheme.outlineVariant)
-                        )
-                        // Layer-count state buttons
-                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            StateButton(
-                                brickCount = 2,
-                                selected = layoutState == OutfitLayoutMode.TWO_LAYERS,
-                                enabled = !isGrid,
+                        
+                        // Jacket toggle + State selector buttons (subrow with margin right)
+                        Row(
+                            modifier = Modifier.padding(start = 16.dp, end = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(0.dp)
+                        ) {
+                            // Jacket vertical-brick toggle
+                            JacketBrickButton(
+                                selected = showJacket && !isGrid,
+                                enabled = jacketItems.isNotEmpty() && !isGrid,
                                 onClick = {
-                                    if (layoutState != OutfitLayoutMode.TWO_LAYERS) {
-                                        onSlotChanged(Type.TShirt, null)
-                                        onSlotChanged(Type.Pullover, null)
-                                        onSlotChanged(Type.Pants, null)
-                                        onSlotChanged(Type.Skirt, null)
-                                        layoutState = OutfitLayoutMode.TWO_LAYERS
-                                        onLayoutStateChanged(layoutState, showJacket)
-                                    }
+                                    if (showJacket) onSlotChanged(Type.Jacket, null)
+                                    showJacket = !showJacket
+                                    onLayoutStateChanged(layoutState, showJacket)
                                 }
                             )
-                            StateButton(
-                                brickCount = 3,
-                                selected = layoutState == OutfitLayoutMode.THREE_LAYERS,
-                                enabled = !isGrid,
-                                onClick = {
-                                    if (layoutState != OutfitLayoutMode.THREE_LAYERS) {
-                                        if (layoutState == OutfitLayoutMode.TWO_LAYERS) {
-                                            onSlotChanged(Type.Dress, null)
-                                        }
-                                        if (layoutState == OutfitLayoutMode.FOUR_LAYERS &&
-                                            selectedTshirtId != null && selectedPulloverId != null
-                                        ) {
+                            // Thin vertical divider
+                            Box(
+                                modifier = Modifier
+                                    .width(1.dp)
+                                    .height(28.dp)
+                                    .background(MaterialTheme.colorScheme.outlineVariant)
+                            )
+                            // Layer-count state buttons
+                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                StateButton(
+                                    brickCount = 2,
+                                    selected = layoutState == OutfitLayoutMode.TWO_LAYERS,
+                                    enabled = !isGrid,
+                                    onClick = {
+                                        if (layoutState != OutfitLayoutMode.TWO_LAYERS) {
+                                            onSlotChanged(Type.TShirt, null)
                                             onSlotChanged(Type.Pullover, null)
+                                            onSlotChanged(Type.Pants, null)
+                                            onSlotChanged(Type.Skirt, null)
+                                            layoutState = OutfitLayoutMode.TWO_LAYERS
+                                            onLayoutStateChanged(layoutState, showJacket)
                                         }
-                                        layoutState = OutfitLayoutMode.THREE_LAYERS
-                                        onLayoutStateChanged(layoutState, showJacket)
                                     }
-                                }
-                            )
-                            StateButton(
-                                brickCount = 4,
-                                selected = layoutState == OutfitLayoutMode.FOUR_LAYERS,
-                                enabled = !isGrid,
-                                onClick = {
-                                    if (layoutState != OutfitLayoutMode.FOUR_LAYERS) {
-                                        if (layoutState == OutfitLayoutMode.TWO_LAYERS) {
-                                            onSlotChanged(Type.Dress, null)
+                                )
+                                StateButton(
+                                    brickCount = 3,
+                                    selected = layoutState == OutfitLayoutMode.THREE_LAYERS,
+                                    enabled = !isGrid,
+                                    onClick = {
+                                        if (layoutState != OutfitLayoutMode.THREE_LAYERS) {
+                                            if (layoutState == OutfitLayoutMode.TWO_LAYERS) {
+                                                onSlotChanged(Type.Dress, null)
+                                            }
+                                            if (layoutState == OutfitLayoutMode.FOUR_LAYERS &&
+                                                selectedTshirtId != null && selectedPulloverId != null
+                                            ) {
+                                                onSlotChanged(Type.Pullover, null)
+                                            }
+                                            layoutState = OutfitLayoutMode.THREE_LAYERS
+                                            onLayoutStateChanged(layoutState, showJacket)
                                         }
-                                        layoutState = OutfitLayoutMode.FOUR_LAYERS
-                                        onLayoutStateChanged(layoutState, showJacket)
                                     }
-                                }
-                            )
+                                )
+                                StateButton(
+                                    brickCount = 4,
+                                    selected = layoutState == OutfitLayoutMode.FOUR_LAYERS,
+                                    enabled = !isGrid,
+                                    onClick = {
+                                        if (layoutState != OutfitLayoutMode.FOUR_LAYERS) {
+                                            if (layoutState == OutfitLayoutMode.TWO_LAYERS) {
+                                                onSlotChanged(Type.Dress, null)
+                                            }
+                                            layoutState = OutfitLayoutMode.FOUR_LAYERS
+                                            onLayoutStateChanged(layoutState, showJacket)
+                                        }
+                                    }
+                                )
+                            }
                         }
-                        // Thin vertical divider before Grid button
                         Box(
                             modifier = Modifier
-                                .width(1.dp)
+                                .width(4.dp)
                                 .height(28.dp)
                                 .background(MaterialTheme.colorScheme.outlineVariant)
                         )
