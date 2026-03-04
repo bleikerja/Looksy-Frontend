@@ -540,7 +540,7 @@ fun FullOutfitScreen(
                     
                             onGenerateRandom()
                         },
-                        modifier = Modifier.size(40.dp)
+                        modifier = Modifier.size(45.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Shuffle,
@@ -693,7 +693,7 @@ fun FullOutfitScreen(
                                     }
                                 },
                                 modifier = Modifier
-                                    .size(40.dp)
+                                    .size(45.dp)
                                     .alpha(if (buttonsEnabled) 1f else 0.3f)
                             ) {
                                 Icon(
@@ -716,7 +716,7 @@ fun FullOutfitScreen(
                                 // Refresh button (when confirmed)
                                 IconButton(
                                     onClick = { showConfirmDialog = true },
-                                    modifier = Modifier.size(40.dp)
+                                    modifier = Modifier.size(45.dp)
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Refresh,
@@ -734,7 +734,7 @@ fun FullOutfitScreen(
                                         }
                                     },
                                     modifier = Modifier
-                                        .size(40.dp)
+                                        .size(45.dp)
                                         .alpha(if (buttonsEnabled) 1f else 0.3f)
                                 ) {
                                     Icon(
@@ -1250,7 +1250,7 @@ private fun BrickIcon(
     color: Color,
     modifier: Modifier = Modifier
 ) {
-    Canvas(modifier = modifier.size(24.dp)) {
+    Canvas(modifier = modifier.size(28.dp)) {
         val totalHeight = size.height
         val totalWidth = size.width
         val gap = 2.dp.toPx()
@@ -1287,11 +1287,11 @@ private fun JacketBrickButton(
     IconButton(
         onClick = { if (enabled) onClick() },
         modifier = modifier
-            .size(40.dp)
+            .size(50.dp)
             .clip(RoundedCornerShape(10.dp))
             .background(bgColor)
     ) {
-        Canvas(modifier = Modifier.size(24.dp)) {
+        Canvas(modifier = Modifier.size(28.dp)) {
             val cornerRadius = 3.dp.toPx()
             val brickWidth = size.width * 0.42f
             drawRoundRect(
@@ -1323,7 +1323,7 @@ private fun StateButton(
     IconButton(
         onClick = { if (enabled) onClick() },
         modifier = modifier
-            .size(40.dp)
+            .size(50.dp)
             .clip(RoundedCornerShape(10.dp))
             .background(bgColor)
     ) {
@@ -1338,7 +1338,7 @@ private fun GridBrickIcon(
     color: Color,
     modifier: Modifier = Modifier
 ) {
-    Canvas(modifier = modifier.size(24.dp)) {
+    Canvas(modifier = modifier.size(28.dp)) {
         val totalHeight = size.height
         val totalWidth = size.width
         val gap = 2.dp.toPx()
@@ -1379,7 +1379,7 @@ private fun GridModeButton(
     IconButton(
         onClick = onClick,
         modifier = modifier
-            .size(40.dp)
+            .size(50.dp)
             .clip(RoundedCornerShape(10.dp))
             .background(bgColor)
     ) {
