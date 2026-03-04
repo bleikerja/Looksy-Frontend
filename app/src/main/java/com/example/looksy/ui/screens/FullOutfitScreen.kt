@@ -58,6 +58,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.Crossfade
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -652,17 +655,41 @@ fun FullOutfitScreen(
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         val isGridMode = layoutState == OutfitLayoutMode.GRID
                         val buttonsEnabled = !isGridMode || gridOutfitValid
+                        
+                        // Animation state for save button
+                        var saveButtonAnimated by remember { mutableStateOf(false) }
+                        val saveButtonColor by animateColorAsState(
+                            targetValue = if (saveButtonAnimated) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            animationSpec = tween(durationMillis = 300),
+                            label = "saveButtonColor"
+                        )
+                        LaunchedEffect(saveButtonAnimated) {
+                            if (saveButtonAnimated) {
+                                kotlinx.coroutines.delay(400)
+                                saveButtonAnimated = false
+                            }
+                        }
+                        
+                        // Animation state for confirm button
+                        var confirmButtonAnimated by remember { mutableStateOf(false) }
+                        val confirmButtonColor by animateColorAsState(
+                            targetValue = if (confirmButtonAnimated) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            animationSpec = tween(durationMillis = 300),
+                            label = "confirmButtonColor"
+                        )
+                        LaunchedEffect(confirmButtonAnimated) {
+                            if (confirmButtonAnimated) {
+                                kotlinx.coroutines.delay(400)
+                                confirmButtonAnimated = false
+                            }
+                        }
+                        
                         if(!editSavedOutfit) {
                             IconButton(
                                 onClick = {
                                     if (buttonsEnabled) {
+                                        saveButtonAnimated = true
                                         onSave()
-                                        scope.launch {
-                                            snackbarHostState.showSnackbar(
-                                                "Outfit gespeichert",
-                                                duration = SnackbarDuration.Short
-                                            )
-                                        }
                                     }
                                 },
                                 modifier = Modifier
@@ -672,96 +699,105 @@ fun FullOutfitScreen(
                                 Icon(
                                     imageVector = Icons.Default.Bookmark,
                                     contentDescription = "Outfit speichern",
-                                    modifier = Modifier.fillMaxSize()
+                                    modifier = Modifier.fillMaxSize(),
+                                    tint = saveButtonColor
                                 )
                             }
                         }
-                        if (!confirmedOutfit) {
-                            IconButton(
-                                onClick = {
-                                    if (buttonsEnabled) {
-                                        onConfirm(allWornItems)
-                                        scope.launch {
-                                            snackbarHostState.showSnackbar(
-                                                "Schön, dass dir das Outfit gefällt und du es anziehst",
-                                                duration = SnackbarDuration.Short
-                                            )
+                        
+                        // Animated transition between Check and Refresh icons
+                        var showConfirmDialog by remember { mutableStateOf(false) }
+                        Crossfade(
+                            targetState = confirmedOutfit,
+                            animationSpec = tween(durationMillis = 300),
+                            label = "confirmRefreshCrossfade"
+                        ) { isConfirmed ->
+                            if (isConfirmed) {
+                                // Refresh button (when confirmed)
+                                IconButton(
+                                    onClick = { showConfirmDialog = true },
+                                    modifier = Modifier.size(40.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Refresh,
+                                        contentDescription = "Neues Outfit",
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                }
+                            } else {
+                                // Confirm button (Check icon - when not confirmed)
+                                IconButton(
+                                    onClick = {
+                                        if (buttonsEnabled) {
+                                            confirmButtonAnimated = true
+                                            onConfirm(allWornItems)
+                                        }
+                                    },
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .alpha(if (buttonsEnabled) 1f else 0.3f)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "Outfit anziehen",
+                                        modifier = Modifier.fillMaxSize(),
+                                        tint = confirmButtonColor
+                                    )
+                                }
+                            }
+                        }
+                        
+                        // Dialog for "wear new outfit" confirmation
+                        if (showConfirmDialog) {
+                            val wornClothes = allWornItems
+                            var selectedIds by remember {
+                                mutableStateOf(wornClothes.map { it.id }.toSet())
+                            }
+                            AlertDialog(
+                                onDismissRequest = { showConfirmDialog = false },
+                                title = { Text(text = "Neues Outfit") },
+                                text = {
+                                    Column {
+                                        Text(
+                                            text = "Welche Kleider sollen als schmutzig markiert werden?",
+                                            modifier = Modifier.padding(bottom = 12.dp)
+                                        )
+                                        LazyVerticalGrid(
+                                            columns = GridCells.Fixed(2),
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            items(wornClothes) { clothItem ->
+                                                val isSelected = clothItem.id in selectedIds
+                                                WashingItemContainer(
+                                                    item = clothItem,
+                                                    isSelected = isSelected,
+                                                    onClick = {
+                                                        selectedIds =
+                                                            if (isSelected) selectedIds - clothItem.id
+                                                            else selectedIds + clothItem.id
+                                                    }
+                                                )
+                                            }
                                         }
                                     }
                                 },
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .alpha(if (buttonsEnabled) 1f else 0.3f)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Check,
-                                    contentDescription = "Outfit anziehen",
-                                    modifier = Modifier.fillMaxSize()
-                                )
-                            }
-                        } else {
-                            var showConfirmDialog by remember { mutableStateOf(false) }
-                            IconButton(
-                                onClick = { showConfirmDialog = true },
-                                modifier = Modifier.size(40.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Refresh,
-                                    contentDescription = "Neues Outfit",
-                                    modifier = Modifier.fillMaxSize()
-                                )
-                            }
-                            if (showConfirmDialog) {
-                                val wornClothes = allWornItems
-                                var selectedIds by remember {
-                                    mutableStateOf(wornClothes.map { it.id }.toSet())
-                                }
-                                AlertDialog(
-                                    onDismissRequest = { showConfirmDialog = false },
-                                    title = { Text(text = "Neues Outfit") },
-                                    text = {
-                                        Column {
-                                            Text(
-                                                text = "Welche Kleider sollen als schmutzig markiert werden?",
-                                                modifier = Modifier.padding(bottom = 12.dp)
-                                            )
-                                            LazyVerticalGrid(
-                                                columns = GridCells.Fixed(2),
-                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                                            ) {
-                                                items(wornClothes) { clothItem ->
-                                                    val isSelected = clothItem.id in selectedIds
-                                                    WashingItemContainer(
-                                                        item = clothItem,
-                                                        isSelected = isSelected,
-                                                        onClick = {
-                                                            selectedIds =
-                                                                if (isSelected) selectedIds - clothItem.id
-                                                                else selectedIds + clothItem.id
-                                                        }
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    },
-                                    confirmButton = {
-                                        Button(onClick = {
-                                            onMoveToWashingMachine(
-                                                wornClothes.filter { it.id in selectedIds },
-                                                wornClothes.filter { it.id !in selectedIds }
-                                            )
-                                            showConfirmDialog = false
-                                        }) { Text("Weiter") }
-                                    },
-                                    dismissButton = {
-                                        Button(onClick = { showConfirmDialog = false }) {
-                                            Text("Abbrechen")
-                                        }
-                                    },
-                                    shape = RoundedCornerShape(16.dp)
-                                )
-                            }
+                                confirmButton = {
+                                    Button(onClick = {
+                                        onMoveToWashingMachine(
+                                            wornClothes.filter { it.id in selectedIds },
+                                            wornClothes.filter { it.id !in selectedIds }
+                                        )
+                                        showConfirmDialog = false
+                                    }) { Text("Weiter") }
+                                },
+                                dismissButton = {
+                                    Button(onClick = { showConfirmDialog = false }) {
+                                        Text("Abbrechen")
+                                    }
+                                },
+                                shape = RoundedCornerShape(16.dp)
+                            )
                         }
                     }
                 }
