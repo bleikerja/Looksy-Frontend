@@ -43,13 +43,13 @@ class Converters {
     }
 
     @TypeConverter
-    fun fromMaterial(material: Material): String {
-        return material.name
+    fun fromMaterial(material: Material?): String? {
+        return material?.name
     }
 
     @TypeConverter
-    fun toMaterial(materialString: String): Material {
-        return Material.valueOf(materialString)
+    fun toMaterial(materialString: String?): Material? {
+        return materialString?.let { Material.valueOf(it) }
     }
 
     @TypeConverter

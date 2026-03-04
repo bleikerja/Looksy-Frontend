@@ -140,16 +140,23 @@ object OutfitCompatibilityCalculator {
     }
     
     /**
-     * Calculates season compatibility score (0-100 points)
+     * Calculates season compatibility score (0-100 points).
+     * AllYear and NoSeason items are ignored (they are compatible with any season).
      */
     private fun calculateSeasonCompatibility(items: List<Clothes>): Double {
         if (items.isEmpty()) return 0.0
-        
-        val seasons = items.map { it.seasonUsage }
-        val uniqueSeasons = seasons.distinct()
+
+        // Filter out items with AllYear / NoSeason — they are always compatible
+        val relevantItems = items.filter {
+            it.seasonUsage != Season.AllYear && it.seasonUsage != Season.NoSeason
+        }
+        // If all items are AllYear/NoSeason, full score
+        if (relevantItems.isEmpty()) return 100.0
+
+        val uniqueSeasons = relevantItems.map { it.seasonUsage }.distinct()
         
         return when {
-            // All items have the same season
+            // All remaining items have the same season
             uniqueSeasons.size == 1 -> 100.0
             // Mostly matching (2 seasons, one is inBetween)
             uniqueSeasons.size == 2 && uniqueSeasons.contains(Season.inBetween) -> 70.0
@@ -161,7 +168,8 @@ object OutfitCompatibilityCalculator {
     }
     
     /**
-     * Calculates material combination score (0-100 points)
+     * Calculates material combination score (0-100 points).
+     * Items with null material are skipped (they are compatible with anything).
      */
     private fun calculateMaterialCompatibility(items: List<Clothes>): Double {
         if (items.size < 2) return 100.0 // Perfect score if only one item
@@ -169,10 +177,13 @@ object OutfitCompatibilityCalculator {
         var totalScore = 0.0
         var pairCount = 0
         
-        // Calculate combination score for all item pairs
+        // Calculate combination score for all item pairs; skip any pair with a null material
         for (i in items.indices) {
             for (j in i + 1 until items.size) {
-                val score = getMaterialPairScore(items[i].material, items[j].material)
+                val m1 = items[i].material
+                val m2 = items[j].material
+                if (m1 == null || m2 == null) continue // null = unknown, always compatible
+                val score = getMaterialPairScore(m1, m2)
                 totalScore += score
                 pairCount++
             }
@@ -182,7 +193,7 @@ object OutfitCompatibilityCalculator {
     }
     
     /**
-     * Returns the combination score for two materials
+     * Returns the combination score for two non-null materials.
      */
     private fun getMaterialPairScore(material1: Material, material2: Material): Double {
         // Same material is a perfect combination
