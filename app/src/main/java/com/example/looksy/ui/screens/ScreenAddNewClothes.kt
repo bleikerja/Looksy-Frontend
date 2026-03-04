@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,9 +28,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -38,6 +41,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.core.net.toUri
 import coil.compose.AsyncImage
@@ -83,9 +87,21 @@ fun AddNewClothesScreen(
     var color by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.color) }
     var washingNotes by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.washingNotes ?: emptyList()) }
     var clean by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.clean ?: true) }
+    var brand by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.brand ?: "") }
+    var comment by remember(clothesToEdit) { mutableStateOf(clothesToEdit?.comment ?: "") }
+
+    // Reset size when switching between shoe and non-shoe to avoid incompatible sizes staying
+    val previousTypeIsShoe = remember { mutableStateOf(clothesToEdit?.type == Type.Shoes) }
+    LaunchedEffect(type) {
+        val currentTypeIsShoe = type == Type.Shoes
+        if (currentTypeIsShoe != previousTypeIsShoe.value) {
+            size = null
+            previousTypeIsShoe.value = currentTypeIsShoe
+        }
+    }
 
     val isFormValid =
-                size != null && season != null && type != null && material != null && washingNotes.isNotEmpty()
+                size != null && season != null && type != null && washingNotes.isNotEmpty()
     var edited by remember { mutableStateOf(false) }
 
     val imageToShowUri = remember(clothesToEdit, imageUriString) {
@@ -165,8 +181,10 @@ fun AddNewClothesScreen(
                         size = size!!,
                         seasonUsage = season!!,
                         type = type!!,
-                        material = material!!,
+                        material = material,
                         color = color,
+                        brand = brand.takeIf { it.isNotBlank() },
+                        comment = comment.takeIf { it.isNotBlank() },
                         clean = clean, // Behalte den alten Status oder setze auf sauber
                         washingNotes = washingNotes,
                         // Der imagePath wird erst in Routes.kt final gesetzt!
@@ -193,16 +211,18 @@ fun AddNewClothesScreen(
                 imageUri = imageToShowUri,
                 onEditImage = { onEditImage(); edited = true },
                 onEditPhoto = { onCropPhoto(); edited = true },
-                size = size,
-                onSizeChange = { size = it; edited = true },
-                season = season,
-                onSeasonChange = { season = it; edited = true },
                 type = type,
                 onTypeChange = { type = it; edited = true },
-                material = material,
-                onMaterialChange = { material = it; edited = true },
+                size = size,
+                onSizeChange = { size = it; edited = true },
+                brand = brand,
+                onBrandChange = { brand = it; edited = true },
+                season = season,
+                onSeasonChange = { season = it; edited = true },
                 color = color,
                 onColorChange = { color = it; edited = true },
+                material = material,
+                onMaterialChange = { material = it; edited = true },
                 washingNotes = washingNotes,
                 onWashingNotesChange = { note ->
                     washingNotes = if (washingNotes.contains(note)) {
@@ -212,6 +232,8 @@ fun AddNewClothesScreen(
                     }
                     edited = true
                 },
+                comment = comment,
+                onCommentChange = { comment = it; edited = true },
                 clean = clean,
                 onCleanChange = { clean = it; edited = true },
                 edit = (clothesIdToEdit != null)
@@ -228,39 +250,49 @@ private fun AddNewClothesForm(
     imageUri: Uri?,
     onEditImage: () -> Unit,
     onEditPhoto: () -> Unit = {},
-    size: Size?,
-    onSizeChange: (Size) -> Unit,
-    season: Season?,
-    onSeasonChange: (Season) -> Unit,
     type: Type?,
     onTypeChange: (Type) -> Unit,
-    material: Material?,
-    onMaterialChange: (Material) -> Unit,
+    size: Size?,
+    onSizeChange: (Size) -> Unit,
+    brand: String,
+    onBrandChange: (String) -> Unit,
+    season: Season?,
+    onSeasonChange: (Season) -> Unit,
     color: ClothesColor?,
     onColorChange: (ClothesColor?) -> Unit,
+    material: Material?,
+    onMaterialChange: (Material?) -> Unit,
     washingNotes: List<WashingNotes>,
     onWashingNotesChange: (WashingNotes) -> Unit,
+    comment: String,
+    onCommentChange: (String) -> Unit,
     clean: Boolean,
     onCleanChange: (Boolean) -> Unit,
     edit: Boolean,
     modifier: Modifier = Modifier
 ) {
+    val halfScreenHeight = (LocalConfiguration.current.screenHeightDp / 3).dp
+
     LazyColumn(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = PaddingValues(bottom = 100.dp) // Abstand oben, unten und seitlich
+        contentPadding = PaddingValues(bottom = 100.dp)
     ) {
         // --- BILD-VORSCHAU ---
         item {
-            Box {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = halfScreenHeight)
+            ) {
                 AsyncImage(
                     model = imageUri ?: R.drawable.clothicon,
                     contentDescription = "Neues Kleidungsstück",
                     modifier = Modifier
                         .fillMaxWidth()
+                        .heightIn(max = halfScreenHeight)
                         .clip(RoundedCornerShape(12.dp)),
-                    // Mit dieser Konfiguration ist FIT die richtige Wahl.
                     contentScale = ContentScale.Fit,
                     placeholder = painterResource(id = R.drawable.clothicon),
                     error = painterResource(id = R.drawable.wardrobe2icon),
@@ -312,42 +344,50 @@ private fun AddNewClothesForm(
 
         // --- EINGABEFELDER ---
 
+        // 1. Typ
         item {
             EnumDropdown(
-                "Größe",
-                Size.entries,
-                size,
-                onSizeChange,
-
-                )
+                label = "Typ",
+                options = Type.entries,
+                selectedOption = type,
+                onOptionSelected = onTypeChange,
+            )
         }
+
+        // 2. Größe — only enabled after type is chosen; list depends on type
+        item {
+            val sizeOptions = if (type == Type.Shoes) Size.shoeSizes else Size.standardSizes
+            EnumDropdown(
+                label = if (type == null) "Größe (erst Typ wählen)" else "Größe",
+                options = sizeOptions,
+                selectedOption = size,
+                onOptionSelected = onSizeChange,
+                enabled = type != null,
+            )
+        }
+
+        // 3. Marke (optional free-text)
+        item {
+            TextField(
+                value = brand,
+                onValueChange = onBrandChange,
+                label = { Text("Marke (optional)") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+            )
+        }
+
+        // 4. Saison
         item {
             EnumDropdown(
-                "Saison",
-                Season.entries,
-                season,
-                onSeasonChange,
-
-                )
+                label = "Saison",
+                options = Season.entries,
+                selectedOption = season,
+                onOptionSelected = onSeasonChange,
+            )
         }
-        item {
-            EnumDropdown(
-                "Typ",
-                Type.entries,
-                type,
-                onTypeChange,
 
-                )
-        }
-        item {
-            EnumDropdown(
-                "Material",
-                Material.entries,
-                material,
-                onMaterialChange,
-
-                )
-        }
+        // 5. Farbe (optional)
         item {
             OptionalEnumDropdown(
                 label = "Farbe (optional)",
@@ -357,6 +397,19 @@ private fun AddNewClothesForm(
                 optionDisplayName = { it.displayName }
             )
         }
+
+        // 6. Material (optional)
+        item {
+            OptionalEnumDropdown(
+                label = "Material (optional)",
+                options = Material.entries,
+                selectedOption = material,
+                onOptionSelected = onMaterialChange,
+                optionDisplayName = { it.displayName }
+            )
+        }
+
+        // 7. Waschhinweise
         item {
             MultiSelectDropdown(
                 label = "Waschhinweise",
@@ -367,7 +420,20 @@ private fun AddNewClothesForm(
                 },
             )
         }
-        if (edit){
+
+        // 8. Kommentar (optional free-text)
+        item {
+            TextField(
+                value = comment,
+                onValueChange = onCommentChange,
+                label = { Text("Kommentar (optional)") },
+                modifier = Modifier.fillMaxWidth(),
+                maxLines = 4,
+            )
+        }
+
+        // Sauberkeit (nur im Bearbeitungs-Modus)
+        if (edit) {
             item {
                 var expanded by remember { mutableStateOf(false) }
                 val options = listOf("Sauber", "Schmutzig")
@@ -394,7 +460,6 @@ private fun AddNewClothesForm(
                             DropdownMenuItem(
                                 text = { Text(selectionOption) },
                                 onClick = {
-                                    // Wandle den ausgewählten Text zurück in einen Boolean um
                                     onCleanChange(selectionOption == "Sauber")
                                     expanded = false
                                 }
@@ -414,26 +479,28 @@ fun <T> EnumDropdown(
     options: List<T>,
     selectedOption: T?,
     onOptionSelected: (T) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     var expanded by remember { mutableStateOf(false) }
 
     ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = !expanded },
+        expanded = expanded && enabled,
+        onExpandedChange = { if (enabled) expanded = !expanded },
         modifier = modifier
     ) {
         TextField(
             modifier = Modifier.menuAnchor(),
             readOnly = true,
+            enabled = enabled,
             value = selectedOption?.toString() ?: "",
             onValueChange = {},
             label = { Text(label) },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded && enabled) },
             colors = ExposedDropdownMenuDefaults.textFieldColors(),
         )
         ExposedDropdownMenu(
-            expanded = expanded,
+            expanded = expanded && enabled,
             onDismissRequest = { expanded = false },
         ) {
             options.forEach { selectionOption ->

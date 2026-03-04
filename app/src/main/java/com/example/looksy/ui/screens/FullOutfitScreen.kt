@@ -558,7 +558,7 @@ fun FullOutfitScreen(
                         
                         // Jacket toggle + State selector buttons (subrow with margin right)
                         Row(
-                            modifier = Modifier.padding(start = 16.dp, end = 16.dp),
+//                            modifier = Modifier.padding(start = 16.dp, end = 16.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(0.dp)
                         ) {

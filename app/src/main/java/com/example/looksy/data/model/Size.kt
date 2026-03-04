@@ -40,6 +40,14 @@ enum class Size(val displayName: String) {
             _XS, _S, _M, _L, _XL -> this
             else -> throw NoKnownSize("Keine Buchstabengröße für '${this.name}' bekannt.")
         }
+
+    companion object {
+        /** Sizes shown when Type.Shoes is selected (EU shoe range). */
+        val shoeSizes: List<Size> = listOf(_36, _37, _38, _39, _40, _41, _42, _43, _44, _45)
+
+        /** Sizes shown for all clothing types (letter sizes + even-numeric EU clothes sizing). */
+        val standardSizes: List<Size> = listOf(_XS, _S, _M, _L, _XL, _34, _36, _38, _40, _42, _44, _46, _48, _50, _52, _54, _56, _58, _60)
+    }
 }
 
 class NoKnownSize(message: String?) : RuntimeException(message)

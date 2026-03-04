@@ -24,7 +24,7 @@ class OutfitGeneratorTest {
         size: Size = Size._M,
         season: Season = Season.Summer,
         type: Type = Type.TShirt,
-        material: Material = Material.Cotton,
+        material: Material? = Material.Cotton,
         clean: Boolean = true,
         color: ClothesColor? = null
     ): Clothes = Clothes(

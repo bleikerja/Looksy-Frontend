@@ -115,7 +115,7 @@ fun SpecificCategoryScreen(
                 )
                 EnumDropdown(
                     "Material",
-                    categoryClothes.map { it.material }.distinct().sortedBy { it.ordinal },
+                    categoryClothes.mapNotNull { it.material }.distinct().sortedBy { it.ordinal },
                     material,
                     { material = it },
                     Modifier.width(300.dp)

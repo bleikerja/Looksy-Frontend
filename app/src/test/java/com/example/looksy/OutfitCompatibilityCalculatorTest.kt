@@ -20,7 +20,7 @@ class OutfitCompatibilityCalculatorTest {
         size: Size = Size._M,
         season: Season = Season.Summer,
         type: Type = Type.TShirt,
-        material: Material = Material.Cotton,
+        material: Material? = Material.Cotton,
         clean: Boolean = true,
         color: ClothesColor? = null
     ): Clothes {
@@ -455,5 +455,50 @@ class OutfitCompatibilityCalculatorTest {
 
         // Then - Should be a valid outfit with high score
         assertTrue("Pullover + pants should be a valid outfit with high score", score >= 70)
+    }
+
+    @Test
+    fun `AllYear season is always compatible with Summer`() {
+        val top = createClothes(id = 1, type = Type.TShirt, season = Season.AllYear)
+        val pants = createClothes(id = 2, type = Type.Pants, season = Season.Summer)
+        val outfit = OutfitResult(top, pants, null, null, null)
+        val score = OutfitCompatibilityCalculator.calculateCompatibilityScore(outfit)
+        assertTrue("AllYear + Summer should not be penalised for season mismatch", score >= 70)
+    }
+
+    @Test
+    fun `NoSeason is always compatible with Winter`() {
+        val top = createClothes(id = 1, type = Type.TShirt, season = Season.NoSeason)
+        val pants = createClothes(id = 2, type = Type.Pants, season = Season.Winter)
+        val outfit = OutfitResult(top, pants, null, null, null)
+        val score = OutfitCompatibilityCalculator.calculateCompatibilityScore(outfit)
+        assertTrue("NoSeason + Winter should not be penalised for season mismatch", score >= 70)
+    }
+
+    @Test
+    fun `AllYear outfit scores high`() {
+        val top = createClothes(id = 1, type = Type.TShirt, season = Season.AllYear)
+        val pants = createClothes(id = 2, type = Type.Pants, season = Season.AllYear)
+        val outfit = OutfitResult(top, pants, null, null, null)
+        val score = OutfitCompatibilityCalculator.calculateCompatibilityScore(outfit)
+        assertTrue("Two AllYear items should score high", score >= 80)
+    }
+
+    @Test
+    fun `null material items are compatible with anything`() {
+        val top = createClothes(id = 1, type = Type.TShirt, material = null, season = Season.Summer)
+        val pants = createClothes(id = 2, type = Type.Pants, material = null, season = Season.Summer)
+        val outfit = OutfitResult(top, pants, null, null, null)
+        val score = OutfitCompatibilityCalculator.calculateCompatibilityScore(outfit)
+        assertTrue("Outfit with all-null materials should still score > 0", score > 0)
+    }
+
+    @Test
+    fun `mixed null and non-null material is compatible`() {
+        val top = createClothes(id = 1, type = Type.TShirt, material = Material.Cotton, season = Season.Summer)
+        val pants = createClothes(id = 2, type = Type.Pants, material = null, season = Season.Summer)
+        val outfit = OutfitResult(top, pants, null, null, null)
+        val score = OutfitCompatibilityCalculator.calculateCompatibilityScore(outfit)
+        assertTrue("Mixed null/non-null material should still score > 0", score > 0)
     }
 }
