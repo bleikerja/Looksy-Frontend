@@ -579,12 +579,12 @@ fun FullOutfitScreen(
                                     .height(28.dp)
                                     .background(MaterialTheme.colorScheme.outlineVariant)
                             )
-                            // Layer-count state buttons
+                            // Layer-count state buttons (always enabled, can exit GRID mode)
                             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                 StateButton(
                                     brickCount = 2,
                                     selected = layoutState == OutfitLayoutMode.TWO_LAYERS,
-                                    enabled = !isGrid,
+                                    enabled = true,
                                     onClick = {
                                         if (layoutState != OutfitLayoutMode.TWO_LAYERS) {
                                             onSlotChanged(Type.TShirt, null)
@@ -599,7 +599,7 @@ fun FullOutfitScreen(
                                 StateButton(
                                     brickCount = 3,
                                     selected = layoutState == OutfitLayoutMode.THREE_LAYERS,
-                                    enabled = !isGrid,
+                                    enabled = true,
                                     onClick = {
                                         if (layoutState != OutfitLayoutMode.THREE_LAYERS) {
                                             if (layoutState == OutfitLayoutMode.TWO_LAYERS) {
@@ -610,6 +610,12 @@ fun FullOutfitScreen(
                                             ) {
                                                 onSlotChanged(Type.Pullover, null)
                                             }
+                                            if (layoutState == OutfitLayoutMode.GRID) {
+                                                // Exiting GRID mode: clear dress if it conflicts
+                                                if (selectedDressId != null && (selectedTshirtId != null || selectedPulloverId != null)) {
+                                                    onSlotChanged(Type.Dress, null)
+                                                }
+                                            }
                                             layoutState = OutfitLayoutMode.THREE_LAYERS
                                             onLayoutStateChanged(layoutState, showJacket)
                                         }
@@ -618,11 +624,17 @@ fun FullOutfitScreen(
                                 StateButton(
                                     brickCount = 4,
                                     selected = layoutState == OutfitLayoutMode.FOUR_LAYERS,
-                                    enabled = !isGrid,
+                                    enabled = true,
                                     onClick = {
                                         if (layoutState != OutfitLayoutMode.FOUR_LAYERS) {
                                             if (layoutState == OutfitLayoutMode.TWO_LAYERS) {
                                                 onSlotChanged(Type.Dress, null)
+                                            }
+                                            if (layoutState == OutfitLayoutMode.GRID) {
+                                                // Exiting GRID mode: clear dress if it conflicts
+                                                if (selectedDressId != null && (selectedTshirtId != null || selectedPulloverId != null)) {
+                                                    onSlotChanged(Type.Dress, null)
+                                                }
                                             }
                                             layoutState = OutfitLayoutMode.FOUR_LAYERS
                                             onLayoutStateChanged(layoutState, showJacket)
@@ -637,23 +649,16 @@ fun FullOutfitScreen(
                                 .height(28.dp)
                                 .background(MaterialTheme.colorScheme.outlineVariant)
                         )
-                        // Grid mode toggle
+                        // Grid mode toggle (only enters GRID, click does nothing when already in GRID)
                         GridModeButton(
                             selected = isGrid,
                             onClick = {
-                                if (isGrid) {
-                                    // Leave GRID → default to THREE_LAYERS
-                                    // Cleanup: if both dress and top are selected, clear dress
-                                    if (selectedDressId != null && (selectedTshirtId != null || selectedPulloverId != null)) {
-                                        onSlotChanged(Type.Dress, null)
-                                    }
-                                    layoutState = OutfitLayoutMode.THREE_LAYERS
-                                    onLayoutStateChanged(layoutState, showJacket)
-                                } else {
-                                    // Enter GRID mode
+                                if (!isGrid) {
+                                    // Enter GRID mode (only action)
                                     layoutState = OutfitLayoutMode.GRID
                                     onLayoutStateChanged(layoutState, showJacket)
                                 }
+                                // If already in GRID, clicking does nothing
                             }
                         )
                     }
