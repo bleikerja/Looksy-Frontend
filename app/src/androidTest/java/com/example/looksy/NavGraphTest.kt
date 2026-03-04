@@ -224,22 +224,24 @@ class NavGraphTest {
             navController.navigate(Routes.Home.route)
         }
         // 1. Home Screen: Klicke auf den Rock (testSkirt ist Type.Skirt -> "Rock")
-        composeTestRule.waitUntilAtLeastOneExists(hasContentDescription("Rock"), 10000)
-        composeTestRule.onNodeWithContentDescription("Rock").performClick()
+        composeTestRule.waitUntilAtLeastOneExists(hasContentDescription("T-Shirt/Longsleeve"), 10000)
+        composeTestRule.onNodeWithContentDescription("T-Shirt/Longsleeve").performClick()
         
         // 2. Details Screen
-        composeTestRule.waitUntilAtLeastOneExists(hasText("Details"), 10000)
+        composeTestRule.waitUntil(timeoutMillis = 10000) {
+            navController.currentDestination?.route == Routes.Details.route
+        }
         composeTestRule.onNodeWithContentDescription("Bearbeiten").performClick()
         
         // 3. Edit Screen
         composeTestRule.waitUntilAtLeastOneExists(hasText("Bearbeiten"), 10000)
-        composeTestRule.onNodeWithContentDescription("Löschen").performScrollTo().performClick()
+        composeTestRule.onNodeWithContentDescription("Löschen").performClick()
         
         // 4. Confirmation Dialog
         composeTestRule.onNode(hasText("Löschen") and hasClickAction()).performClick()
         
         // VERIFIKATION: Prüfe nur die ID
-        coVerify(timeout = 5000) { clothesViewModel.delete(match { it.id == testSkirt.id }) }
+        coVerify(timeout = 5000) { clothesViewModel.delete(match { it.id == testTop.id }) }
         composeTestRule.waitForIdle()
         
         // Warten auf Navigation zurück zu Home
@@ -249,7 +251,7 @@ class NavGraphTest {
         
         assert(navController.currentDestination?.route == Routes.Home.route)
         assert(clothesFlow.value.size == 2)
-        assert(clothesFlow.value.none { it.id == testSkirt.id })
+        assert(clothesFlow.value.none { it.id == testTop.id })
     }
 
     @Test
