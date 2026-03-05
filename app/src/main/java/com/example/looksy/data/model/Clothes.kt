@@ -26,5 +26,8 @@ data class Clothes(
     val imagePath: String = "",
     val isSynced: Boolean = false,
 
-    val wornClothes: Int = 0
+    val wornClothes: Int = 0,
+
+    /** True for clothes seeded by DemoDataManager — used to remove all demo items at once. */
+    val isDemoData: Boolean = false
 )

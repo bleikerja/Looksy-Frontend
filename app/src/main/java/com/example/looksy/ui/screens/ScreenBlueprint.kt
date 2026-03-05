@@ -36,6 +36,8 @@ import com.example.looksy.ui.components.ConfirmationDialog
 import com.example.looksy.ui.viewmodel.ClothesViewModelFactory
 import com.example.looksy.ui.viewmodel.OutfitViewModelFactory
 import com.example.looksy.ui.viewmodel.WeatherViewModelFactory
+import com.example.looksy.ui.viewmodel.DemoDataViewModel
+import com.example.looksy.ui.viewmodel.DemoDataViewModelFactory
 import com.example.looksy.ui.navigation.NavGraph
 import com.example.looksy.ui.viewmodel.ClothesViewModel
 import com.example.looksy.ui.viewmodel.OutfitViewModel
@@ -65,6 +67,9 @@ fun ScreenBlueprint(navController: NavHostController) {
     )
     val viewModelWeather: WeatherViewModel = viewModel(
         factory = WeatherViewModelFactory(application.weatherRepository, application.userPreferencesRepository)
+    )
+    val viewModelDemo: DemoDataViewModel = viewModel(
+        factory = DemoDataViewModelFactory(application.repository, application)
     )
     var nextRoute by remember { mutableStateOf(Routes.Home.route) }
     var showBackDialog by remember { mutableStateOf(false) }
@@ -141,7 +146,8 @@ fun ScreenBlueprint(navController: NavHostController) {
             ),
             clothesViewModel=viewModelClothes,
             outfitViewModel = viewModelOutfit,
-            weatherViewModel = viewModelWeather
+            weatherViewModel = viewModelWeather,
+            demoDataViewModel = viewModelDemo
         )
     }
 }

@@ -27,10 +27,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.CloudOff
-import androidx.compose.material.icons.filled.DomainDisabled
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.LocalLaundryService
@@ -61,6 +61,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.Crossfade
+import androidx.compose.material.icons.filled.DomainDisabled
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -125,7 +126,9 @@ fun FullOutfitScreen(
     permissionState: PermissionState = PermissionState.NOT_ASKED,
     isLocationEnabled: Boolean = true,
     onWeatherClick: () -> Unit = {},
-    editSavedOutfit: Boolean = false
+    editSavedOutfit: Boolean = false,
+    isDemoActive: Boolean = false,
+    onDemoToggle: () -> Unit = {},
 ) {
     val cleanClothes = allClothes.filter { it.clean }
 
@@ -202,7 +205,9 @@ fun FullOutfitScreen(
                     isLocationEnabled = isLocationEnabled,
                     onWeatherClick = onWeatherClick,
                     onWashingMachine = onWashingMachine,
-                    editSavedOutfit = editSavedOutfit
+                    editSavedOutfit = editSavedOutfit,
+                    isDemoActive = isDemoActive,
+                    onDemoToggle = onDemoToggle,
                 )
             },
             snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -831,7 +836,10 @@ fun FullOutfitScreen(
                         clothesData = null,
                         headerText = if(editSavedOutfit) "Outfit bearbeiten" else "Heutiges Outfit",
                         isFirstHeader = true,
-                        headerTextStart = true
+                        headerTextStart = true,
+                        secondRightIcon = if (isDemoActive) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
+                        secondRightIconContentDescription = if (isDemoActive) "Demo-Daten entfernen" else "Demo-Daten laden",
+                        onSecondRightIconClick = onDemoToggle,
                     )
                 }
             }
@@ -1520,6 +1528,8 @@ private fun FullOutfitTopBar(
     onWeatherClick: () -> Unit,
     onWashingMachine: () -> Unit,
     editSavedOutfit: Boolean = false,
+    isDemoActive: Boolean = false,
+    onDemoToggle: () -> Unit = {},
 ) {
     Box(modifier = Modifier.fillMaxWidth()) {
         if(editSavedOutfit) {
@@ -1546,7 +1556,10 @@ private fun FullOutfitTopBar(
                     rightIconContentDescription = "Zur Waschmaschine",
                     rightIcon = Icons.Default.LocalLaundryService,
                     isFirstHeader = true,
-                    headerTextStart = true
+                    headerTextStart = true,
+                    secondRightIcon = if (isDemoActive) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
+                    secondRightIconContentDescription = if (isDemoActive) "Demo-Daten entfernen" else "Demo-Daten laden",
+                    onSecondRightIconClick = onDemoToggle,
                 )
             }
 

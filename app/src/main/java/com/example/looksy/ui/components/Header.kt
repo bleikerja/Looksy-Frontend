@@ -1,6 +1,7 @@
 package com.example.looksy.ui.components
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -30,6 +31,11 @@ fun Header(
     rightIconSize: Float = 1F,
     isFirstHeader: Boolean = false,
     leftIcon: (@Composable (modifier: Modifier) -> Unit)? = null,
+    // ── Second icon slot (shown to the left of rightIcon) ──────────────
+    // Intended for the demo-mode toggle on the Home screen.
+    secondRightIcon: ImageVector? = null,
+    secondRightIconContentDescription: String? = null,
+    onSecondRightIconClick: () -> Unit = {},
 ) {
     Box(
         modifier = modifier
@@ -59,16 +65,28 @@ fun Header(
             modifier = if(headerTextStart) Modifier.align(Alignment.CenterStart) else Modifier.align(Alignment.Center)
         )
 
-        if (rightIcon != null && rightIconContentDescription != null) {
-            IconButton(
-                onClick = { onNavigateToRightIcon(clothesData?.id) },
-                modifier = Modifier.align(Alignment.CenterEnd)
-            ) {
-                Icon(
-                    imageVector = rightIcon,
-                    contentDescription = rightIconContentDescription,
-                    modifier = Modifier.fillMaxSize(rightIconSize)
-                )
+        // Right-side icon(s): demo toggle + optional primary action icon
+        val hasRightIcon = rightIcon != null && rightIconContentDescription != null
+        val hasSecondIcon = secondRightIcon != null && secondRightIconContentDescription != null
+        if (hasSecondIcon || hasRightIcon) {
+            Row(modifier = Modifier.align(Alignment.CenterEnd)) {
+                if (hasSecondIcon) {
+                    IconButton(onClick = onSecondRightIconClick) {
+                        Icon(
+                            imageVector = secondRightIcon!!,
+                            contentDescription = secondRightIconContentDescription
+                        )
+                    }
+                }
+                if (hasRightIcon) {
+                    IconButton(onClick = { onNavigateToRightIcon(clothesData?.id) }) {
+                        Icon(
+                            imageVector = rightIcon!!,
+                            contentDescription = rightIconContentDescription,
+                            modifier = Modifier.fillMaxSize(rightIconSize)
+                        )
+                    }
+                }
             }
         }
     }

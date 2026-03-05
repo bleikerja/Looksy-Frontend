@@ -1,0 +1,393 @@
+[
+  {
+    "type": "TShirt",
+    "size": "_M",
+    "season": "Summer",
+    "material": "Cotton",
+    "color": "White",
+    "brand": "Uniqlo",
+    "washingNotes": ["Temperature30", "HangingDry"],
+    "clean": true,
+    "imageName": "tshirt_1.jpg"
+  },
+  {
+    "type": "TShirt",
+    "size": "_S",
+    "season": "inBetween",
+    "material": "Cotton",
+    "color": "Black",
+    "brand": "H&M",
+    "washingNotes": ["Temperature40", "HangingDry"],
+    "clean": true,
+    "imageName": "tshirt_2.jpg"
+  },
+  {
+    "type": "TShirt",
+    "size": "_L",
+    "season": "Summer",
+    "material": "Polyester",
+    "color": "Blue",
+    "brand": "Nike",
+    "washingNotes": ["Temperature30", "HangingDry"],
+    "clean": false,
+    "imageName": "tshirt_3.jpg"
+  },
+  {
+    "type": "TShirt",
+    "size": "_XS",
+    "season": "AllYear",
+    "material": null,
+    "color": "Grey",
+    "brand": null,
+    "washingNotes": ["Temperature30"],
+    "clean": true,
+    "imageName": "tshirt_4.jpg"
+  },
+  {
+    "type": "TShirt",
+    "size": "_XL",
+    "season": "inBetween",
+    "material": "Cotton",
+    "color": "Navy",
+    "brand": "Zara",
+    "washingNotes": ["Temperature40", "HangingDry"],
+    "clean": true,
+    "imageName": "tshirt_5.jpg"
+  },
+
+  {
+    "type": "Pullover",
+    "size": "_M",
+    "season": "Winter",
+    "material": "Wool",
+    "color": "Beige",
+    "brand": "COS",
+    "washingNotes": ["Temperature30", "LyingDry"],
+    "clean": true,
+    "imageName": "pullover_1.jpg"
+  },
+  {
+    "type": "Pullover",
+    "size": "_L",
+    "season": "inBetween",
+    "material": "Cotton",
+    "color": "Grey",
+    "brand": "Arket",
+    "washingNotes": ["Temperature40", "HangingDry"],
+    "clean": true,
+    "imageName": "pullover_2.jpg"
+  },
+  {
+    "type": "Pullover",
+    "size": "_S",
+    "season": "Winter",
+    "material": "cashmere",
+    "color": "Burgundy",
+    "brand": "Mango",
+    "washingNotes": ["Temperature30", "LyingDry"],
+    "clean": false,
+    "imageName": "pullover_3.jpg"
+  },
+  {
+    "type": "Pullover",
+    "size": "_XL",
+    "season": "Winter",
+    "material": "Polyester",
+    "color": "Black",
+    "brand": null,
+    "washingNotes": ["Temperature40", "HangingDry"],
+    "clean": true,
+    "imageName": "pullover_4.jpg"
+  },
+  {
+    "type": "Pullover",
+    "size": "_M",
+    "season": "AllYear",
+    "material": "Cotton",
+    "color": "Olive",
+    "brand": "H&M",
+    "washingNotes": ["Temperature30", "HangingDry"],
+    "clean": true,
+    "imageName": "pullover_5.jpg"
+  },
+
+  {
+    "type": "Pants",
+    "size": "_38",
+    "season": "inBetween",
+    "material": "jeans",
+    "color": "Blue",
+    "brand": "Levi's",
+    "washingNotes": ["Temperature30", "HangingDry"],
+    "clean": true,
+    "imageName": "pants_1.jpg"
+  },
+  {
+    "type": "Pants",
+    "size": "_40",
+    "season": "inBetween",
+    "material": "jeans",
+    "color": "Black",
+    "brand": "Zara",
+    "washingNotes": ["Temperature30", "HangingDry"],
+    "clean": true,
+    "imageName": "pants_2.jpg"
+  },
+  {
+    "type": "Pants",
+    "size": "_36",
+    "season": "Summer",
+    "material": "linen",
+    "color": "Beige",
+    "brand": "COS",
+    "washingNotes": ["Temperature30", "HangingDry"],
+    "clean": false,
+    "imageName": "pants_3.jpg"
+  },
+  {
+    "type": "Pants",
+    "size": "_42",
+    "season": "Winter",
+    "material": "Polyester",
+    "color": "Grey",
+    "brand": "Arket",
+    "washingNotes": ["Temperature40", "HangingDry"],
+    "clean": true,
+    "imageName": "pants_4.jpg"
+  },
+  {
+    "type": "Pants",
+    "size": "_34",
+    "season": "AllYear",
+    "material": "Cotton",
+    "color": "Navy",
+    "brand": "Uniqlo",
+    "washingNotes": ["Temperature40", "HangingDry"],
+    "clean": true,
+    "imageName": "pants_5.jpg"
+  },
+
+  {
+    "type": "Skirt",
+    "size": "_S",
+    "season": "Summer",
+    "material": "linen",
+    "color": "White",
+    "brand": "Mango",
+    "washingNotes": ["Temperature30", "HangingDry"],
+    "clean": true,
+    "imageName": "skirt_1.jpg"
+  },
+  {
+    "type": "Skirt",
+    "size": "_M",
+    "season": "inBetween",
+    "material": "Cotton",
+    "color": "Pink",
+    "brand": "H&M",
+    "washingNotes": ["Temperature30", "HangingDry"],
+    "clean": true,
+    "imageName": "skirt_2.jpg"
+  },
+  {
+    "type": "Skirt",
+    "size": "_XS",
+    "season": "Summer",
+    "material": "silk",
+    "color": "Beige",
+    "brand": "Zara",
+    "washingNotes": ["Temperature30", "LyingDry"],
+    "clean": false,
+    "imageName": "skirt_3.jpg"
+  },
+  {
+    "type": "Skirt",
+    "size": "_L",
+    "season": "AllYear",
+    "material": "jeans",
+    "color": "Blue",
+    "brand": "Levi's",
+    "washingNotes": ["Temperature30", "HangingDry"],
+    "clean": true,
+    "imageName": "skirt_4.jpg"
+  },
+  {
+    "type": "Skirt",
+    "size": "_M",
+    "season": "inBetween",
+    "material": "Polyester",
+    "color": "Burgundy",
+    "brand": "COS",
+    "washingNotes": ["Temperature30", "HangingDry"],
+    "clean": true,
+    "imageName": "skirt_5.jpg"
+  },
+
+  {
+    "type": "Dress",
+    "size": "_S",
+    "season": "Summer",
+    "material": "linen",
+    "color": "White",
+    "brand": "Zara",
+    "washingNotes": ["Temperature30", "HangingDry"],
+    "clean": true,
+    "imageName": "dress_1.jpg"
+  },
+  {
+    "type": "Dress",
+    "size": "_M",
+    "season": "inBetween",
+    "material": "Cotton",
+    "color": "Black",
+    "brand": "Arket",
+    "washingNotes": ["Temperature30", "HangingDry"],
+    "clean": true,
+    "imageName": "dress_2.jpg"
+  },
+  {
+    "type": "Dress",
+    "size": "_XS",
+    "season": "Summer",
+    "material": "silk",
+    "color": "Pink",
+    "brand": "Mango",
+    "washingNotes": ["Temperature30", "LyingDry"],
+    "clean": false,
+    "imageName": "dress_3.jpg"
+  },
+  {
+    "type": "Dress",
+    "size": "_L",
+    "season": "AllYear",
+    "material": "Polyester",
+    "color": "Navy",
+    "brand": "H&M",
+    "washingNotes": ["Temperature40", "HangingDry"],
+    "clean": true,
+    "imageName": "dress_4.jpg"
+  },
+  {
+    "type": "Dress",
+    "size": "_M",
+    "season": "inBetween",
+    "material": "Cotton",
+    "color": "Green",
+    "brand": "COS",
+    "washingNotes": ["Temperature30", "HangingDry"],
+    "clean": true,
+    "imageName": "dress_5.jpg"
+  },
+
+  {
+    "type": "Jacket",
+    "size": "_M",
+    "season": "Winter",
+    "material": "Wool",
+    "color": "Black",
+    "brand": "Zara",
+    "washingNotes": ["noProfClean"],
+    "clean": true,
+    "imageName": "jacket_1.jpg"
+  },
+  {
+    "type": "Jacket",
+    "size": "_L",
+    "season": "inBetween",
+    "material": "Cotton",
+    "color": "Olive",
+    "brand": "COS",
+    "washingNotes": ["Temperature30", "HangingDry"],
+    "clean": true,
+    "imageName": "jacket_2.jpg"
+  },
+  {
+    "type": "Jacket",
+    "size": "_S",
+    "season": "Winter",
+    "material": "fur",
+    "color": "Brown",
+    "brand": "Mango",
+    "washingNotes": ["noProfClean"],
+    "clean": false,
+    "imageName": "jacket_3.jpg"
+  },
+  {
+    "type": "Jacket",
+    "size": "_XL",
+    "season": "inBetween",
+    "material": "Polyester",
+    "color": "Navy",
+    "brand": "Nike",
+    "washingNotes": ["Temperature40", "HangingDry"],
+    "clean": true,
+    "imageName": "jacket_4.jpg"
+  },
+  {
+    "type": "Jacket",
+    "size": "_M",
+    "season": "Winter",
+    "material": "Wool",
+    "color": "Grey",
+    "brand": "Arket",
+    "washingNotes": ["noProfClean"],
+    "clean": true,
+    "imageName": "jacket_5.jpg"
+  },
+
+  {
+    "type": "Shoes",
+    "size": "_38",
+    "season": "inBetween",
+    "material": null,
+    "color": "White",
+    "brand": "Adidas",
+    "washingNotes": ["None"],
+    "clean": true,
+    "imageName": "shoes_1.jpg"
+  },
+  {
+    "type": "Shoes",
+    "size": "_40",
+    "season": "Winter",
+    "material": null,
+    "color": "Black",
+    "brand": "Dr. Martens",
+    "washingNotes": ["None"],
+    "clean": true,
+    "imageName": "shoes_2.jpg"
+  },
+  {
+    "type": "Shoes",
+    "size": "_37",
+    "season": "Summer",
+    "material": null,
+    "color": "Beige",
+    "brand": "Birkenstock",
+    "washingNotes": ["None"],
+    "clean": false,
+    "imageName": "shoes_3.jpg"
+  },
+  {
+    "type": "Shoes",
+    "size": "_41",
+    "season": "AllYear",
+    "material": null,
+    "color": "Brown",
+    "brand": "Timberland",
+    "washingNotes": ["None"],
+    "clean": true,
+    "imageName": "shoes_4.jpg"
+  },
+  {
+    "type": "Shoes",
+    "size": "_39",
+    "season": "inBetween",
+    "material": null,
+    "color": "Navy",
+    "brand": "Converse",
+    "washingNotes": ["None"],
+    "clean": true,
+    "imageName": "shoes_5.jpg"
+  }
+]

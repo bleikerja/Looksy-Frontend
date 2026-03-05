@@ -41,4 +41,10 @@ interface ClothesDao {
 
     @Delete
     suspend fun deleteAll(clothes: List<Clothes>)
+
+    @Query("DELETE FROM clothes_table WHERE isDemoData = 1")
+    suspend fun deleteAllDemoClothes()
+
+    @Query("SELECT COUNT(*) > 0 FROM clothes_table WHERE isDemoData = 1")
+    fun hasDemoClothes(): Flow<Boolean>
 }

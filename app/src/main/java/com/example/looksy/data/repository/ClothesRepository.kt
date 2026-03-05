@@ -43,4 +43,10 @@ class ClothesRepository(private val clothesDao: ClothesDao) {
     suspend fun getByIdDirect(id: Int): Clothes? {
         return clothesDao.getByIdDirect(id)
     }
+
+    suspend fun deleteAllDemoClothes() {
+        clothesDao.deleteAllDemoClothes()
+    }
+
+    val hasDemoClothes: Flow<Boolean> = clothesDao.hasDemoClothes()
 }

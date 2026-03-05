@@ -47,6 +47,7 @@ import com.example.looksy.ui.screens.SavedOutfitsScreen
 import com.example.looksy.ui.screens.SpecificCategoryScreen
 import com.example.looksy.ui.screens.WashingMachineScreen
 import com.example.looksy.ui.viewmodel.OutfitViewModel
+import com.example.looksy.ui.viewmodel.DemoDataViewModel
 import com.example.looksy.util.generateRandomOutfit
 import com.example.looksy.util.saveImagePermanently
 import kotlinx.coroutines.launch
@@ -59,7 +60,8 @@ fun NavGraph(
     modifier: Modifier = Modifier,
     clothesViewModel: ClothesViewModel,
     outfitViewModel: OutfitViewModel,
-    weatherViewModel: WeatherViewModel
+    weatherViewModel: WeatherViewModel,
+    demoDataViewModel: DemoDataViewModel
 ) {
     val allClothesFromDb by clothesViewModel.allClothes.collectAsState(initial = emptyList())
     val allOutfitsFromDb by outfitViewModel.allOutfits.collectAsState(initial = emptyList())
@@ -121,6 +123,7 @@ fun NavGraph(
 
             val application = LocalContext.current.applicationContext as LooksyApplication
             val weatherState by weatherViewModel.weatherState.collectAsState()
+            val isDemoActive by demoDataViewModel.isDemoActive.collectAsState()
             val scope = rememberCoroutineScope()
 
             // Update permission and location state
@@ -258,7 +261,9 @@ fun NavGraph(
                     currentLayoutMode = mode
                     currentJacketVisible = jacketVisible
                     isGridMode = mode == OutfitLayoutMode.GRID
-                }
+                },
+                isDemoActive = isDemoActive,
+                onDemoToggle = { demoDataViewModel.toggleDemo() }
             )
         }
 
