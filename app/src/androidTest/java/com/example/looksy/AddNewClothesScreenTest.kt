@@ -79,49 +79,31 @@ class AddNewClothesScreenTest {
             )
         }
 
-        // Fill in Size
-        composeTestRule.onNodeWithText("Größe").performClick()
-        composeTestRule.onNodeWithText("M").performClick()
+        // 1. Open Typ accordion → select T-Shirt/Longsleeve
+        composeTestRule.onNodeWithText("Typ").performScrollTo().performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("T-Shirt/Longsleeve").performScrollTo().performClick()
+        composeTestRule.waitForIdle()
 
-        // Fill in Season
-        composeTestRule.onNodeWithText("Saison").performClick()
-        composeTestRule.onNodeWithText("Sommer").performClick()
+        // 2. Open Größe accordion → select M
+        composeTestRule.onNodeWithText("Größe").performScrollTo().performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("M").performScrollTo().performClick()
+        composeTestRule.waitForIdle()
 
-        // Fill in Type
-        composeTestRule.onNodeWithText("Typ").performClick()
-        composeTestRule.onNodeWithText("T-Shirt", substring = true).performClick()
+        // 3. Open Saison accordion → select Sommer
+        composeTestRule.onNodeWithText("Saison").performScrollTo().performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("Sommer").performScrollTo().performClick()
+        composeTestRule.waitForIdle()
 
-        // Fill in Material
-        composeTestRule.onNodeWithText("Material").performClick()
-        composeTestRule.onNodeWithText("Baumwolle").performClick()
-
-        // Fill in WashingNotes
+        // 4. Open Waschhinweise accordion → select Waschen 40°C
         composeTestRule.onNodeWithText("Waschhinweise").performScrollTo().performClick()
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText(" Waschen 40°C", substring = true).performScrollTo()
-            .performClick()
-        composeTestRule.waitForIdle()
-        // 2. MANUELLER SCROLL: Um tiefer liegende Elemente wie " Kein Trockner" sicher zu erreichen,
-        // scrollen wir den Container im Popup manuell per Swipe nach oben.
-        composeTestRule.onNode(hasScrollAction() and hasAnyAncestor(isPopup()))
-            .performTouchInput {
-                swipeUp(durationMillis = 1000)
-            }
+        composeTestRule.onNodeWithText("Waschen 40°C").performScrollTo().performClick()
         composeTestRule.waitForIdle()
 
-        // 3. Ziel-Element auswählen. Exakter Text verhindert Verwechslungen.
-        composeTestRule.onNode(hasText(" Bleichen") and hasAnyAncestor(isPopup()))
-            .performScrollTo() // Falls der Swipe noch nicht ganz gereicht hat
-            .performClick()
-        composeTestRule.waitForIdle()
-
-        // Dropdown schließen, damit der Speichern-Button nicht überlagert wird
-        composeTestRule.onNodeWithText("Waschhinweise").performClick()
-        composeTestRule.waitForIdle()
-
-        composeTestRule.waitForIdle()
-        // Close dropdown if necessary or just click outside, but MultiSelectDropdown might stay open
-        // Check if "Speichern" button is enabled
+        // Save button should now be enabled
         composeTestRule
             .onNodeWithText("Speichern")
             .assertIsEnabled()
@@ -138,34 +120,23 @@ class AddNewClothesScreenTest {
             )
         }
 
-        // Open WashingNotes dropdown
+        // Open the WashingNotes accordion
         composeTestRule.onNodeWithText("Waschhinweise").performScrollTo().performClick()
         composeTestRule.waitForIdle()
-        // 1. Test Handwäsche vs Temperature washing
-        // Select Handwäsche - use leading space and substring to be robust
-        composeTestRule.onNodeWithText(" Handwäsche", substring = true).performScrollTo()
-            .performClick()
-        composeTestRule.waitForIdle()
-        // Check if "Waschen 30°C" is disabled
-        composeTestRule.onNodeWithText(" Waschen 30°C", substring = true).performScrollTo()
-            .assertIsNotEnabled()
-        // 2. MANUELLER SCROLL: Um tiefer liegende Elemente wie " Kein Trockner" sicher zu erreichen,
-        // scrollen wir den Container im Popup manuell per Swipe nach oben.
-        composeTestRule.onNode(hasScrollAction() and hasAnyAncestor(isPopup()))
-            .performTouchInput {
-                swipeUp(durationMillis = 1000)
-            }
+
+        // Select Handwäsche
+        composeTestRule.onNodeWithText("Handwäsche").performScrollTo().performClick()
         composeTestRule.waitForIdle()
 
-        // 3. Ziel-Element auswählen. Exakter Text verhindert Verwechslungen.
-        composeTestRule.onNode(hasText(" Bleichen") and hasAnyAncestor(isPopup()))
-            .performScrollTo() // Falls der Swipe noch nicht ganz gereicht hat
-            .performClick()
+        // Waschen 30°C must now be disabled (conflicts with Handwäsche)
+        composeTestRule.onNodeWithText("Waschen 30°C").performScrollTo().assertIsNotEnabled()
+
+        // Select Bleichen
+        composeTestRule.onNodeWithText("Bleichen").performScrollTo().performClick()
         composeTestRule.waitForIdle()
 
-        // Check if "Kein Trockner" is disabled
-        composeTestRule.onNodeWithText(" Nicht Bleichen", substring = true).performScrollTo()
-            .assertIsNotEnabled()
+        // Nicht Bleichen must now be disabled (conflicts with Bleichen)
+        composeTestRule.onNodeWithText("Nicht Bleichen").performScrollTo().assertIsNotEnabled()
     }
 
     @Test
@@ -179,17 +150,21 @@ class AddNewClothesScreenTest {
             )
         }
 
-        // Open WashingNotes dropdown
+        // Open the WashingNotes accordion
         composeTestRule.onNodeWithText("Waschhinweise").performScrollTo().performClick()
+        composeTestRule.waitForIdle()
 
-        // Select "-" (None)
-        // Since it's exactly "-", we use substring=false or careful matching
-        composeTestRule.onNodeWithText("—", useUnmergedTree = true).performClick()
+        // Select "—" (WashingNotes.None).
+        // Multiple "—" texts exist in the form (accordion row headers for Color and Material),
+        // but only the pill chips are toggleable (FilterChip), so we narrow by isToggleable().
+        composeTestRule
+            .onAllNodes(hasText("—") and isToggleable())[0]
+            .performScrollTo()
+            .performClick()
+        composeTestRule.waitForIdle()
 
-        // Note: The "None" option conflicts with all others via WashingNotes.getConflicts().
-        // The dropdown items may render as visually disabled (alpha) rather than semantically
-        // disabled; verify the other still-clickable items exist in the UI at minimum.
+        // Other chips must still be present in the tree
         composeTestRule.onNodeWithText("Handwäsche", substring = true).assertExists()
-        composeTestRule.onNodeWithText(" Trockner").assertExists()
+        composeTestRule.onNodeWithText("Trockner").assertExists()
     }
 }

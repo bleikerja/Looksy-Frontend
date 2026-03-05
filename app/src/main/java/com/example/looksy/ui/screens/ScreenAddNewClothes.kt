@@ -55,8 +55,11 @@ import com.example.looksy.data.model.Season
 import com.example.looksy.data.model.Size
 import com.example.looksy.data.model.Type
 import com.example.looksy.data.model.WashingNotes
+import com.example.looksy.ui.components.ColorSelectAccordion
 import com.example.looksy.ui.components.ConfirmationDialog
-import com.example.looksy.ui.components.MultiSelectDropdown
+import com.example.looksy.ui.components.OptionalSingleSelectAccordion
+import com.example.looksy.ui.components.SingleSelectAccordion
+import com.example.looksy.ui.components.WashingNotesAccordion
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -272,6 +275,7 @@ private fun AddNewClothesForm(
     modifier: Modifier = Modifier
 ) {
     val halfScreenHeight = (LocalConfiguration.current.screenHeightDp / 3).dp
+    var openField by remember { mutableStateOf<String?>(null) }
 
     LazyColumn(
         modifier = modifier.fillMaxWidth(),
@@ -346,23 +350,35 @@ private fun AddNewClothesForm(
 
         // 1. Typ
         item {
-            EnumDropdown(
+            SingleSelectAccordion(
+                fieldKey = "type",
                 label = "Typ",
                 options = Type.entries,
                 selectedOption = type,
                 onOptionSelected = onTypeChange,
+                openKey = openField,
+                onOpenKeyChange = { openField = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
             )
         }
 
         // 2. Größe — only enabled after type is chosen; list depends on type
         item {
             val sizeOptions = if (type == Type.Shoes) Size.shoeSizes else Size.standardSizes
-            EnumDropdown(
+            SingleSelectAccordion(
+                fieldKey = "size",
                 label = if (type == null) "Größe (erst Typ wählen)" else "Größe",
                 options = sizeOptions,
                 selectedOption = size,
                 onOptionSelected = onSizeChange,
+                openKey = openField,
+                onOpenKeyChange = { openField = it },
                 enabled = type != null,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
             )
         }
 
@@ -372,52 +388,73 @@ private fun AddNewClothesForm(
                 value = brand,
                 onValueChange = onBrandChange,
                 label = { Text("Marke (optional)") },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
                 singleLine = true,
             )
         }
 
         // 4. Saison
         item {
-            EnumDropdown(
+            SingleSelectAccordion(
+                fieldKey = "season",
                 label = "Saison",
                 options = Season.entries,
                 selectedOption = season,
                 onOptionSelected = onSeasonChange,
+                openKey = openField,
+                onOpenKeyChange = { openField = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
             )
         }
 
-        // 5. Farbe (optional)
+        // 5. Farbe (optional) — custom accordion with color bubbles
         item {
-            OptionalEnumDropdown(
+            ColorSelectAccordion(
+                fieldKey = "color",
                 label = "Farbe (optional)",
-                options = ClothesColor.entries,
                 selectedOption = color,
                 onOptionSelected = onColorChange,
-                optionDisplayName = { it.displayName }
+                openKey = openField,
+                onOpenKeyChange = { openField = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
             )
         }
 
         // 6. Material (optional)
         item {
-            OptionalEnumDropdown(
+            OptionalSingleSelectAccordion(
+                fieldKey = "material",
                 label = "Material (optional)",
                 options = Material.entries,
                 selectedOption = material,
                 onOptionSelected = onMaterialChange,
-                optionDisplayName = { it.displayName }
+                openKey = openField,
+                onOpenKeyChange = { openField = it },
+                optionLabel = { it.displayName },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
             )
         }
 
         // 7. Waschhinweise
         item {
-            MultiSelectDropdown(
+            WashingNotesAccordion(
+                fieldKey = "washing",
                 label = "Waschhinweise",
-                options = WashingNotes.entries,
                 selectedOptions = washingNotes,
-                onOptionSelected = { note ->
-                    onWashingNotesChange(note)
-                },
+                onOptionSelected = onWashingNotesChange,
+                openKey = openField,
+                onOpenKeyChange = { openField = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
             )
         }
 
@@ -427,7 +464,9 @@ private fun AddNewClothesForm(
                 value = comment,
                 onValueChange = onCommentChange,
                 label = { Text("Kommentar (optional)") },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
                 maxLines = 4,
             )
         }
@@ -435,38 +474,18 @@ private fun AddNewClothesForm(
         // Sauberkeit (nur im Bearbeitungs-Modus)
         if (edit) {
             item {
-                var expanded by remember { mutableStateOf(false) }
-                val options = listOf("Sauber", "Schmutzig")
-                val selectedText = if (clean) "Sauber" else "Schmutzig"
-
-                ExposedDropdownMenuBox(
-                    expanded = expanded,
-                    onExpandedChange = { expanded = !expanded }
-                ) {
-                    TextField(
-                        modifier = Modifier.menuAnchor(),
-                        readOnly = true,
-                        value = selectedText,
-                        onValueChange = {},
-                        label = { Text("Sauberkeit") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                        colors = ExposedDropdownMenuDefaults.textFieldColors(),
-                    )
-                    ExposedDropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false },
-                    ) {
-                        options.forEach { selectionOption ->
-                            DropdownMenuItem(
-                                text = { Text(selectionOption) },
-                                onClick = {
-                                    onCleanChange(selectionOption == "Sauber")
-                                    expanded = false
-                                }
-                            )
-                        }
-                    }
-                }
+                SingleSelectAccordion(
+                    fieldKey = "clean",
+                    label = "Sauberkeit",
+                    options = listOf("Sauber", "Schmutzig"),
+                    selectedOption = if (clean) "Sauber" else "Schmutzig",
+                    onOptionSelected = { onCleanChange(it == "Sauber") },
+                    openKey = openField,
+                    onOpenKeyChange = { openField = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
+                )
             }
         }
     }
