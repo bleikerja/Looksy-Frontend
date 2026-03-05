@@ -2,6 +2,7 @@ package com.example.looksy.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -28,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.looksy.data.model.ClothesColor
 import com.example.looksy.data.model.WashingNotes
@@ -360,11 +362,21 @@ fun WashingNotesAccordion(
                     val conflicts = WashingNotes.getConflicts(option)
                     val isDisabled =
                         selectedOptions.any { it in conflicts } && !selectedOptions.contains(option)
+                    
                     PillChip(
                         text = option.displayName,
                         selected = selectedOptions.contains(option),
                         enabled = !isDisabled,
                         onClick = { onOptionSelected(option) },
+                        leadingContent = if (option.iconRes != null) {
+                            {
+                                Image(
+                                    painter = painterResource(id = option.iconRes),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
+                        } else null
                     )
                 }
             }
