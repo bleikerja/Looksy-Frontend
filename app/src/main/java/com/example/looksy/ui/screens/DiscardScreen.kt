@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Undo
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -75,23 +76,22 @@ fun DiscardScreen(
                 rightIcon = Icons.Default.Checklist
             )
         },
+        floatingActionButtonPosition = FabPosition.Center,
         floatingActionButton = {
-            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (selectedIds.isNotEmpty()) {
-                    Button(
-                        onClick = {
-                            val clothesToUpdate = clothesToDiscard.filter { it.id in selectedIds }
-                            onConfirmDiscard(clothesToUpdate)
-                            selectedIds = emptySet()
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp)
-                            .testTag("ConfirmDiscardButton"),
-                        colors = ButtonDefaults.buttonColors(Color.Red)
-                    ) {
-                        Text("Aussortieren (${selectedIds.size})")
-                    }
+            if (selectedIds.isNotEmpty()) {
+                Button(
+                    onClick = {
+                        val clothesToUpdate = clothesToDiscard.filter { it.id in selectedIds }
+                        onConfirmDiscard(clothesToUpdate)
+                        selectedIds = emptySet()
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .testTag("ConfirmDiscardButton"),
+                    colors = ButtonDefaults.buttonColors(Color.Red)
+                ) {
+                    Text("Aussortieren (${selectedIds.size})")
                 }
             }
         }
