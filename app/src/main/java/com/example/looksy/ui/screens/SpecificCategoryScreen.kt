@@ -77,6 +77,7 @@ fun SpecificCategoryScreen(
 
     val filteredClothes = remember(categoryClothes, size, season, material) {
         categoryClothes.filter { cloth ->
+            cloth.clean &&
             (size == null || cloth.size == size) &&
                     (season == null || cloth.seasonUsage == season) &&
                     (material == null || cloth.material == material)
