@@ -61,6 +61,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -209,7 +210,8 @@ fun FullOutfitScreen(
         ) { padding ->
             Box(modifier = Modifier
                 .padding(padding)
-                .fillMaxSize()) {
+                .fillMaxSize()
+            ) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -217,10 +219,6 @@ fun FullOutfitScreen(
                         .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-
-
-
-
                     // ──── Outfit area: jacket column + center carousels ────
                 if (layoutState == OutfitLayoutMode.GRID) {
                     // ──── GRID mode: 4×2 grid of independent carousels ────
@@ -540,7 +538,7 @@ fun FullOutfitScreen(
                     
                             onGenerateRandom()
                         },
-                        modifier = Modifier.size(45.dp)
+                        modifier = Modifier.weight(1f)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Shuffle,
@@ -552,7 +550,8 @@ fun FullOutfitScreen(
                     // 2. Jacket toggle + State selector buttons + Grid button (grouped)
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(0.dp)
+                        horizontalArrangement = Arrangement.spacedBy(0.dp),
+                        modifier = Modifier.weight(5f)
                     ) {
                         val isGrid = layoutState == OutfitLayoutMode.GRID
                         
@@ -560,7 +559,8 @@ fun FullOutfitScreen(
                         Row(
 //                            modifier = Modifier.padding(start = 16.dp, end = 16.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(0.dp)
+                            horizontalArrangement = Arrangement.spacedBy(0.dp),
+                            modifier = Modifier.weight(4f)
                         ) {
                             // Jacket vertical-brick toggle
                             JacketBrickButton(
@@ -570,7 +570,8 @@ fun FullOutfitScreen(
                                     if (showJacket) onSlotChanged(Type.Jacket, null)
                                     showJacket = !showJacket
                                     onLayoutStateChanged(layoutState, showJacket)
-                                }
+                                },
+                                modifier = Modifier.weight(1f)
                             )
                             // Thin vertical divider
                             Box(
@@ -580,7 +581,7 @@ fun FullOutfitScreen(
                                     .background(MaterialTheme.colorScheme.outlineVariant)
                             )
                             // Layer-count state buttons (always enabled, can exit GRID mode)
-                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.weight(3f)) {
                                 StateButton(
                                     brickCount = 2,
                                     selected = layoutState == OutfitLayoutMode.TWO_LAYERS,
@@ -594,7 +595,8 @@ fun FullOutfitScreen(
                                             layoutState = OutfitLayoutMode.TWO_LAYERS
                                             onLayoutStateChanged(layoutState, showJacket)
                                         }
-                                    }
+                                    },
+                                    modifier = Modifier.weight(1f)
                                 )
                                 StateButton(
                                     brickCount = 3,
@@ -619,7 +621,8 @@ fun FullOutfitScreen(
                                             layoutState = OutfitLayoutMode.THREE_LAYERS
                                             onLayoutStateChanged(layoutState, showJacket)
                                         }
-                                    }
+                                    },
+                                    modifier = Modifier.weight(1f)
                                 )
                                 StateButton(
                                     brickCount = 4,
@@ -639,7 +642,8 @@ fun FullOutfitScreen(
                                             layoutState = OutfitLayoutMode.FOUR_LAYERS
                                             onLayoutStateChanged(layoutState, showJacket)
                                         }
-                                    }
+                                    },
+                                    modifier = Modifier.weight(1f)
                                 )
                             }
                         }
@@ -659,12 +663,16 @@ fun FullOutfitScreen(
                                     onLayoutStateChanged(layoutState, showJacket)
                                 }
                                 // If already in GRID, clicking does nothing
-                            }
+                            },
+                            modifier = Modifier.weight(1f)
                         )
                     }
 
                     // 3. Save + confirm/refresh buttons (right)
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        modifier = Modifier.weight(if (!editSavedOutfit) 2f else 1f)
+                    ) {
                         val isGridMode = layoutState == OutfitLayoutMode.GRID
                         val buttonsEnabled = !isGridMode || gridOutfitValid
                         
@@ -705,7 +713,7 @@ fun FullOutfitScreen(
                                     }
                                 },
                                 modifier = Modifier
-                                    .size(45.dp)
+                                    .weight(1f)
                                     .alpha(if (buttonsEnabled) 1f else 0.3f)
                             ) {
                                 Icon(
@@ -722,13 +730,14 @@ fun FullOutfitScreen(
                         Crossfade(
                             targetState = confirmedOutfit,
                             animationSpec = tween(durationMillis = 300),
-                            label = "confirmRefreshCrossfade"
+                            label = "confirmRefreshCrossfade",
+                            modifier = Modifier.weight(1f)
                         ) { isConfirmed ->
                             if (isConfirmed) {
                                 // Refresh button (when confirmed)
                                 IconButton(
                                     onClick = { showConfirmDialog = true },
-                                    modifier = Modifier.size(45.dp)
+                                    modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Refresh,
@@ -746,7 +755,7 @@ fun FullOutfitScreen(
                                         }
                                     },
                                     modifier = Modifier
-                                        .size(45.dp)
+                                        .fillMaxWidth()
                                         .alpha(if (buttonsEnabled) 1f else 0.3f)
                                 ) {
                                     Icon(
@@ -1262,7 +1271,9 @@ private fun BrickIcon(
     color: Color,
     modifier: Modifier = Modifier
 ) {
-    Canvas(modifier = modifier.size(28.dp)) {
+    Canvas(modifier = modifier
+        .fillMaxWidth()
+        .aspectRatio(1f)) {
         val totalHeight = size.height
         val totalWidth = size.width
         val gap = 2.dp.toPx()
@@ -1296,14 +1307,14 @@ private fun JacketBrickButton(
                     else if (selected) MaterialTheme.colorScheme.onPrimaryContainer
                     else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
 
-    IconButton(
-        onClick = { if (enabled) onClick() },
+    Box(
         modifier = modifier
-            .size(50.dp)
             .clip(RoundedCornerShape(10.dp))
             .background(bgColor)
+            .clickable { if (enabled) onClick() }
+            .padding(8.dp)
     ) {
-        Canvas(modifier = Modifier.size(28.dp)) {
+        Canvas(modifier = Modifier.fillMaxWidth().aspectRatio(1f)) {
             val cornerRadius = 3.dp.toPx()
             val brickWidth = size.width * 0.42f
             drawRoundRect(
@@ -1332,12 +1343,12 @@ private fun StateButton(
                     else if (selected) MaterialTheme.colorScheme.onPrimaryContainer
                     else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
 
-    IconButton(
-        onClick = { if (enabled) onClick() },
+    Box(
         modifier = modifier
-            .size(50.dp)
             .clip(RoundedCornerShape(10.dp))
             .background(bgColor)
+            .clickable { if (enabled) onClick() }
+            .padding(8.dp)
     ) {
         BrickIcon(brickCount = brickCount, color = iconColor)
     }
@@ -1350,7 +1361,9 @@ private fun GridBrickIcon(
     color: Color,
     modifier: Modifier = Modifier
 ) {
-    Canvas(modifier = modifier.size(28.dp)) {
+    Canvas(modifier = modifier
+        .fillMaxWidth()
+        .aspectRatio(1f)) {
         val totalHeight = size.height
         val totalWidth = size.width
         val gap = 2.dp.toPx()
@@ -1388,12 +1401,12 @@ private fun GridModeButton(
     val iconColor = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
                     else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
 
-    IconButton(
-        onClick = onClick,
+    Box(
         modifier = modifier
-            .size(50.dp)
             .clip(RoundedCornerShape(10.dp))
             .background(bgColor)
+            .clickable { onClick() }
+            .padding(8.dp)
     ) {
         GridBrickIcon(color = iconColor)
     }

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -103,7 +104,10 @@ fun OutfitDetailsScreen(
                     Text(
                         "Bearbeiten",
                         color = Color.White,
-                        fontSize = 13.sp
+                        autoSize = TextAutoSize.StepBased(
+                            minFontSize = 5.sp,
+                            maxFontSize = 24.sp
+                        )
                     )
                 }
 
@@ -129,7 +133,10 @@ fun OutfitDetailsScreen(
                     Text(
                         "Löschen",
                         color = Color.White,
-                        fontSize = 13.sp
+                        autoSize = TextAutoSize.StepBased(
+                            minFontSize = 5.sp,
+                            maxFontSize = 24.sp
+                        )
                     )
                 }
 
@@ -163,7 +170,10 @@ fun OutfitDetailsScreen(
                     Text(
                         "Tragen",
                         color = Color.White,
-                        fontSize = 13.sp
+                        autoSize = TextAutoSize.StepBased(
+                            minFontSize = 5.sp,
+                            maxFontSize = 24.sp
+                        )
                     )
                 }
             }
